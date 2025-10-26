@@ -1,79 +1,97 @@
 import React, { useState } from "react";
-import { FiEye, FiEyeOff } from "react-icons/fi";
-import { z } from "zod";
-console.log("Rendering LoginPage");
-
-const schema = z.object({
-  email: z.string().email("Enter a valid Email address"),
-  password: z.string().min(6, "Password must be at least 6 characters long"),
-});
+import { useNavigate } from "react-router-dom";
+import { loginApi } from "../api/auth.api";
+import { useAuthStore } from "../../../store/auth.store";
+import { FiEye, FiEyeOff } from "react-icons/fi"; // 👈 from react-icons
 
 export default function LoginPage() {
-  // React State
+  const navigate = useNavigate();
+  const doLogin = useAuthStore((s) => s.login);
+
+  // Form/UI state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null); // Error state for displaying error messages when login fails
-  const [loading, setLoading] = useState(false); // Loading state to indicate login process
-  const [show, setShow] = useState(false); // State to toggle password visibility
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // 👈 track toggle state
 
-  //submit handler
-  async function onSubmit(event: React.FormEvent) {
-    const parsed = schema.safeParse({ email, password });
-    if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message || "Invalid input");
-      return;
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (!email.includes("@")) return setError("Please enter a valid email address.");
+    if (password.length < 6) return setError("Password must be at least 6 characters long.");
+
+    try {
+      setLoading(true);
+
+      // 1️⃣ Call fake API
+      const res = await loginApi(email, password);
+
+      // 2️⃣ Save session to Zustand
+      doLogin({ user: res.user, token: res.token });
+
+      // 3️⃣ Navigate to dashboard
+      navigate("/dashboard", { replace: true });
+    } catch (e) {
+      if (e instanceof Error) setError(e.message || "Login failed");
+      else setError("Login failed");
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen grid place-items-center bg-slate-50 p-4"> {/* Container div for centering the form */}
-      <div className="w-full max-w-sm rounded-2xl shadow-lg bg-white p-6"> {/* Form container with styling */}
-      {/*Header*/}
+    <div className="min-h-screen grid place-items-center bg-blue-50 p-4">
+      <div className="w-full max-w-sm rounded-2xl shadow-xl bg-white p-8">
+        {/* Header */}
         <div className="mb-6">
-        <h1 className ="text-2xl font-semibold">Sign in to ClariFi</h1>
-        <p className="text-sm text-slate-600 mt-1">
-          Demo: <code>demo@clarifi.app</code> / <code>Demo1234!</code>
-        </p>
+          <h1 className="text-2xl font-semibold">Sign in to ClariFi</h1>
+          <p className="text-sm text-slate-600 mt-1">
+            Demo: <code>demo@clarifi.app</code> / <code>Demo1234!</code>
+          </p>
         </div>
 
         {/* Form */}
         <form className="space-y-4" onSubmit={onSubmit}>
           <div>
-            <label className="block text-sm mb-1">Email: </label>
+            <label className="block text-sm mb-1">Email</label>
             <input
               className="w-full rounded-lg border p-2 outline-none focus:ring"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              />
+            />
           </div>
+
           <div>
-            <label className="block text-sm mb-1">Password: </label>
+            <label className="block text-sm mb-1">Password</label>
             <div className="relative">
               <input
-              className="w-full rounded-lg border p-2 pr-20 outline-none focus:ring"
-              type={show ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+                className="w-full rounded-lg border p-2 pr-10 outline-none focus:ring"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
               />
+              {/* Eye toggle icon */}
               <button
                 type="button"
-                onClick={() => setShow((s) =>!s)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 cursor-pointer transition-colors"
-
+                onClick={() => setShowPassword((s) => !s)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 cursor-pointer transition-colors"
               >
-                {show ? <FiEyeOff /> : <FiEye />}
+                {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
               </button>
             </div>
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>} {/* Display error message if any */}
+          {error && <div className="text-sm text-red-600">{error}</div>}
+
           <button
             type="submit"
-            disabled={loading} // Disable button when loading
-            className="w-full rounded-lg bg-slate-500 text-white py-2 disabled:opacity-60"
+            disabled={loading}
+            className="w-full rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 mt-2 shadow-md disabled:opacity-60 transition-colors"
           >
             {loading ? "Logging in..." : "Log in"}
           </button>
