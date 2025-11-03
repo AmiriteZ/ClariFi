@@ -5,6 +5,7 @@ import LoginPage from "../features/auth/pages/LoginPage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import AppShell from "../components/layout/AppShell";
 import { useAuthStore } from "../store/auth.store";
+import SignUpPage from "../features/auth/pages/SignUpPage";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
@@ -17,6 +18,7 @@ export default function Router() {
     <Routes>
       <Route element={<App />}>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
         <Route
           path="/dashboard"
           element={

@@ -19,8 +19,10 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
 
-    if (!email.includes("@")) return setError("Please enter a valid email address.");
-    if (password.length < 6) return setError("Password must be at least 6 characters long.");
+    if (!email.includes("@"))
+      return setError("Please enter a valid email address.");
+    if (password.length < 6)
+      return setError("Password must be at least 6 characters long.");
 
     try {
       setLoading(true);
@@ -67,7 +69,7 @@ export default function LoginPage() {
 
           <div>
             <label className="block text-sm mb-1">Password</label>
-            <div className="relative">
+            <div className="relative flex items-center">
               <input
                 className="w-full rounded-lg border p-2 pr-10 outline-none focus:ring"
                 type={showPassword ? "text" : "password"}
@@ -75,15 +77,20 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
               />
-              {/* Eye toggle icon */}
               <button
                 type="button"
                 onClick={() => setShowPassword((s) => !s)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 cursor-pointer transition-colors"
+                className="absolute right-3 text-gray-500 hover:text-gray-700 cursor-pointer transition-colors"
               >
                 {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
               </button>
             </div>
+            <p className="text-sm text-slate-600 mt-4">
+              New here?{" "}
+              <a href="/signup" className="text-blue-700 underline">
+                Create an account
+              </a>
+            </p>
           </div>
 
           {error && <div className="text-sm text-red-600">{error}</div>}
