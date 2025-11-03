@@ -8,7 +8,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   function doLogout() {
     logout();
-    navigate("/login", { replace: true });
+    navigate("/start", { replace: true });
   }
 
   return (

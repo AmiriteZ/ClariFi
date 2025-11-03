@@ -2,38 +2,29 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginApi } from "../api/auth.api";
 import { useAuthStore } from "../../../store/auth.store";
-import { FiEye, FiEyeOff } from "react-icons/fi"; // 👈 from react-icons
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const doLogin = useAuthStore((s) => s.login);
 
-  // Form/UI state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // 👈 track toggle state
+  const [showPassword, setShowPassword] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
-    if (!email.includes("@"))
-      return setError("Please enter a valid email address.");
-    if (password.length < 6)
-      return setError("Password must be at least 6 characters long.");
+    if (!email.includes("@")) return setError("Please enter a valid email address.");
+    if (password.length < 12) return setError("Password must be at least 12 characters long.");
 
     try {
       setLoading(true);
-
-      // 1️⃣ Call fake API
       const res = await loginApi(email, password);
-
-      // 2️⃣ Save session to Zustand
       doLogin({ user: res.user, token: res.token });
-
-      // 3️⃣ Navigate to dashboard
       navigate("/dashboard", { replace: true });
     } catch (e) {
       if (e instanceof Error) setError(e.message || "Login failed");
@@ -44,17 +35,23 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen grid place-items-center bg-blue-50 p-4">
-      <div className="w-full max-w-sm rounded-2xl shadow-xl bg-white p-8">
-        {/* Header */}
+    <div className="relative min-h-screen grid place-items-center overflow-hidden p-4">
+      <div
+        className="
+          absolute inset-0 -z-10
+          bg-[linear-gradient(120deg,#065f46,#10b981,#34d399)]
+          bg-[length:300%_300%]
+          animate-gradient
+        "
+        aria-hidden
+      />
+
+      {/* Login Card */}
+      <div className="w-full max-w-sm rounded-2xl shadow-xl bg-white/95 backdrop-blur-sm p-8">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold">Sign in to ClariFi</h1>
-          <p className="text-sm text-slate-600 mt-1">
-            Demo: <code>demo@clarifi.app</code> / <code>Demo1234!</code>
-          </p>
         </div>
 
-        {/* Form */}
         <form className="space-y-4" onSubmit={onSubmit}>
           <div>
             <label className="block text-sm mb-1">Email</label>
@@ -87,7 +84,7 @@ export default function LoginPage() {
             </div>
             <p className="text-sm text-slate-600 mt-4">
               New here?{" "}
-              <a href="/signup" className="text-blue-700 underline">
+              <a href="/signup" className="text-brand-600 underline">
                 Create an account
               </a>
             </p>
@@ -98,7 +95,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 mt-2 shadow-md disabled:opacity-60 transition-colors"
+            className="w-full rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 mt-2 shadow-md disabled:opacity-60 transition-colors"
           >
             {loading ? "Logging in..." : "Log in"}
           </button>

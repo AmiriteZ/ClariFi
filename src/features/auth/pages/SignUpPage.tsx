@@ -10,23 +10,16 @@ export default function SignUpPage() {
   const navigate = useNavigate();
   const doLogin = useAuthStore((s) => s.login);
 
-  // form state
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
-  // ui state
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  // strength
   const [strength, setStrength] = useState(getPasswordStrength(""));
 
-  // static color (avoid dynamic class purge)
   const barColor =
     strength.score <= 1
       ? "bg-red-500"
@@ -52,15 +45,6 @@ export default function SignUpPage() {
       const res = await signupApi(name.trim(), email, password);
       doLogin({ user: res.user, token: res.token });
       navigate("/dashboard", { replace: true });
-    } catch (e) {
-      if (e instanceof Error) setError(e.message);
-      else setError("Sign up failed");
-    } finally {
-      setLoading(false);
-    }
-
-    try {
-      await signupApi(name, email, password);
     } catch (e: unknown) {
       if (e instanceof FirebaseError) {
         if (e.code === "auth/email-already-in-use") {
@@ -73,12 +57,24 @@ export default function SignUpPage() {
       } else {
         setError("Sign up failed");
       }
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen grid place-items-center bg-blue-50 p-4">
-      <div className="w-full max-w-sm rounded-2xl shadow-xl bg-white p-8">
+    <div className="relative min-h-screen grid place-items-center overflow-hidden p-4">
+      <div
+        className="
+          absolute inset-0 -z-10
+          bg-[linear-gradient(120deg,#065f46,#10b981,#34d399)]
+          bg-[length:300%_300%]
+          animate-gradient
+        "
+        aria-hidden
+      />
+
+      <div className="w-full max-w-sm rounded-2xl shadow-xl bg-white/95 backdrop-blur-sm p-8">
         <h1 className="text-2xl font-semibold mb-6">Create your account</h1>
 
         <form className="space-y-4" onSubmit={onSubmit}>
@@ -116,7 +112,7 @@ export default function SignUpPage() {
                 onChange={(e) => {
                   const val = e.target.value;
                   setPassword(val);
-                  setStrength(getPasswordStrength(val)); // live strength
+                  setStrength(getPasswordStrength(val));
                 }}
                 placeholder="Enter password"
               />
@@ -130,7 +126,7 @@ export default function SignUpPage() {
               </button>
             </div>
 
-            {/* Strength meter */}
+            {/* Strength Meter */}
             <div className="mt-2">
               <div className="flex items-center justify-between text-xs text-slate-600 mb-1">
                 <span>Password strength:</span>
@@ -219,7 +215,7 @@ export default function SignUpPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 mt-2 shadow-md disabled:opacity-60 transition-colors"
+            className="w-full rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 mt-2 shadow-md disabled:opacity-60 transition-colors"
           >
             {loading ? "Creating account..." : "Sign up"}
           </button>
@@ -227,7 +223,7 @@ export default function SignUpPage() {
 
         <p className="text-sm text-slate-600 mt-4">
           Already have an account?{" "}
-          <Link to="/login" className="text-blue-700 underline">
+          <Link to="/login" className="text-brand-600 underline">
             Log in
           </Link>
         </p>
