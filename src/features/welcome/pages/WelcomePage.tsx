@@ -66,7 +66,7 @@ export default function WelcomePage() {
             text={[
               "Gain Financial Clarity.",
               "Track Your Expenses Effortlessly.",
-              "Achieve Your Savings Goals.",
+              "Achieve Your Saving Goals.",
               "Make Informed Financial Decisions.",
             ]}
             typingSpeed={100}
