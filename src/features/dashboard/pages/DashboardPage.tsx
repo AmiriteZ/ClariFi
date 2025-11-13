@@ -1,46 +1,38 @@
 import React from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { useEffect, useState } from "react";
+import { getDashboard, type DashboardResponse } from "../api/dashboard.api";
+
 
 export default function DashboardPage() {
   // later will use my API to fetch user-specific data and 3D model
-  const dashboardData = {
-    summary: {
-      totalBalance: 2314.52,
-      monthIncome: 3400,
-      monthExpenses: 1840.35,
-    },
-    spendingByCategory: [
-      { category: "Food", amount: 320 },
-      { category: "Rent", amount: 1200 },
-      { category: "Transport", amount: 120 },
-    ],
-    recentTransactions: [
-      {
-        id: 1,
-        date: "10/11/2025",
-        merchant: "Tesco",
-        category: "Groceries",
-        amount: -42.5,
-      },
-      {
-        id: 2,
-        date: "09/11/2025",
-        merchant: "Netflix",
-        category: "Subscription",
-        amount: -12.99,
-      },
-    ],
-    mainGoal: {
-      name: "Holiday Fund",
-      currentAmount: 450,
-      targetAmount: 2000,
-    },
-    insights: [
-      "You’ve spent 48% of your monthly budget so far.",
-      "Your Transport spending is 15% lower than last month.",
-      "At your current saving rate, you’ll reach your Holiday Fund in ~5 months.",
-    ],
-  };
+  const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        setLoading(true);
+        const data = await getDashboard();
+        setDashboardData(data);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Failed to load dashboard");
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    load();
+  }, []);
+
+  if (loading) return <p>Loading…</p>;
+  if (error) return <p>Error: {error}</p>;
+  if (!dashboardData) return null;
 
   const goalProgress =
     (dashboardData.mainGoal.currentAmount /
