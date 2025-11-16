@@ -1,38 +1,102 @@
 import React from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { useEffect, useState } from "react";
+
+import { onAuthStateChanged, type User } from "firebase/auth";
+import { auth } from "../../../lib/firebase";
+
 import { getDashboard, type DashboardResponse } from "../api/dashboard.api";
 
 
 export default function DashboardPage() {
-  // later will use my API to fetch user-specific data and 3D model
-  const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // 1) Track Firebase auth state
+const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+const [authLoading, setAuthLoading] = useState(true);
 
+// 2) Track dashboard data + loading + error
+const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null);
+const [loading, setLoading] = useState(false);
+const [error, setError] = useState<string | null>(null);
+
+// 3) Wait for Firebase to finish restoring the user (after reloads, etc.)
+useEffect(() => {
+  const unsub = onAuthStateChanged(auth, (user) => {
+    setFirebaseUser(user);
+    setAuthLoading(false);
+  });
+
+  return () => unsub();
+}, []);
+
+// 4) Once auth is ready AND we have a user, fetch the dashboard
   useEffect(() => {
     async function load() {
+      if (!firebaseUser) return; // no user, don't fetch
+
       try {
         setLoading(true);
-        const data = await getDashboard();
+        setError(null);
+
+        const idToken = await firebaseUser.getIdToken();
+        const data = await getDashboard(idToken);
         setDashboardData(data);
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("Failed to load dashboard");
-        }
+      } catch (err) {
+        console.error(err);
+        setError(
+          err instanceof Error ? err.message : "Failed to load dashboard"
+        );
       } finally {
         setLoading(false);
       }
     }
 
-    load();
-  }, []);
+    if (!authLoading && firebaseUser) {
+      void load();
+    }
+  }, [authLoading, firebaseUser]);
 
-  if (loading) return <p>Loading…</p>;
-  if (error) return <p>Error: {error}</p>;
-  if (!dashboardData) return null;
+  if (authLoading) {
+  return (
+    <div className="w-full h-full px-10 py-8">
+      <div className="max-w-6xl mx-auto">
+        <p className="text-sm text-slate-500">Checking your session…</p>
+      </div>
+    </div>
+  );
+}
+
+if (!firebaseUser) {
+  // you could also navigate("/login") here instead of showing this message
+  return (
+    <div className="w-full h-full px-10 py-8">
+      <div className="max-w-6xl mx-auto">
+        <p className="text-sm text-slate-500">
+          You’re not logged in. Please sign in to view your dashboard.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+if (loading || !dashboardData) {
+  return (
+    <div className="w-full h-full px-10 py-8">
+      <div className="max-w-6xl mx-auto">
+        <p className="text-sm text-slate-500">Loading your dashboard…</p>
+      </div>
+    </div>
+  );
+}
+
+if (error) {
+  return (
+    <div className="w-full h-full px-10 py-8">
+      <div className="max-w-6xl mx-auto">
+        <p className="text-sm text-red-500">Error: {error}</p>
+      </div>
+    </div>
+  );
+}
 
   const goalProgress =
     (dashboardData.mainGoal.currentAmount /

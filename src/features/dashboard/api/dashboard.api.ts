@@ -1,7 +1,3 @@
-//import { auth } from "../../../lib/firebase";
-
-// ------- Types for dashboard data -------
-
 export type Summary = {
   totalBalance: number;
   monthIncome: number;
@@ -35,21 +31,15 @@ export type DashboardResponse = {
   insights: string[];
 };
 
-// Base URL for your backend API
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5001/api";
+const API_BASE_URL = "http://localhost:5001/api";
 
-/**
- * Fetch the dashboard data for the currently logged-in user.
- * Uses the Firebase ID token in the Authorization header.
- */
-export async function getDashboard(): Promise<DashboardResponse> {
-    const res = await fetch(`${API_BASE_URL}/dashboard`, {
+export async function getDashboard(idToken: string): Promise<DashboardResponse> {
+  const res = await fetch(`${API_BASE_URL}/dashboard`, {
     headers: {
-        "Content-Type": "application/json",
-        // no auth header for now
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${idToken}`,
     },
-    });
+  });
 
   if (!res.ok) {
     throw new Error(`Dashboard API error ${res.status}`);
