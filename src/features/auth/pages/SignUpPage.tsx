@@ -6,16 +6,59 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 import { getPasswordStrength } from "../../../utils/passwordStrength";
 import { FirebaseError } from "firebase/app";
 
+function parseDob(dobStr: string): Date | null {
+  // Expecting dd/mm/yyyy
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dobStr.trim());
+  if (!match) return null;
+
+  const day = Number(match[1]);
+  const month = Number(match[2]); // 1–12
+  const year = Number(match[3]);
+
+  const date = new Date(year, month - 1, day);
+
+  // Basic validity check (JS Date will auto-correct invalid dates otherwise)
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
+
+function isAtLeast12YearsOld(dob: Date): boolean {
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+
+  const hasHadBirthdayThisYear =
+    today.getMonth() > dob.getMonth() ||
+    (today.getMonth() === dob.getMonth() && today.getDate() >= dob.getDate());
+
+  if (!hasHadBirthdayThisYear) {
+    age -= 1;
+  }
+
+  return age >= 12;
+}
+
 export default function SignUpPage() {
   const navigate = useNavigate();
   const doLogin = useAuthStore((s) => s.login);
 
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [dob, setDob] = useState(""); // dd/mm/yyyy
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [strength, setStrength] = useState(getPasswordStrength(""));
@@ -29,20 +72,59 @@ export default function SignUpPage() {
       ? "bg-green-500"
       : "bg-emerald-600";
 
-  async function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
 
-    if (name.trim().length < 2) return setError("Please enter your name.");
-    if (!email.includes("@")) return setError("Enter a valid email.");
-    if (password !== confirmPassword)
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = lastName.trim();
+    const trimmedDob = dob.trim();
+    const trimmedEmail = email.trim();
+
+    if (trimmedFirstName.length < 2) {
+      return setError("Please enter your first name.");
+    }
+
+    if (trimmedLastName.length < 2) {
+      return setError("Please enter your last name.");
+    }
+
+    if (!trimmedDob) {
+      return setError("Please enter your date of birth.");
+    }
+
+    const parsedDob = parseDob(trimmedDob);
+    if (!parsedDob) {
+      return setError("Please enter a valid date of birth in dd/mm/yyyy format.");
+    }
+
+    if (!isAtLeast12YearsOld(parsedDob)) {
+      return setError("You must be at least 12 years old to sign up.");
+    }
+
+    if (!trimmedEmail.includes("@")) {
+      return setError("Enter a valid email.");
+    }
+
+    if (password !== confirmPassword) {
       return setError("Passwords do not match.");
-    if (strength.score < 2)
+    }
+
+    if (strength.score < 2) {
       return setError("Please choose a stronger password.");
+    }
 
     try {
       setLoading(true);
-      const res = await signupApi(name.trim(), email, password);
+
+      const res = await signupApi(
+        trimmedFirstName,
+        trimmedLastName,
+        trimmedDob,
+        trimmedEmail,
+        password
+      );
+
       doLogin({ user: res.user, token: res.token });
       navigate("/dashboard", { replace: true });
     } catch (e: unknown) {
@@ -78,14 +160,38 @@ export default function SignUpPage() {
         <h1 className="text-2xl font-semibold mb-6">Create your account</h1>
 
         <form className="space-y-4" onSubmit={onSubmit}>
-          {/* Name */}
+          {/* First & Last Name */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm mb-1">First name</label>
+              <input
+                className="w-full rounded-lg border p-2 outline-none focus:ring"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Jane"
+              />
+            </div>
+            <div>
+              <label className="block text-sm mb-1">Last name</label>
+              <input
+                className="w-full rounded-lg border p-2 outline-none focus:ring"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Doe"
+              />
+            </div>
+          </div>
+
+          {/* Date of Birth */}
           <div>
-            <label className="block text-sm mb-1">Name</label>
+            <label className="block text-sm mb-1">Date of birth</label>
             <input
               className="w-full rounded-lg border p-2 outline-none focus:ring"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Jane Doe"
+              value={dob}
+              onChange={(e) => setDob(e.target.value)}
+              placeholder="dd/mm/yyyy"
+              inputMode="numeric"
+              maxLength={10}
             />
           </div>
 

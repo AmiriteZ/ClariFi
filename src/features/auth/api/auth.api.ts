@@ -1,68 +1,99 @@
-import { auth, db } from "../../../lib/firebase";
+// client/src/features/auth/api/auth.api.ts
+
+import { auth } from "../../../lib/firebase";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
-import { doc, setDoc, getDoc, type DocumentData } from "firebase/firestore";
+
+export type UserProfile = {
+  id: number;
+  firebaseUid: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  dob: string; // e.g. "2003-05-18" from Postgres
+};
 
 export type LoginResponse = {
   token: string;
-  user: { name: string; email: string };
+  user: UserProfile;
 };
 
-// Sign up + create profile doc
+const API_BASE =
+  import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ?? "http://localhost:5001/api";
+
+// Sign up: Firebase creates the auth user, backend stores profile in Postgres
 export async function signupApi(
-  name: string,
+  firstName: string,
+  lastName: string,
+  dob: string, // dd/mm/yyyy from the form
   email: string,
   password: string
 ): Promise<LoginResponse> {
-  // TS will infer UserCredential here; no need to annotate
+  // 1) Create Firebase Auth user
   const cred = await createUserWithEmailAndPassword(auth, email, password);
   const idToken = await cred.user.getIdToken();
 
-  // Create a profile document (users/{uid})
-  const ref = doc(db, "users", cred.user.uid);
-  await setDoc(ref, {
-    name,
-    email,
-    createdAt: new Date().toISOString(),
+  // 2) Tell our backend to create the Postgres row
+  const res = await fetch(`${API_BASE}/users/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${idToken}`,
+    },
+    body: JSON.stringify({
+      firstName,
+      lastName,
+      dob, // backend will parse "dd/mm/yyyy" → DATE
+      email,
+    }),
   });
 
-  return { token: idToken, user: { name, email } };
+  if (!res.ok) {
+    const message = await res.text();
+    throw new Error(message || "Failed to create user profile.");
+  }
+
+  const user = (await res.json()) as UserProfile;
+
+  return {
+    token: idToken,
+    user,
+  };
 }
 
-// Login with email/password
+// Login: Firebase signs in, backend returns the Postgres profile
 export async function loginApi(
   email: string,
   password: string
 ): Promise<LoginResponse> {
+  // 1) Sign in with Firebase Auth
   const cred = await signInWithEmailAndPassword(auth, email, password);
   const idToken = await cred.user.getIdToken();
 
-  // Optional: read profile for display name
-  const ref = doc(db, "users", cred.user.uid);
-  const snap = await getDoc(ref);
+  // 2) Fetch profile from backend (from Postgres via firebaseUid)
+  const res = await fetch(`${API_BASE}/users/me`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${idToken}`,
+    },
+  });
 
-  let displayName: string | undefined;
-
-  if (snap.exists()) {
-    // snap.data() is DocumentData (a typed map), avoid `as any`
-    const data = snap.data() as DocumentData | undefined;
-    const candidate = data?.name;
-    if (typeof candidate === "string" && candidate.trim().length > 0) {
-      displayName = candidate;
-    }
+  if (!res.ok) {
+    const message = await res.text();
+    throw new Error(message || "Failed to fetch user profile.");
   }
 
-  // Fallbacks: Firebase displayName, then email prefix
-  if (!displayName) {
-    displayName = cred.user.displayName ?? email.split("@")[0];
-  }
+  const user = (await res.json()) as UserProfile;
 
-  return { token: idToken, user: { name: displayName, email } };
+  return {
+    token: idToken,
+    user,
+  };
 }
 
-export async function logoutApi() {
+export async function logoutApi(): Promise<void> {
   await signOut(auth);
 }
