@@ -1,7 +1,12 @@
+// client/src/store/auth.store.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type User = { name: string; email: string };
+export type User = {
+  id: string;   // UUID
+  name: string;
+  email: string;
+};
 
 type AuthState = {
   user: User | null;

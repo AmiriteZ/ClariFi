@@ -7,37 +7,69 @@ import {
   signOut,
 } from "firebase/auth";
 
-export type UserProfile = {
-  id: number;
-  firebaseUid: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  dob: string; // e.g. "2003-05-18" from Postgres
-};
+import type { User } from "../../../store/auth.store";
 
 export type LoginResponse = {
   token: string;
-  user: UserProfile;
+  user: User;
 };
 
 const API_BASE =
-  import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ?? "http://localhost:5001/api";
+  import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ??
+  "http://localhost:5001/api";
 
-// Sign up: Firebase creates the auth user, backend stores profile in Postgres
+type BackendUser = {
+  id: string;
+  email: string;
+  fname?: string | null;
+  lname?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+};
+
+type RawUserPayload = {
+  user?: BackendUser;
+} & Partial<BackendUser>;
+
+function normaliseUser(raw: RawUserPayload): User {
+  // Support both { user: {...} } and plain {... }
+  const candidate: BackendUser = (raw.user ?? raw) as BackendUser;
+
+  const id = String(candidate.id);
+  const email = candidate.email;
+
+  const first =
+    candidate.fname ??
+    candidate.firstName ??
+    "";
+  const last =
+    candidate.lname ??
+    candidate.lastName ??
+    "";
+
+  const name = `${first} ${last}`.trim() || email;
+
+  return {
+    id,
+    name,
+    email,
+  };
+}
+
+// SIGN UP
 export async function signupApi(
   firstName: string,
   lastName: string,
-  dob: string, // dd/mm/yyyy from the form
+  dobIso: string, // "YYYY-MM-DD"
   email: string,
   password: string
 ): Promise<LoginResponse> {
-  // 1) Create Firebase Auth user
+  // 1) Create Firebase user (client SDK)
   const cred = await createUserWithEmailAndPassword(auth, email, password);
   const idToken = await cred.user.getIdToken();
 
-  // 2) Tell our backend to create the Postgres row
-  const res = await fetch(`${API_BASE}/users/register`, {
+  // 2) Register profile into Postgres
+  const res = await fetch(`${API_BASE}/users/init-profile`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -46,7 +78,7 @@ export async function signupApi(
     body: JSON.stringify({
       firstName,
       lastName,
-      dob, // backend will parse "dd/mm/yyyy" → DATE
+      dob: dobIso,
       email,
     }),
   });
@@ -56,24 +88,23 @@ export async function signupApi(
     throw new Error(message || "Failed to create user profile.");
   }
 
-  const user = (await res.json()) as UserProfile;
+  const data = (await res.json()) as RawUserPayload;
 
-  return {
-    token: idToken,
-    user,
-  };
+  const user = normaliseUser(data);
+
+  return { token: idToken, user };
 }
 
-// Login: Firebase signs in, backend returns the Postgres profile
+// LOGIN
 export async function loginApi(
   email: string,
   password: string
 ): Promise<LoginResponse> {
-  // 1) Sign in with Firebase Auth
+  // 1) Firebase login
   const cred = await signInWithEmailAndPassword(auth, email, password);
   const idToken = await cred.user.getIdToken();
 
-  // 2) Fetch profile from backend (from Postgres via firebaseUid)
+  // 2) Fetch DB user profile
   const res = await fetch(`${API_BASE}/users/me`, {
     method: "GET",
     headers: {
@@ -86,14 +117,14 @@ export async function loginApi(
     throw new Error(message || "Failed to fetch user profile.");
   }
 
-  const user = (await res.json()) as UserProfile;
+  const data = (await res.json()) as RawUserPayload;
 
-  return {
-    token: idToken,
-    user,
-  };
+  const user = normaliseUser(data);
+
+  return { token: idToken, user };
 }
 
+// LOGOUT
 export async function logoutApi(): Promise<void> {
   await signOut(auth);
 }

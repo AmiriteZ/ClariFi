@@ -8,15 +8,81 @@ import {
 
 const router = express.Router();
 
-interface InitProfileBody {
+type RegisterBody = {
+  firstName?: string;
+  lastName?: string;
+  dob?: string;
+  email?: string;
+};
+
+type DbUserRow = {
+  id: string | number;
+  firebase_uid: string;
+  email: string;
   fname: string;
   lname: string;
-  dob: string; // "YYYY-MM-DD"
+  dob: string;
+  created_at: string;
+};
+
+type ApiUser = {
+  id: string;
+  firebaseUid: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  dob: string;
+  createdAt: string;
+};
+
+function normalizeDob(raw: string | undefined): string | null {
+  if (!raw) return null;
+  const dob = raw.trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dob)) {
+    return dob;
+  }
+
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dob);
+  if (!match) return null;
+
+  const [, ddStr, mmStr, yyyyStr] = match;
+  const dd = Number(ddStr);
+  const mm = Number(mmStr);
+  const yyyy = Number(yyyyStr);
+
+  const isoDob = `${yyyy}-${mm.toString().padStart(2, "0")}-${dd
+    .toString()
+    .padStart(2, "0")}`;
+
+  const date = new Date(isoDob);
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getUTCFullYear() !== yyyy ||
+    date.getUTCMonth() + 1 !== mm ||
+    date.getUTCDate() !== dd
+  ) {
+    return null;
+  }
+
+  return isoDob;
 }
 
-// POST /api/users/init-profile
+function mapUser(row: DbUserRow): ApiUser {
+  return {
+    id: String(row.id),
+    firebaseUid: row.firebase_uid,
+    email: row.email,
+    firstName: row.fname,
+    lastName: row.lname,
+    dob: row.dob,
+    createdAt: row.created_at,
+  };
+}
+
+// POST /api/users/register (alias: /init-profile for backwards compatibility)
 router.post(
-  "/init-profile",
+  ["/register", "/init-profile"],
   verifyFirebaseToken,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
@@ -24,29 +90,48 @@ router.post(
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      const { uid, email } = req.user;
-      const { fname, lname, dob } = req.body as InitProfileBody;
+      const { uid, email: firebaseEmail } = req.user;
+      const { firstName, lastName, dob, email } = req.body as RegisterBody;
 
-      if (!fname || !lname || !dob) {
-        return res.status(400).json({ error: "Missing required fields" });
+      const trimmedFirst = firstName?.trim();
+      const trimmedLast = lastName?.trim();
+      const normalizedDob = normalizeDob(dob);
+
+      if (!trimmedFirst || !trimmedLast || !normalizedDob) {
+        return res.status(400).json({
+          error: "Missing or invalid fields. Expect firstName, lastName, dob.",
+        });
+      }
+
+      const finalEmail = email?.trim() || firebaseEmail?.trim() || null;
+
+      if (!finalEmail) {
+        return res.status(400).json({
+          error: "Email is required.",
+        });
       }
 
       const query = `
         INSERT INTO users (firebase_uid, email, fname, lname, dob)
         VALUES ($1, $2, $3, $4, $5)
         ON CONFLICT (firebase_uid) DO UPDATE
-        SET fname = EXCLUDED.fname,
+        SET email = EXCLUDED.email,
+            fname = EXCLUDED.fname,
             lname = EXCLUDED.lname,
             dob   = EXCLUDED.dob
         RETURNING id, firebase_uid, email, fname, lname, dob, created_at;
       `;
 
-      const values = [uid, email, fname, lname, dob];
+      const result = await pool.query<DbUserRow>(query, [
+        uid,
+        finalEmail,
+        trimmedFirst,
+        trimmedLast,
+        normalizedDob,
+      ]);
 
-      const result = await pool.query(query, values);
-      const user = result.rows[0];
-
-      return res.json({ user });
+      const user = mapUser(result.rows[0]);
+      return res.json(user);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Internal server error";
@@ -56,6 +141,7 @@ router.post(
   }
 );
 
+// GET /api/users/me
 // GET /api/users/me
 router.get(
   "/me",

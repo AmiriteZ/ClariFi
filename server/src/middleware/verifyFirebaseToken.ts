@@ -1,33 +1,52 @@
-// server/middleware/verifyFirebaseToken.ts
 import { Request, Response, NextFunction } from "express";
-import admin from "firebase-admin";
+import { admin } from "../lib/firebaseAdmin";
+
+export interface AuthUser {
+  uid: string;
+  email: string | null;
+}
 
 export interface AuthenticatedRequest extends Request {
-  user?: {
-    uid: string;
-    email?: string | null;
-  };
+  user?: AuthUser;
 }
 
 export async function verifyFirebaseToken(
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
-) {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader?.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "No token provided" });
-  }
-
-  const idToken = authHeader.split(" ")[1];
-
+): Promise<void> {
   try {
-    const decoded = await admin.auth().verifyIdToken(idToken);
-    req.user = { uid: decoded.uid, email: decoded.email ?? null };
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      console.error(
+        "verifyFirebaseToken: missing or invalid Authorization header:",
+        authHeader
+      );
+      res
+        .status(401)
+        .json({ error: "Missing or invalid Authorization header" });
+      return;
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    console.log(
+      "verifyFirebaseToken: received token starting with:",
+      token.slice(0, 20),
+      "..."
+    );
+
+    const decoded = await admin.auth().verifyIdToken(token);
+
+    req.user = {
+      uid: decoded.uid,
+      email: decoded.email ?? null,
+    };
+
     next();
   } catch (err) {
-    console.error("Token verification failed:", err);
-    return res.status(401).json({ error: "Invalid token" });
+    console.error("verifyFirebaseToken error:", err);
+    res.status(401).json({ error: "Invalid token" });
   }
 }

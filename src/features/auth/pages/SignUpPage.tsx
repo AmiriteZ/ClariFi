@@ -1,3 +1,4 @@
+// client/src/features/auth/pages/SignUpPage.tsx
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { signupApi } from "../api/auth.api";
@@ -44,6 +45,13 @@ function isAtLeast12YearsOld(dob: Date): boolean {
   return age >= 12;
 }
 
+function formatDobToIso(dob: Date): string {
+  const year = dob.getFullYear();
+  const month = String(dob.getMonth() + 1).padStart(2, "0");
+  const day = String(dob.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`; // "YYYY-MM-DD"
+}
+
 export default function SignUpPage() {
   const navigate = useNavigate();
   const doLogin = useAuthStore((s) => s.login);
@@ -78,7 +86,7 @@ export default function SignUpPage() {
 
     const trimmedFirstName = firstName.trim();
     const trimmedLastName = lastName.trim();
-    const trimmedDob = dob.trim();
+    const trimmedDobInput = dob.trim();
     const trimmedEmail = email.trim();
 
     if (trimmedFirstName.length < 2) {
@@ -89,11 +97,11 @@ export default function SignUpPage() {
       return setError("Please enter your last name.");
     }
 
-    if (!trimmedDob) {
+    if (!trimmedDobInput) {
       return setError("Please enter your date of birth.");
     }
 
-    const parsedDob = parseDob(trimmedDob);
+    const parsedDob = parseDob(trimmedDobInput);
     if (!parsedDob) {
       return setError("Please enter a valid date of birth in dd/mm/yyyy format.");
     }
@@ -101,6 +109,8 @@ export default function SignUpPage() {
     if (!isAtLeast12YearsOld(parsedDob)) {
       return setError("You must be at least 12 years old to sign up.");
     }
+
+    const dobIso = formatDobToIso(parsedDob); // "YYYY-MM-DD" for the backend
 
     if (!trimmedEmail.includes("@")) {
       return setError("Enter a valid email.");
@@ -120,11 +130,12 @@ export default function SignUpPage() {
       const res = await signupApi(
         trimmedFirstName,
         trimmedLastName,
-        trimmedDob,
+        dobIso, // send ISO to backend
         trimmedEmail,
         password
       );
 
+      // res.user is now { id, name, email } which matches auth.store
       doLogin({ user: res.user, token: res.token });
       navigate("/dashboard", { replace: true });
     } catch (e: unknown) {

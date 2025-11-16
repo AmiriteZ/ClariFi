@@ -10,7 +10,7 @@ router.get(
   "/dashboard",
   verifyFirebaseToken,
   (req: AuthenticatedRequest, res: Response) => {
-    const userId = req.userId;
+    const userId = req.user;
     console.log("Dashboard requested by user:", userId);
 
     const data = {
