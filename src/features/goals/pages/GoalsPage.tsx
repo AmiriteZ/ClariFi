@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { getGoals, createGoal, setFavouriteGoal } from "../api/goals.api";
 import type { GoalSummary } from "../api/goals.api";
+import { useNavigate } from "react-router-dom";
 
 // High-level goal categories – names must match rows in categories.name
 const GOAL_CATEGORIES = [
@@ -15,7 +16,10 @@ const GOAL_CATEGORIES = [
   { name: "Other", label: "Other" },
 ];
 
+
+
 export default function GoalsPage() {
+  const navigate = useNavigate();
   const [goals, setGoals] = useState<GoalSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +34,8 @@ export default function GoalsPage() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [createLoading, setCreateLoading] = useState(false);
 
+  
+  
   // Favourite star update state
   const [favouriteUpdatingId, setFavouriteUpdatingId] = useState<string | null>(
     null
@@ -55,9 +61,7 @@ export default function GoalsPage() {
   }, []);
 
   const handleViewMore = (goalId: string) => {
-    // Later: navigate to /goals/:id or open a modal
-    // eslint-disable-next-line no-console
-    console.log("View more:", goalId);
+    navigate(`/goals/${goalId}`);
   };
 
   const handleAddGoalClick = () => {
@@ -220,6 +224,7 @@ export default function GoalsPage() {
                 >
                   View More
                 </button>
+
               </div>
 
               {/* Amount contributed / target */}

@@ -238,6 +238,7 @@ router.get(
       }
 
       let mainGoal: {
+        id: string | null;
         name: string;
         currentAmount: number;
         targetAmount: number;
@@ -245,12 +246,14 @@ router.get(
 
       if (selectedGoalRow) {
         mainGoal = {
+          id: selectedGoalRow.id,
           name: selectedGoalRow.name,
           targetAmount: Number(selectedGoalRow.target_amount ?? 0),
           currentAmount: Number(selectedGoalRow.current_amount ?? 0),
         };
       } else {
         mainGoal = {
+          id: null,
           name: "No active goals yet",
           targetAmount: 0,
           currentAmount: 0,

@@ -239,7 +239,10 @@ router.post(
         categoryId,
       ];
 
-      const insertResult = await pool.query<GoalSummaryRow>(insertQuery, values);
+      const insertResult = await pool.query<GoalSummaryRow>(
+        insertQuery,
+        values
+      );
       const row = insertResult.rows[0];
 
       const createdGoal = {
@@ -334,6 +337,119 @@ router.post(
       // eslint-disable-next-line no-console
       console.error("Error setting favourite goal:", error);
       res.status(500).json({ error: "Failed to set favourite goal" });
+    }
+  }
+);
+
+router.get(
+  "/:id",
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const userId = await resolveUserId(req);
+
+      if (!userId) {
+        res
+          .status(401)
+          .json({ error: "Unauthenticated or user not found in database" });
+        return;
+      }
+
+      const goalId = req.params.id;
+
+      type GoalDetailRow = {
+        id: string;
+        name: string;
+        target_amount: string;
+        currency_code: string;
+        target_date: string | null;
+        status: string;
+        is_favourite: boolean;
+        created_at: string;
+        total_contributed: string | null;
+      };
+
+      // 1) Fetch goal + aggregated contribution amount
+      const goalResult = await pool.query<GoalDetailRow>(
+        `
+        SELECT
+          g.id,
+          g.name,
+          g.target_amount,
+          g.currency_code,
+          g.target_date,
+          g.status,
+          g.is_favourite,
+          g.created_at,
+          COALESCE(SUM(gc.amount), 0) AS total_contributed
+        FROM goals g
+        LEFT JOIN goal_contributions gc
+          ON gc.goal_id = g.id
+        WHERE g.id = $1
+          AND g.user_id = $2
+          AND g.household_id IS NULL
+        GROUP BY g.id
+        LIMIT 1
+        `,
+        [goalId, userId]
+      );
+
+      if (goalResult.rows.length === 0) {
+        res.status(404).json({ error: "Goal not found" });
+        return;
+      }
+
+      const row = goalResult.rows[0];
+      const targetAmount = Number(row.target_amount);
+      const totalContributed = Number(row.total_contributed ?? 0);
+      const percentComplete =
+        targetAmount > 0 ? (totalContributed / targetAmount) * 100 : 0;
+
+      const goal = {
+        id: row.id,
+        name: row.name,
+        targetAmount,
+        currencyCode: row.currency_code,
+        targetDate: row.target_date,
+        status: row.status,
+        isFavourite: row.is_favourite,
+        totalContributed,
+        percentComplete,
+        createdAt: row.created_at,
+      };
+
+      // 2) Fetch individual contributions (if you have source_type, created_at)
+      type ContributionRow = {
+        id: string;
+        amount: string;
+        contributed_at: string;
+        notes: string | null;
+      };
+
+      const contribResult = await pool.query<ContributionRow>(
+        `
+        SELECT
+          id,
+          amount,
+          contributed_at,
+          notes
+        FROM goal_contributions
+        WHERE goal_id = $1
+        ORDER BY contributed_at DESC
+        `,
+        [goalId]
+      );
+
+      const contributions = contribResult.rows.map((c) => ({
+        id: c.id,
+        amount: Number(c.amount),
+        createdAt: c.contributed_at,
+        sourceType: c.notes,
+      }));
+
+      res.json({ goal, contributions });
+    } catch (error) {
+      console.error("Error fetching goal detail:", error);
+      res.status(500).json({ error: "Failed to fetch goal detail" });
     }
   }
 );

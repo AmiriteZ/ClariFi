@@ -1,34 +1,37 @@
-import React from "react";
+// src/features/dashboard/pages/DashboardPage.tsx
+import React, { useEffect, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { useEffect, useState } from "react";
 
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { auth } from "../../../lib/firebase";
 
 import { getDashboard, type DashboardResponse } from "../api/dashboard.api";
-
+import { useNavigate } from "react-router-dom";
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
+
   // 1) Track Firebase auth state
-const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
-const [authLoading, setAuthLoading] = useState(true);
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
-// 2) Track dashboard data + loading + error
-const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null);
-const [loading, setLoading] = useState(false);
-const [error, setError] = useState<string | null>(null);
+  // 2) Track dashboard data + loading + error
+  const [dashboardData, setDashboardData] =
+    useState<DashboardResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-// 3) Wait for Firebase to finish restoring the user (after reloads, etc.)
-useEffect(() => {
-  const unsub = onAuthStateChanged(auth, (user) => {
-    setFirebaseUser(user);
-    setAuthLoading(false);
-  });
+  // 3) Wait for Firebase to finish restoring the user (after reloads, etc.)
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setFirebaseUser(user);
+      setAuthLoading(false);
+    });
 
-  return () => unsub();
-}, []);
+    return () => unsub();
+  }, []);
 
-// 4) Once auth is ready AND we have a user, fetch the dashboard
+  // 4) Once auth is ready AND we have a user, fetch the dashboard
   useEffect(() => {
     async function load() {
       if (!firebaseUser) return; // no user, don't fetch
@@ -56,52 +59,53 @@ useEffect(() => {
   }, [authLoading, firebaseUser]);
 
   if (authLoading) {
-  return (
-    <div className="w-full h-full px-10 py-8">
-      <div className="max-w-6xl mx-auto">
-        <p className="text-sm text-slate-500">Checking your session…</p>
+    return (
+      <div className="w-full h-full px-10 py-8">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-sm text-slate-500">Checking your session…</p>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-if (!firebaseUser) {
-  // you could also navigate("/login") here instead of showing this message
-  return (
-    <div className="w-full h-full px-10 py-8">
-      <div className="max-w-6xl mx-auto">
-        <p className="text-sm text-slate-500">
-          You’re not logged in. Please sign in to view your dashboard.
-        </p>
+  if (!firebaseUser) {
+    return (
+      <div className="w-full h-full px-10 py-8">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-sm text-slate-500">
+            You’re not logged in. Please sign in to view your dashboard.
+          </p>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-if (loading || !dashboardData) {
-  return (
-    <div className="w-full h-full px-10 py-8">
-      <div className="max-w-6xl mx-auto">
-        <p className="text-sm text-slate-500">Loading your dashboard…</p>
+  if (loading || !dashboardData) {
+    return (
+      <div className="w-full h-full px-10 py-8">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-sm text-slate-500">Loading your dashboard…</p>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-if (error) {
-  return (
-    <div className="w-full h-full px-10 py-8">
-      <div className="max-w-6xl mx-auto">
-        <p className="text-sm text-red-500">Error: {error}</p>
+  if (error) {
+    return (
+      <div className="w-full h-full px-10 py-8">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-sm text-red-500">Error: {error}</p>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   const goalProgress =
-    (dashboardData.mainGoal.currentAmount /
-      dashboardData.mainGoal.targetAmount) *
-    100;
+    dashboardData.mainGoal.targetAmount > 0
+      ? (dashboardData.mainGoal.currentAmount /
+          dashboardData.mainGoal.targetAmount) *
+        100
+      : 0;
 
   return (
     <div className="w-full h-full px-10 py-8">
@@ -233,7 +237,7 @@ if (error) {
                         tx.amount < 0 ? "text-rose-500" : "text-emerald-500"
                       }`}
                     >
-                      {tx.amount < 0 ? "-" : "+"}€
+                      {tx.amount < 0 ? "-" : "+"}€{" "}
                       {Math.abs(tx.amount).toFixed(2)}
                     </p>
                   </div>
@@ -245,7 +249,15 @@ if (error) {
           {/* === BOTTOM ROW === */}
           <div className="grid grid-cols-2 gap-6">
             {/* 5. Main Goal with Progress */}
-            <section className="rounded-2xl border border-slate-300 bg-slate-100 px-6 py-3 shadow-sm">
+            <section
+              className="rounded-2xl border border-slate-300 bg-slate-100 px-6 py-3 shadow-sm cursor-pointer hover:shadow-md transition"
+              onClick={() => {
+                const id = dashboardData.mainGoal.id;
+                if (id) {
+                  navigate(`/goals/${id}`);
+                }
+              }}
+            >
               <h2 className="text-sm font-semibold text-slate-900">
                 Main Goal
               </h2>
@@ -253,7 +265,8 @@ if (error) {
                 {dashboardData.mainGoal.name}
               </p>
               <p className="mt-1 text-xs text-slate-700">
-                €{dashboardData.mainGoal.currentAmount.toFixed(2)} / €
+                €
+                {dashboardData.mainGoal.currentAmount.toFixed(2)} / €
                 {dashboardData.mainGoal.targetAmount.toFixed(2)}
               </p>
               <div className="mt-3 h-3 w-full rounded-full bg-slate-200">

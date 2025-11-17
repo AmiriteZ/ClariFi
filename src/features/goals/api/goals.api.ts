@@ -13,6 +13,18 @@ export interface GoalSummary {
   isFavourite: boolean;
 }
 
+export interface GoalContribution {
+  id: string;
+  amount: number;
+  createdAt: string;
+  sourceType: string | null;
+}
+
+export interface GoalDetailResponse {
+  goal: GoalSummary & { createdAt: string };
+  contributions: GoalContribution[];
+}
+
 interface GetGoalsResponse {
   householdId: string | null;
   goals: GoalSummary[];
@@ -39,7 +51,9 @@ export async function getGoals(): Promise<GetGoalsResponse> {
   return res.json();
 }
 
-export async function setFavouriteGoal(goalId: string) {
+export async function setFavouriteGoal(
+  goalId: string
+): Promise<{ goal: GoalSummary }> {
   const user = auth.currentUser;
   if (!user) {
     throw new Error("Not authenticated");
@@ -98,5 +112,30 @@ export async function createGoal(input: CreateGoalInput) {
   }
 
   // { householdId, goal }
-  return data;
+  return data as { householdId: string | null; goal: GoalSummary };
+}
+
+export async function getGoalDetail(
+  goalId: string
+): Promise<GoalDetailResponse> {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("Not authenticated");
+  }
+
+  const token = await user.getIdToken();
+
+  const res = await fetch(`http://localhost:5001/api/goals/${goalId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to fetch goal detail");
+  }
+
+  return data as GoalDetailResponse;
 }

@@ -18,6 +18,7 @@ export type Transaction = {
 };
 
 export type MainGoal = {
+  id: string | null;
   name: string;
   currentAmount: number;
   targetAmount: number;

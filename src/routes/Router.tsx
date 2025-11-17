@@ -8,6 +8,7 @@ import { useAuthStore } from "../store/auth.store";
 import SignUpPage from "../features/auth/pages/SignUpPage";
 import WelcomePage from "../features/welcome/pages/WelcomePage";
 import GoalsPage from "../features/goals/pages/GoalsPage";
+import GoalDetailPage from "../features/goals/pages/GoalDetailPage";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
@@ -38,6 +39,16 @@ export default function Router() {
             <ProtectedRoute>
               <AppShell>
                 <GoalsPage />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/goals/:goalId"
+          element={
+            <ProtectedRoute>
+              <AppShell>
+                <GoalDetailPage />
               </AppShell>
             </ProtectedRoute>
           }
