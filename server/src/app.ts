@@ -4,6 +4,7 @@ import cors from "cors";
 import { pool } from "./db";
 import dashboardRouter from "./routes/dashboard";
 import usersRouter from "./routes/users";
+import goalsRouter from "./routes/goals";
 
 const app = express();
 
@@ -29,10 +30,11 @@ app.get("/api/debug/db", async (req: Request, res: Response) => {
   }
 });
 
-// Existing dashboard routes (e.g. /api/dashboard/...)
+
 app.use("/api", dashboardRouter);
 
-// New user/profile routes (e.g. /api/users/init-profile, /api/users/me)
 app.use("/api/users", usersRouter);
+
+app.use("/api/goals", goalsRouter);
 
 export default app;

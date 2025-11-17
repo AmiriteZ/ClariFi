@@ -28,8 +28,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <main className="grid md:grid-cols-[220px_1fr]">
         <aside className="hidden md:block border-r p-4 bg-slate-50">
           <nav className="space-y-2 text-sm">
-            <Link to="/dashboard" className="block">Overview</Link>
+            <Link to="/dashboard" className="block">
+              Overview
+            </Link>
             <span className="block opacity-50">(3D scene later)</span>
+
+            {/* 🔥 NEW GOALS BUTTON */}
+            <Link
+              to="/goals"
+              className="block mt-4 font-medium text-slate-700 hover:text-indigo-600"
+            >
+              Goals
+            </Link>
           </nav>
         </aside>
 
