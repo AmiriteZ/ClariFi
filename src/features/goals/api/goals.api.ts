@@ -139,3 +139,98 @@ export async function getGoalDetail(
 
   return data as GoalDetailResponse;
 }
+
+export async function updateGoal(
+  goalId: string,
+  updates: {
+    name?: string;
+    targetAmount?: number;
+    targetDate?: string | null;
+    status?: string;
+    currencyCode?: string;
+  }
+): Promise<{ goal: GoalSummary }> {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Not authenticated");
+  const token = await user.getIdToken();
+
+  const res = await fetch(`http://localhost:5001/api/goals/${goalId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(updates),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to update goal");
+  return data;
+}
+
+export async function deleteGoal(goalId: string): Promise<void> {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Not authenticated");
+  const token = await user.getIdToken();
+
+  const res = await fetch(`http://localhost:5001/api/goals/${goalId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.error || "Failed to delete goal");
+  }
+}
+
+export async function addContribution(
+  goalId: string,
+  data: { amount: number; notes: string; date: string }
+): Promise<{ contribution: GoalContribution }> {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Not authenticated");
+  const token = await user.getIdToken();
+
+  const res = await fetch(
+    `http://localhost:5001/api/goals/${goalId}/contributions`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    }
+  );
+
+  const resData = await res.json();
+  if (!res.ok) throw new Error(resData.error || "Failed to add contribution");
+  return resData;
+}
+
+export async function deleteContribution(
+  goalId: string,
+  contributionId: string
+): Promise<void> {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Not authenticated");
+  const token = await user.getIdToken();
+
+  const res = await fetch(
+    `http://localhost:5001/api/goals/${goalId}/contributions/${contributionId}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.error || "Failed to delete contribution");
+  }
+}

@@ -453,4 +453,262 @@ router.get(
     }
   }
 );
+
+/**
+ * PATCH /api/goals/:id
+ * Update a goal's details
+ */
+router.patch(
+  "/:id",
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const userId = await resolveUserId(req);
+      if (!userId) {
+        res
+          .status(401)
+          .json({ error: "Unauthenticated or user not found in database" });
+        return;
+      }
+
+      const goalId = req.params.id;
+      const body = req.body;
+      const {
+        name,
+        targetAmount,
+        targetDate,
+        status,
+        currencyCode,
+        categoryName,
+      } = body;
+
+      // Resolve categoryName -> categories.id if provided
+      let categoryId: number | null = null;
+      if (categoryName && categoryName.trim().length > 0) {
+        const catResult = await pool.query<CategoryIdRow>(
+          `SELECT id FROM categories WHERE name = $1 AND type = 'expense' LIMIT 1`,
+          [categoryName]
+        );
+        if (catResult.rows.length > 0) {
+          categoryId = catResult.rows[0].id;
+        }
+      }
+
+      // Build dynamic update query
+      const updates: string[] = [];
+      const values: (string | number | null)[] = [];
+      let paramIndex = 1;
+
+      if (name !== undefined) {
+        updates.push(`name = $${paramIndex++}`);
+        values.push(name);
+      }
+      if (targetAmount !== undefined) {
+        updates.push(`target_amount = $${paramIndex++}`);
+        values.push(targetAmount);
+      }
+      if (targetDate !== undefined) {
+        updates.push(`target_date = $${paramIndex++}`);
+        values.push(targetDate);
+      }
+      if (status !== undefined) {
+        updates.push(`status = $${paramIndex++}`);
+        values.push(status);
+      }
+      if (currencyCode !== undefined) {
+        updates.push(`currency_code = $${paramIndex++}`);
+        values.push(currencyCode);
+      }
+      if (categoryId !== null) {
+        updates.push(`category_id = $${paramIndex++}`);
+        values.push(categoryId);
+      }
+
+      if (updates.length === 0) {
+        res.json({ message: "No changes requested" });
+        return;
+      }
+
+      values.push(goalId);
+      values.push(userId);
+
+      const query = `
+        UPDATE goals
+        SET ${updates.join(", ")}, updated_at = now()
+        WHERE id = $${paramIndex++} AND user_id = $${paramIndex++}
+        RETURNING id, name, target_amount, currency_code, target_date, status, created_at, is_favourite
+      `;
+
+      const result = await pool.query<GoalSummaryRow>(query, values);
+
+      if (result.rows.length === 0) {
+        res.status(404).json({ error: "Goal not found or not authorized" });
+        return;
+      }
+
+      const row = result.rows[0];
+      const updatedGoal = {
+        id: row.id,
+        name: row.name,
+        targetAmount: Number(row.target_amount),
+        currencyCode: row.currency_code,
+        targetDate: row.target_date,
+        status: row.status,
+        isFavourite: row.is_favourite,
+      };
+
+      res.json({ goal: updatedGoal });
+    } catch (error) {
+      console.error("Error updating goal:", error);
+      res.status(500).json({ error: "Failed to update goal" });
+    }
+  }
+);
+
+/**
+ * DELETE /api/goals/:id
+ * Delete a goal
+ */
+router.delete(
+  "/:id",
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const userId = await resolveUserId(req);
+      if (!userId) {
+        res
+          .status(401)
+          .json({ error: "Unauthenticated or user not found in database" });
+        return;
+      }
+
+      const goalId = req.params.id;
+
+      const result = await pool.query(
+        `DELETE FROM goals WHERE id = $1 AND user_id = $2 RETURNING id`,
+        [goalId, userId]
+      );
+
+      if (result.rowCount === 0) {
+        res.status(404).json({ error: "Goal not found or not authorized" });
+        return;
+      }
+
+      res.json({ message: "Goal deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting goal:", error);
+      res.status(500).json({ error: "Failed to delete goal" });
+    }
+  }
+);
+
+/**
+ * POST /api/goals/:id/contributions
+ * Add a contribution to a goal
+ */
+router.post(
+  "/:id/contributions",
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const userId = await resolveUserId(req);
+      if (!userId) {
+        res
+          .status(401)
+          .json({ error: "Unauthenticated or user not found in database" });
+        return;
+      }
+
+      const goalId = req.params.id;
+      const { amount, notes, date } = req.body;
+
+      if (!amount || Number.isNaN(amount) || amount <= 0) {
+        res.status(400).json({ error: "Invalid amount" });
+        return;
+      }
+
+      // Verify goal ownership first
+      const goalCheck = await pool.query(
+        `SELECT id FROM goals WHERE id = $1 AND user_id = $2`,
+        [goalId, userId]
+      );
+
+      if (goalCheck.rows.length === 0) {
+        res.status(404).json({ error: "Goal not found or not authorized" });
+        return;
+      }
+
+      const insertQuery = `
+        INSERT INTO goal_contributions (goal_id, amount, notes, contributed_at)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id, amount, notes, contributed_at
+      `;
+
+      const result = await pool.query(insertQuery, [
+        goalId,
+        amount,
+        notes || null,
+        date || new Date(),
+      ]);
+
+      const row = result.rows[0];
+      const contribution = {
+        id: row.id,
+        amount: Number(row.amount),
+        notes: row.notes,
+        createdAt: row.contributed_at,
+      };
+
+      res.status(201).json({ contribution });
+    } catch (error) {
+      console.error("Error adding contribution:", error);
+      res.status(500).json({ error: "Failed to add contribution" });
+    }
+  }
+);
+
+/**
+ * DELETE /api/goals/:goalId/contributions/:contributionId
+ * Delete a contribution
+ */
+router.delete(
+  "/:goalId/contributions/:contributionId",
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const userId = await resolveUserId(req);
+      if (!userId) {
+        res
+          .status(401)
+          .json({ error: "Unauthenticated or user not found in database" });
+        return;
+      }
+
+      const { goalId, contributionId } = req.params;
+
+      // Verify goal ownership first
+      const goalCheck = await pool.query(
+        `SELECT id FROM goals WHERE id = $1 AND user_id = $2`,
+        [goalId, userId]
+      );
+
+      if (goalCheck.rows.length === 0) {
+        res.status(404).json({ error: "Goal not found or not authorized" });
+        return;
+      }
+
+      const result = await pool.query(
+        `DELETE FROM goal_contributions WHERE id = $1 AND goal_id = $2 RETURNING id`,
+        [contributionId, goalId]
+      );
+
+      if (result.rowCount === 0) {
+        res.status(404).json({ error: "Contribution not found" });
+        return;
+      }
+
+      res.json({ message: "Contribution deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting contribution:", error);
+      res.status(500).json({ error: "Failed to delete contribution" });
+    }
+  }
+);
+
 export default router;

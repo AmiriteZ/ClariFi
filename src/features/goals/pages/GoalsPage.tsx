@@ -16,8 +16,6 @@ const GOAL_CATEGORIES = [
   { name: "Other", label: "Other" },
 ];
 
-
-
 export default function GoalsPage() {
   const navigate = useNavigate();
   const [goals, setGoals] = useState<GoalSummary[]>([]);
@@ -34,8 +32,6 @@ export default function GoalsPage() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [createLoading, setCreateLoading] = useState(false);
 
-  
-  
   // Favourite star update state
   const [favouriteUpdatingId, setFavouriteUpdatingId] = useState<string | null>(
     null
@@ -168,13 +164,9 @@ export default function GoalsPage() {
           Track your savings progress and financial targets.
         </p>
 
-        {loading && (
-          <p className="text-sm text-slate-500">Loading goals…</p>
-        )}
+        {loading && <p className="text-sm text-slate-500">Loading goals…</p>}
 
-        {error && (
-          <p className="text-sm text-red-500 mb-3">Error: {error}</p>
-        )}
+        {error && <p className="text-sm text-red-500 mb-3">Error: {error}</p>}
 
         {!loading && !error && goals.length === 0 && !isCreating && (
           <p className="text-sm text-slate-500 mb-4">
@@ -224,7 +216,6 @@ export default function GoalsPage() {
                 >
                   View More
                 </button>
-
               </div>
 
               {/* Amount contributed / target */}
@@ -301,16 +292,15 @@ export default function GoalsPage() {
                       <label className="block text-xs font-medium text-slate-700 mb-1">
                         Currency
                       </label>
-                      <input
-                        type="text"
+                      <select
                         value={newCurrencyCode}
-                        onChange={(e) =>
-                          setNewCurrencyCode(e.target.value.toUpperCase())
-                        }
-                        maxLength={3}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 uppercase focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                        placeholder="EUR"
-                      />
+                        onChange={(e) => setNewCurrencyCode(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                      >
+                        <option value="EUR">EUR (€)</option>
+                        <option value="GBP">GBP (£)</option>
+                        <option value="USD">USD ($)</option>
+                      </select>
                     </div>
 
                     <div>
