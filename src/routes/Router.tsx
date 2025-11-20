@@ -9,6 +9,8 @@ import SignUpPage from "../features/auth/pages/SignUpPage";
 import WelcomePage from "../features/welcome/pages/WelcomePage";
 import GoalsPage from "../features/goals/pages/GoalsPage";
 import GoalDetailPage from "../features/goals/pages/GoalDetailPage";
+import BudgetsPage from "../features/budgets/pages/BudgetsPage";
+import BudgetSetupPage from "../features/budgets/pages/BudgetSetupPage";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
@@ -49,6 +51,26 @@ export default function Router() {
             <ProtectedRoute>
               <AppShell>
                 <GoalDetailPage />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/budgets"
+          element={
+            <ProtectedRoute>
+              <AppShell>
+                <BudgetsPage />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/budgets/:budgetId/setup"
+          element={
+            <ProtectedRoute>
+              <AppShell>
+                <BudgetSetupPage />
               </AppShell>
             </ProtectedRoute>
           }

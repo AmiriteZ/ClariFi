@@ -5,6 +5,7 @@ import { pool } from "./db";
 import dashboardRouter from "./routes/dashboard";
 import usersRouter from "./routes/users";
 import goalsRouter from "./routes/goals";
+import budgetsRouter from "./routes/budgets";
 
 const app = express();
 
@@ -30,11 +31,11 @@ app.get("/api/debug/db", async (req: Request, res: Response) => {
   }
 });
 
-
 app.use("/api", dashboardRouter);
 
 app.use("/api/users", usersRouter);
 
 app.use("/api/goals", goalsRouter);
+app.use("/api/budgets", budgetsRouter);
 
 export default app;

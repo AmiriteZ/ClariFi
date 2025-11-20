@@ -40,6 +40,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             >
               Goals
             </Link>
+
+            {/* 🔥 NEW BUDGETS BUTTON */}
+            <Link
+              to="/budgets"
+              className="block mt-2 font-medium text-slate-700 hover:text-indigo-600"
+            >
+              Budgets
+            </Link>
           </nav>
         </aside>
 
