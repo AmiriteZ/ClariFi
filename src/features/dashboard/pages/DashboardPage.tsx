@@ -2,46 +2,45 @@
 import React, { useEffect, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
-import { onAuthStateChanged, type User } from "firebase/auth";
-import { auth } from "../../../lib/firebase";
+import { useAuthStore } from "../../../store/auth.store";
 
 import { getDashboard, type DashboardResponse } from "../api/dashboard.api";
+import { renewExpiredBudgets } from "../../budgets/api/budgets.api";
 import { useNavigate } from "react-router-dom";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
 
   // 1) Track Firebase auth state
-  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const { user, token } = useAuthStore();
 
   // 2) Track dashboard data + loading + error
-  const [dashboardData, setDashboardData] =
-    useState<DashboardResponse | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // 3) Wait for Firebase to finish restoring the user (after reloads, etc.)
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      setFirebaseUser(user);
-      setAuthLoading(false);
-    });
-
-    return () => unsub();
-  }, []);
 
   // 4) Once auth is ready AND we have a user, fetch the dashboard
   useEffect(() => {
     async function load() {
-      if (!firebaseUser) return; // no user, don't fetch
+      if (!user) return; // no user, don't fetch
 
       try {
         setLoading(true);
         setError(null);
 
-        const idToken = await firebaseUser.getIdToken();
-        const data = await getDashboard(idToken);
+        if (!token) return;
+
+        // Renew any expired budgets before loading dashboard
+        await renewExpiredBudgets().catch((err) => {
+          console.warn("Failed to renew budgets:", err);
+          // Don't block dashboard load if renewal fails
+        });
+
+        const data = await getDashboard(token);
         setDashboardData(data);
       } catch (err) {
         console.error(err);
@@ -53,22 +52,12 @@ export default function DashboardPage() {
       }
     }
 
-    if (!authLoading && firebaseUser) {
+    if (user && token) {
       void load();
     }
-  }, [authLoading, firebaseUser]);
+  }, [user, token]);
 
-  if (authLoading) {
-    return (
-      <div className="w-full h-full px-10 py-8">
-        <div className="max-w-6xl mx-auto">
-          <p className="text-sm text-slate-500">Checking your session…</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!firebaseUser) {
+  if (!user) {
     return (
       <div className="w-full h-full px-10 py-8">
         <div className="max-w-6xl mx-auto">
@@ -133,17 +122,13 @@ export default function DashboardPage() {
               </h2>
               <div className="mt-3 flex items-end justify-between gap-4">
                 <div>
-                  <p className="text-xs font-medium text-emerald-500">
-                    Income
-                  </p>
+                  <p className="text-xs font-medium text-emerald-500">Income</p>
                   <p className="text-xl font-semibold text-slate-900">
                     €{dashboardData.summary.monthIncome.toFixed(2)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-rose-500">
-                    Expenses
-                  </p>
+                  <p className="text-xs font-medium text-rose-500">Expenses</p>
                   <p className="text-xl font-semibold text-slate-900">
                     €{dashboardData.summary.monthExpenses.toFixed(2)}
                   </p>
@@ -265,8 +250,7 @@ export default function DashboardPage() {
                 {dashboardData.mainGoal.name}
               </p>
               <p className="mt-1 text-xs text-slate-700">
-                €
-                {dashboardData.mainGoal.currentAmount.toFixed(2)} / €
+                €{dashboardData.mainGoal.currentAmount.toFixed(2)} / €
                 {dashboardData.mainGoal.targetAmount.toFixed(2)}
               </p>
               <div className="mt-3 h-3 w-full rounded-full bg-slate-200">

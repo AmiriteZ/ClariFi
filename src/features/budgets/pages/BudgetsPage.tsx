@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
-import { getBudgets } from "../api/budgets.api";
+import { getBudgets, renewExpiredBudgets } from "../api/budgets.api";
 import type { BudgetSummary } from "../api/budgets.api";
 import BudgetCard from "../components/BudgetCard";
 import CreateBudgetModal from "../components/CreateBudgetModal";
@@ -18,8 +18,13 @@ export default function BudgetsPage() {
   async function loadBudgets() {
     try {
       setLoading(true);
-      const { budgets } = await getBudgets();
-      setBudgets(budgets);
+
+      // Check and renew expired budgets first
+      await renewExpiredBudgets();
+
+      // Then fetch all budgets
+      const data = await getBudgets();
+      setBudgets(data.budgets);
     } catch (err) {
       console.error("Failed to load budgets", err);
       setError("Failed to load budgets");
@@ -40,7 +45,7 @@ export default function BudgetsPage() {
           </div>
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-indigo-700 hover:shadow-md"
+            className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-emerald-700 hover:shadow-md"
           >
             <Plus className="h-4 w-4" />
             Create Budget
@@ -65,7 +70,7 @@ export default function BudgetsPage() {
         ) : budgets.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50/50 py-20 text-center">
             <div className="mb-4 rounded-full bg-white p-4 shadow-sm">
-              <Plus className="h-8 w-8 text-indigo-600" />
+              <Plus className="h-8 w-8 text-emerald-600" />
             </div>
             <h3 className="text-lg font-medium text-slate-900">
               No budgets yet
@@ -76,7 +81,7 @@ export default function BudgetsPage() {
             </p>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="mt-6 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-indigo-700 hover:shadow-md"
+              className="mt-6 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-emerald-700 hover:shadow-md"
             >
               Create Budget
             </button>

@@ -6,6 +6,7 @@ import dashboardRouter from "./routes/dashboard";
 import usersRouter from "./routes/users";
 import goalsRouter from "./routes/goals";
 import budgetsRouter from "./routes/budgets";
+import accountsRouter from "./routes/accounts";
 
 const app = express();
 
@@ -37,5 +38,6 @@ app.use("/api/users", usersRouter);
 
 app.use("/api/goals", goalsRouter);
 app.use("/api/budgets", budgetsRouter);
+app.use("/api/accounts", accountsRouter);
 
 export default app;

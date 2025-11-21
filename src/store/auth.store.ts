@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export type User = {
-  id: string;   // UUID
+  id: string; // UUID
   name: string;
   email: string;
 };
@@ -11,8 +11,10 @@ export type User = {
 type AuthState = {
   user: User | null;
   token: string | null;
+  isInitialized: boolean;
   login: (p: { user: User; token: string }) => void;
   logout: () => void;
+  setInitialized: (val: boolean) => void;
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -20,9 +22,18 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       token: null,
+      isInitialized: false,
       login: ({ user, token }) => set({ user, token }),
       logout: () => set({ user: null, token: null }),
+      setInitialized: (val) => set({ isInitialized: val }),
     }),
-    { name: "clarifi_auth" }
+    {
+      name: "clarifi_auth",
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+        // Exclude isInitialized - it should always start as false on page load
+      }),
+    }
   )
 );

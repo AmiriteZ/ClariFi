@@ -30,18 +30,13 @@ interface BudgetRow {
 async function resolveUserId(
   req: AuthenticatedRequest
 ): Promise<string | null> {
-  const authUser = req.user as any;
+  const authUser = req.user;
 
   if (!authUser) {
     return null;
   }
 
-  if (authUser.id) {
-    return authUser.id;
-  }
-
-  const firebaseUid =
-    authUser.firebaseUid ?? authUser.firebase_uid ?? authUser.uid;
+  const firebaseUid = authUser.uid;
 
   if (!firebaseUid) {
     return null;
@@ -58,6 +53,445 @@ async function resolveUserId(
 
   return result.rows[0].id;
 }
+
+/**
+ * POST /api/budgets/renew-expired
+ * Check for expired budgets with auto_renew=true and update their dates
+ */
+router.post(
+  "/renew-expired",
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const userId = await resolveUserId(req);
+      if (!userId) {
+        res
+          .status(401)
+          .json({ error: "Unauthenticated or user not found in database" });
+        return;
+      }
+
+      // Find all expired budgets with auto_renew enabled for this user
+      const findExpiredQuery = `
+        SELECT id, period_type, period_start, period_end, auto_renew
+        FROM budgets
+        WHERE user_id = $1
+          AND auto_renew = true
+          AND period_end < CURRENT_DATE
+      `;
+
+      const expiredBudgets = await pool.query(findExpiredQuery, [userId]);
+
+      let renewedCount = 0;
+
+      for (const budget of expiredBudgets.rows) {
+        const { id, period_type, period_end } = budget;
+
+        // Calculate next period dates
+        const currentEnd = new Date(period_end);
+        let newStart: Date;
+        let newEnd: Date;
+
+        if (period_type === "monthly") {
+          // Move to next month
+          newStart = new Date(
+            currentEnd.getFullYear(),
+            currentEnd.getMonth() + 1,
+            1
+          );
+          newEnd = new Date(
+            currentEnd.getFullYear(),
+            currentEnd.getMonth() + 2,
+            0
+          );
+        } else if (period_type === "weekly") {
+          // Move to next week
+          newStart = new Date(currentEnd);
+          newStart.setDate(currentEnd.getDate() + 1);
+          newEnd = new Date(newStart);
+          newEnd.setDate(newStart.getDate() + 6);
+        } else {
+          continue; // Skip if not monthly or weekly
+        }
+
+        // Update budget with new dates
+        await pool.query(
+          `UPDATE budgets 
+           SET period_start = $1, period_end = $2, updated_at = now()
+           WHERE id = $3`,
+          [newStart, newEnd, id]
+        );
+
+        renewedCount++;
+      }
+
+      res.json({
+        success: true,
+        renewedCount,
+        message: `${renewedCount} budget(s) renewed`,
+      });
+    } catch (error) {
+      console.error("Error renewing budgets:", error);
+      res.status(500).json({ error: "Failed to renew budgets" });
+    }
+  }
+);
+
+/**
+ * GET /api/budgets/:id/view
+ * Get comprehensive budget view data including analytics, spending, and history
+ */
+router.get(
+  "/:id/view",
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const userId = await resolveUserId(req);
+      if (!userId) {
+        res
+          .status(401)
+          .json({ error: "Unauthenticated or user not found in database" });
+        return;
+      }
+
+      const budgetId = req.params.id;
+
+      // 1. Load budget details
+      const budgetQuery = await pool.query(
+        `SELECT id, name, period_type, period_start, period_end, currency_code, user_id
+         FROM budgets
+         WHERE id = $1 AND user_id = $2`,
+        [budgetId, userId]
+      );
+
+      if (budgetQuery.rows.length === 0) {
+        res.status(404).json({ error: "Budget not found" });
+        return;
+      }
+
+      const budget = budgetQuery.rows[0];
+
+      // 2. Load budget items with category names
+      const budgetItemsQuery = await pool.query(
+        `SELECT bi.category_id, bi.limit_amount, c.name as category_name
+         FROM budget_items bi
+         JOIN categories c ON bi.category_id = c.id
+         WHERE bi.budget_id = $1
+         ORDER BY c.name`,
+        [budgetId]
+      );
+
+      const budgetItems = budgetItemsQuery.rows;
+      const categoryIds = budgetItems.map(
+        (item: { category_id: number }) => item.category_id
+      );
+
+      // 3. Calculate spending per category
+      const spendingQuery = await pool.query(
+        `SELECT 
+          t.category_id,
+          SUM(ABS(t.amount)) as spent,
+          COUNT(*) as transaction_count
+         FROM transactions t
+         JOIN accounts a ON t.account_id = a.id
+         WHERE (a.external_account_id = $1 OR a.external_account_id = 'tool-account-' || $1)
+           AND t.posted_at >= $2
+           AND t.posted_at <= $3
+           AND t.direction = 'debit'
+           AND t.category_id = ANY($4)
+         GROUP BY t.category_id`,
+        [userId, budget.period_start, budget.period_end, categoryIds]
+      );
+
+      const spendingMap = new Map();
+      spendingQuery.rows.forEach(
+        (row: {
+          category_id: number;
+          spent: string;
+          transaction_count: string;
+        }) => {
+          spendingMap.set(row.category_id, {
+            spent: parseFloat(row.spent),
+            transactionCount: parseInt(row.transaction_count),
+          });
+        }
+      );
+
+      // 4. Build category breakdown
+      let totalBudgeted = 0;
+      let totalSpent = 0;
+
+      const categories = budgetItems.map(
+        (item: {
+          category_id: number;
+          limit_amount: string;
+          category_name: string;
+        }) => {
+          const budgeted = parseFloat(item.limit_amount);
+          const spendingData = spendingMap.get(item.category_id) || {
+            spent: 0,
+            transactionCount: 0,
+          };
+          const spent = spendingData.spent;
+          const remaining = budgeted - spent;
+          const percentageUsed = budgeted > 0 ? (spent / budgeted) * 100 : 0;
+
+          totalBudgeted += budgeted;
+          totalSpent += spent;
+
+          let status: "under" | "near" | "over" | "hit" = "under";
+          // Allow small floating point tolerance for exact matches
+          const isAtLimit = Math.abs(budgeted - spent) < 0.01;
+
+          if (percentageUsed > 100 && !isAtLimit) status = "over";
+          else if (isAtLimit) status = "hit";
+          else if (percentageUsed > 85) status = "near";
+
+          return {
+            categoryId: item.category_id,
+            categoryName: item.category_name,
+            budgeted,
+            spent,
+            remaining,
+            percentageUsed,
+            status,
+            transactionCount: spendingData.transactionCount,
+          };
+        }
+      );
+
+      // 5. Load all transactions for period
+      const transactionsQuery = await pool.query(
+        `SELECT 
+          t.id, t.posted_at, t.description, t.merchant_name,
+          t.amount, t.category_id, t.status,
+          c.name as category_name,
+          a.name as account_name
+         FROM transactions t
+         JOIN accounts a ON t.account_id = a.id
+         LEFT JOIN categories c ON t.category_id = c.id
+         WHERE (a.external_account_id = $1 OR a.external_account_id = 'tool-account-' || $1)
+           AND t.posted_at >= $2
+           AND t.posted_at <= $3
+           AND t.direction = 'debit'
+         ORDER BY t.posted_at DESC
+         LIMIT 200`,
+        [userId, budget.period_start, budget.period_end]
+      );
+
+      const transactions = transactionsQuery.rows.map(
+        (row: {
+          id: string;
+          posted_at: string;
+          description: string;
+          merchant_name: string | null;
+          amount: string;
+          category_id: number | null;
+          category_name: string | null;
+          account_name: string;
+          status: string;
+        }) => ({
+          id: row.id,
+          date: row.posted_at,
+          description: row.description,
+          merchant: row.merchant_name || row.description,
+          amount: parseFloat(row.amount),
+          categoryId: row.category_id,
+          categoryName: row.category_name,
+          accountName: row.account_name,
+          status: row.status,
+        })
+      );
+
+      // 6. Find unassigned transactions
+      const unassignedQuery = await pool.query(
+        `SELECT t.id, t.posted_at, t.description, t.merchant_name, t.amount, a.name as account_name
+         FROM transactions t
+         JOIN accounts a ON t.account_id = a.id
+         WHERE (a.external_account_id = $1 OR a.external_account_id = 'tool-account-' || $1)
+           AND t.posted_at >= $2
+           AND t.posted_at <= $3
+           AND t.category_id IS NULL
+           AND t.direction = 'debit'
+         ORDER BY t.posted_at DESC
+         LIMIT 50`,
+        [userId, budget.period_start, budget.period_end]
+      );
+
+      const unassigned = unassignedQuery.rows.map(
+        (row: {
+          id: string;
+          posted_at: string;
+          description: string;
+          merchant_name: string | null;
+          amount: string;
+          account_name: string;
+        }) => ({
+          id: row.id,
+          date: row.posted_at,
+          description: row.description,
+          merchant: row.merchant_name || row.description,
+          amount: parseFloat(row.amount),
+          categoryId: null,
+          categoryName: null,
+          accountName: row.account_name,
+          status: "posted",
+        })
+      );
+
+      // 7. Calculate analytics
+      const totalRemaining = totalBudgeted - totalSpent;
+      const percentageUsed =
+        totalBudgeted > 0 ? (totalSpent / totalBudgeted) * 100 : 0;
+
+      // Calculate period elapsed
+      const periodStart = new Date(budget.period_start);
+      const periodEnd = new Date(budget.period_end);
+      const today = new Date();
+      const totalDays = Math.ceil(
+        (periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      const daysElapsed = Math.max(
+        0,
+        Math.ceil(
+          (today.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24)
+        )
+      );
+      const periodElapsed = Math.min(100, (daysElapsed / totalDays) * 100);
+
+      // Burn rate and projections
+      const avgDailySpend = daysElapsed > 0 ? totalSpent / daysElapsed : 0;
+      const remainingDays = Math.max(0, totalDays - daysElapsed);
+      const projectedSpend = totalSpent + avgDailySpend * remainingDays;
+      const projectedOverage = Math.max(0, projectedSpend - totalBudgeted);
+
+      const burnRate = periodElapsed > 0 ? percentageUsed / periodElapsed : 0;
+      let healthStatus: "healthy" | "warning" | "danger" = "healthy";
+      if (percentageUsed > periodElapsed + 20) {
+        healthStatus = "danger";
+      } else if (percentageUsed > periodElapsed + 10) {
+        healthStatus = "warning";
+      }
+
+      // Biggest transactions
+      const biggestTransactions = [...transactions]
+        .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
+        .slice(0, 5);
+
+      // Over budget categories
+      const overBudgetCategories = categories
+        .filter(
+          (cat: { status: string; categoryName: string }) =>
+            cat.status === "over"
+        )
+        .map(
+          (cat: { status: string; categoryName: string }) => cat.categoryName
+        );
+
+      // 8. Load historical performance
+      const historyQuery = await pool.query(
+        `SELECT id, period_start, period_end
+         FROM budgets
+         WHERE user_id = $1
+           AND name = $2
+           AND period_type = $3
+           AND period_end < $4
+         ORDER BY period_start DESC
+         LIMIT 6`,
+        [userId, budget.name, budget.period_type, budget.period_start]
+      );
+
+      const history = await Promise.all(
+        historyQuery.rows.map(
+          async (histBudget: {
+            id: string;
+            period_start: string;
+            period_end: string;
+          }) => {
+            // Get budget items for this historical period
+            const histItemsQuery = await pool.query(
+              `SELECT SUM(limit_amount) as total_budgeted
+             FROM budget_items
+             WHERE budget_id = $1`,
+              [histBudget.id]
+            );
+
+            const histBudgeted = parseFloat(
+              histItemsQuery.rows[0]?.total_budgeted || "0"
+            );
+
+            // Get spending for this historical period
+            const histSpendingQuery = await pool.query(
+              `SELECT SUM(ABS(t.amount)) as total_spent
+             FROM transactions t
+             JOIN accounts a ON t.account_id = a.id
+             WHERE (a.external_account_id = $1 OR a.external_account_id = 'tool-account-' || $1)
+               AND t.posted_at >= $2
+               AND t.posted_at <= $3
+               AND t.direction = 'debit'`,
+              [userId, histBudget.period_start, histBudget.period_end]
+            );
+
+            const histSpent = parseFloat(
+              histSpendingQuery.rows[0]?.total_spent || "0"
+            );
+            const histPercentage =
+              histBudgeted > 0 ? (histSpent / histBudgeted) * 100 : 0;
+
+            let histStatus: "under" | "near" | "over" | "hit" = "under";
+            const isHistAtLimit = Math.abs(histBudgeted - histSpent) < 0.01;
+
+            if (histPercentage > 100 && !isHistAtLimit) histStatus = "over";
+            else if (isHistAtLimit) histStatus = "hit";
+            else if (histPercentage > 85) histStatus = "near";
+
+            return {
+              budgetId: histBudget.id,
+              periodStart: histBudget.period_start,
+              periodEnd: histBudget.period_end,
+              totalBudgeted: histBudgeted,
+              totalSpent: histSpent,
+              percentageUsed: histPercentage,
+              status: histStatus,
+            };
+          }
+        )
+      );
+
+      // 9. Return comprehensive response
+      res.json({
+        budget: {
+          id: budget.id,
+          name: budget.name,
+          periodType: budget.period_type,
+          periodStart: budget.period_start,
+          periodEnd: budget.period_end,
+          currencyCode: budget.currency_code,
+        },
+        summary: {
+          totalBudgeted,
+          totalSpent,
+          totalRemaining,
+          percentageUsed,
+          periodElapsed,
+        },
+        categories,
+        transactions,
+        analytics: {
+          biggestTransactions,
+          overBudgetCategories,
+          projectedSpend,
+          projectedOverage,
+          burnRate,
+          healthStatus,
+        },
+        unassigned,
+        history,
+      });
+    } catch (error) {
+      console.error("Error fetching budget view:", error);
+      res.status(500).json({ error: "Failed to fetch budget view" });
+    }
+  }
+);
 
 /**
  * GET /api/budgets
@@ -205,6 +639,7 @@ router.get(
 
       const budgetId = req.params.id;
 
+      // 1. Fetch budget details
       const query = `
         SELECT
           b.id,
@@ -213,7 +648,11 @@ router.get(
           b.period_start,
           b.period_end,
           b.currency_code,
-          b.created_at
+          b.created_at,
+          b.income_amount,
+          b.savings_target_amount,
+          b.savings_target_type,
+          b.auto_renew
         FROM budgets b
         WHERE b.id = $1
           AND (b.user_id = $2 OR b.household_id IN (
@@ -229,6 +668,24 @@ router.get(
       }
 
       const row = result.rows[0];
+
+      // 2. Fetch selected accounts
+      const accountsQuery = `
+        SELECT account_id FROM budget_accounts WHERE budget_id = $1
+      `;
+      const accountsResult = await pool.query(accountsQuery, [budgetId]);
+      const accountIds = accountsResult.rows.map((r) => r.account_id);
+
+      // 3. Fetch category limits
+      const limitsQuery = `
+        SELECT category_id, limit_amount FROM budget_items WHERE budget_id = $1
+      `;
+      const limitsResult = await pool.query(limitsQuery, [budgetId]);
+      const categoryLimits = limitsResult.rows.map((r) => ({
+        categoryId: r.category_id,
+        amount: parseFloat(r.limit_amount),
+      }));
+
       const budget = {
         id: row.id,
         name: row.name,
@@ -237,12 +694,283 @@ router.get(
         periodEnd: row.period_end,
         currencyCode: row.currency_code,
         createdAt: row.created_at,
+        incomeAmount: row.income_amount ? parseFloat(row.income_amount) : null,
+        savingsTargetAmount: row.savings_target_amount
+          ? parseFloat(row.savings_target_amount)
+          : null,
+        savingsTargetType: row.savings_target_type,
+        autoRenew: row.auto_renew,
+        accountIds,
+        categoryLimits,
       };
 
       res.json({ budget });
     } catch (error) {
       console.error("Error fetching budget details:", error);
       res.status(500).json({ error: "Failed to fetch budget details" });
+    }
+  }
+);
+
+/**
+ * GET /api/budgets/:id/accounts
+ * Fetch user's accounts for budget selection
+ */
+router.get(
+  "/:id/accounts",
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const userId = await resolveUserId(req);
+      if (!userId) {
+        res
+          .status(401)
+          .json({ error: "Unauthenticated or user not found in database" });
+        return;
+      }
+
+      // Fetch all accounts belonging to the user
+      const query = `
+        SELECT
+          a.id,
+          a.name,
+          a.account_type,
+          a.currency_code,
+          a.current_balance,
+          a.masked_account_ref
+        FROM accounts a
+        JOIN bank_connections bc ON a.bank_connection_id = bc.id
+        WHERE bc.user_id = $1
+        ORDER BY a.name
+      `;
+
+      const result = await pool.query(query, [userId]);
+
+      const accounts = result.rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        accountType: row.account_type,
+        currencyCode: row.currency_code,
+        currentBalance: row.current_balance,
+        maskedRef: row.masked_account_ref,
+      }));
+
+      res.json({ accounts });
+    } catch (error) {
+      console.error("Error fetching accounts:", error);
+      res.status(500).json({ error: "Failed to fetch accounts" });
+    }
+  }
+);
+
+/**
+ * GET /api/budgets/:id/categories
+ * Fetch leaf expense categories grouped by parent for budget limit entry
+ */
+router.get(
+  "/:id/categories",
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const userId = await resolveUserId(req);
+      if (!userId) {
+        res
+          .status(401)
+          .json({ error: "Unauthenticated or user not found in database" });
+        return;
+      }
+
+      // Fetch only leaf expense categories using the view
+      const query = `
+        SELECT
+          id,
+          name,
+          parent_id AS "parentId",
+          parent_name AS "parentName"
+        FROM vw_budget_leaf_categories
+        ORDER BY parent_name, name
+      `;
+
+      const result = await pool.query(query);
+
+      // Group categories by parent
+      const groupsMap = new Map<string, Array<{ id: number; name: string }>>();
+
+      for (const row of result.rows) {
+        const parentLabel = row.parentName ?? "Other Expenses";
+        if (!groupsMap.has(parentLabel)) {
+          groupsMap.set(parentLabel, []);
+        }
+        groupsMap.get(parentLabel)!.push({ id: row.id, name: row.name });
+      }
+
+      const categoryGroups = Array.from(groupsMap.entries()).map(
+        ([parent, items]) => ({
+          parent,
+          items,
+        })
+      );
+
+      res.json({ categoryGroups });
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      res.status(500).json({ error: "Failed to fetch categories" });
+    }
+  }
+);
+
+/**
+ * PATCH /api/budgets/:id/setup
+ * Save budget setup configuration (period, accounts, category limits, savings)
+ */
+router.patch(
+  "/:id/setup",
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const userId = await resolveUserId(req);
+      if (!userId) {
+        res
+          .status(401)
+          .json({ error: "Unauthenticated or user not found in database" });
+        return;
+      }
+
+      const budgetId = req.params.id;
+      const {
+        periodType,
+        periodStart,
+        periodEnd,
+        accountIds,
+        categoryLimits,
+        incomeAmount,
+        savingsTargetAmount,
+        savingsTargetType,
+        autoRenew,
+      } = req.body;
+
+      // Verify budget ownership
+      const ownerCheck = await pool.query(
+        `SELECT id FROM budgets WHERE id = $1 AND user_id = $2`,
+        [budgetId, userId]
+      );
+
+      if (ownerCheck.rows.length === 0) {
+        res.status(404).json({ error: "Budget not found or access denied" });
+        return;
+      }
+
+      // Start transaction
+      await pool.query("BEGIN");
+
+      try {
+        // Update budget period and savings
+        const updateBudgetQuery = `
+          UPDATE budgets
+          SET
+            period_type = $1,
+            period_start = $2,
+            period_end = $3,
+            income_amount = $4,
+            savings_target_amount = $5,
+            savings_target_type = $6,
+            auto_renew = $7,
+            updated_at = now()
+          WHERE id = $8
+        `;
+
+        await pool.query(updateBudgetQuery, [
+          periodType,
+          periodStart,
+          periodEnd,
+          incomeAmount || null,
+          savingsTargetAmount || null,
+          savingsTargetType || null,
+          autoRenew || false,
+          budgetId,
+        ]);
+
+        // Delete existing account associations
+        await pool.query(`DELETE FROM budget_accounts WHERE budget_id = $1`, [
+          budgetId,
+        ]);
+
+        // Insert new account associations
+        if (accountIds && accountIds.length > 0) {
+          const accountValues = accountIds
+            .map((accountId: string, idx: number) => `($1, $${idx + 2})`)
+            .join(", ");
+
+          await pool.query(
+            `INSERT INTO budget_accounts (budget_id, account_id) VALUES ${accountValues}`,
+            [budgetId, ...accountIds]
+          );
+        }
+
+        // Delete existing category limits
+        await pool.query(`DELETE FROM budget_items WHERE budget_id = $1`, [
+          budgetId,
+        ]);
+
+        // Insert new category limits
+        if (categoryLimits && categoryLimits.length > 0) {
+          for (const limit of categoryLimits) {
+            if (limit.amount && limit.amount > 0) {
+              await pool.query(
+                `INSERT INTO budget_items (budget_id, category_id, limit_amount) VALUES ($1, $2, $3)`,
+                [budgetId, limit.categoryId, limit.amount]
+              );
+            }
+          }
+        }
+
+        await pool.query("COMMIT");
+
+        res.json({ success: true, message: "Budget setup saved successfully" });
+      } catch (error) {
+        await pool.query("ROLLBACK");
+        throw error;
+      }
+    } catch (error) {
+      console.error("Error saving budget setup:", error);
+      res.status(500).json({ error: "Failed to save budget setup" });
+    }
+  }
+);
+
+/**
+ * DELETE /api/budgets/:id
+ * Delete a budget and all its related data
+ */
+router.delete(
+  "/:id",
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const userId = await resolveUserId(req);
+      if (!userId) {
+        res
+          .status(401)
+          .json({ error: "Unauthenticated or user not found in database" });
+        return;
+      }
+
+      const budgetId = req.params.id;
+
+      // Verify budget belongs to user
+      const ownerCheck = await pool.query(
+        "SELECT id FROM budgets WHERE id = $1 AND user_id = $2",
+        [budgetId, userId]
+      );
+
+      if (ownerCheck.rows.length === 0) {
+        res.status(404).json({ error: "Budget not found" });
+        return;
+      }
+
+      // Delete budget (cascading deletes will handle related records)
+      await pool.query("DELETE FROM budgets WHERE id = $1", [budgetId]);
+
+      res.json({ success: true, message: "Budget deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting budget:", error);
+      res.status(500).json({ error: "Failed to delete budget" });
     }
   }
 );

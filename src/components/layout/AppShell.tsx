@@ -36,7 +36,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             {/* 🔥 NEW GOALS BUTTON */}
             <Link
               to="/goals"
-              className="block mt-4 font-medium text-slate-700 hover:text-indigo-600"
+              className="block mt-4 font-medium text-slate-700 hover:text-emerald-600"
             >
               Goals
             </Link>
@@ -44,9 +44,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             {/* 🔥 NEW BUDGETS BUTTON */}
             <Link
               to="/budgets"
-              className="block mt-2 font-medium text-slate-700 hover:text-indigo-600"
+              className="block mt-2 font-medium text-slate-700 hover:text-emerald-600"
             >
               Budgets
+            </Link>
+
+            {/* 🔥 NEW ACCOUNTS BUTTON */}
+            <Link
+              to="/accounts"
+              className="block mt-2 font-medium text-slate-700 hover:text-emerald-600"
+            >
+              Accounts
             </Link>
           </nav>
         </aside>

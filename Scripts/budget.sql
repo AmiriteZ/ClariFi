@@ -37,8 +37,8 @@ SET
     user_id = u.id
 FROM users u
 WHERE
-    budgets.user_id IS NULL
-    -- add a WHERE here to pick a specific user if you like;
+    budgets.user_id IS NULL;
+-- add a WHERE here to pick a specific user if you like
 
 -- 4) Now enforce NOT NULL on user_id
 ALTER TABLE budgets ALTER COLUMN user_id SET NOT NULL;

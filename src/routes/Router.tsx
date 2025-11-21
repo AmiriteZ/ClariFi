@@ -11,9 +11,21 @@ import GoalsPage from "../features/goals/pages/GoalsPage";
 import GoalDetailPage from "../features/goals/pages/GoalDetailPage";
 import BudgetsPage from "../features/budgets/pages/BudgetsPage";
 import BudgetSetupPage from "../features/budgets/pages/BudgetSetupPage";
+import BudgetViewPage from "../features/budgets/pages/BudgetViewPage";
+import AccountsPage from "../features/accounts/pages/AccountsPage";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const token = useAuthStore((s) => s.token);
+  const { token, isInitialized } = useAuthStore();
+
+  if (!isInitialized) {
+    // Wait for Firebase to initialize before making auth decisions
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        <p className="text-sm text-slate-500">Loading...</p>
+      </div>
+    );
+  }
+
   if (!token) return <Navigate to="/start" replace />;
   return <>{children}</>;
 }
@@ -66,11 +78,31 @@ export default function Router() {
           }
         />
         <Route
+          path="/budgets/:budgetId/view"
+          element={
+            <ProtectedRoute>
+              <AppShell>
+                <BudgetViewPage />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/budgets/:budgetId/setup"
           element={
             <ProtectedRoute>
               <AppShell>
                 <BudgetSetupPage />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounts"
+          element={
+            <ProtectedRoute>
+              <AppShell>
+                <AccountsPage />
               </AppShell>
             </ProtectedRoute>
           }

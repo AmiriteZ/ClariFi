@@ -1,220 +1,597 @@
 BEGIN;
 
--- ===========================
--- CORE SYSTEM CATEGORIES
--- ===========================
--- Table structure reminder:
--- categories (
---   id SERIAL PRIMARY KEY,
---   parent_id INT REFERENCES categories(id),
---   name TEXT NOT NULL,
---   type TEXT NOT NULL, -- 'income' | 'expense' | 'transfer'
---   is_system BOOLEAN NOT NULL DEFAULT TRUE,
---   display_order INT,
---   UNIQUE (name, type)
--- );
--- ---------------------------
+----------------------------------------------------------------------
+-- 1) BACKUP EXISTING CATEGORIES (RUN ONCE / SAFE TO KEEP)
+----------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS categories_backup AS
+SELECT *
+FROM categories;
 
--- ==============
--- EXPENSE: PARENTS
--- ==============
-INSERT INTO categories (name, type, is_system, display_order)
+----------------------------------------------------------------------
+-- 2) UPSERT CANONICAL CATEGORY SET
+--    This keeps IDs the same but fixes names / parent_ids / type.
+--    is_system is forced TRUE for these built-in categories.
+----------------------------------------------------------------------
+
+INSERT INTO
+    categories (
+        id,
+        name,
+        type,
+        parent_id,
+        is_system
+    )
 VALUES
-  ('Housing & Utilities',    'expense', TRUE, 10),
-  ('Food & Groceries',       'expense', TRUE, 20),
-  ('Transport',              'expense', TRUE, 30),
-  ('Bills & Subscriptions',  'expense', TRUE, 40),
-  ('Shopping & Lifestyle',   'expense', TRUE, 50),
-  ('Health & Wellness',      'expense', TRUE, 60),
-  ('Entertainment & Leisure','expense', TRUE, 70),
-  ('Family & Children',      'expense', TRUE, 80),
-  ('Financial & Fees',       'expense', TRUE, 90),
-  ('Other Expenses',         'expense', TRUE, 99)
-ON CONFLICT (name, type)
-DO UPDATE SET display_order = EXCLUDED.display_order;
+    -- TOP-LEVEL EXPENSE GROUPS
+    (
+        8,
+        'Housing & Utilities',
+        'expense',
+        NULL,
+        TRUE
+    ),
+    (
+        9,
+        'Food & Groceries',
+        'expense',
+        NULL,
+        TRUE
+    ),
+    (
+        10,
+        'Transport',
+        'expense',
+        NULL,
+        TRUE
+    ),
+    (
+        11,
+        'Bills & Subscriptions',
+        'expense',
+        NULL,
+        TRUE
+    ),
+    (
+        12,
+        'Shopping & Lifestyle',
+        'expense',
+        NULL,
+        TRUE
+    ),
+    (
+        13,
+        'Health & Wellness',
+        'expense',
+        NULL,
+        TRUE
+    ),
+    (
+        14,
+        'Entertainment & Leisure',
+        'expense',
+        NULL,
+        TRUE
+    ),
+    (
+        15,
+        'Family & Children',
+        'expense',
+        NULL,
+        TRUE
+    ),
+    (
+        16,
+        'Financial & Fees',
+        'expense',
+        NULL,
+        TRUE
+    ),
+    (
+        17,
+        'Other Expenses',
+        'expense',
+        NULL,
+        TRUE
+    ),
 
--- ==============
--- EXPENSE: CHILDREN
--- ==============
+-- HOUSING & UTILITIES (parent 8)
+(
+    18,
+    'Rent / Mortgage',
+    'expense',
+    8,
+    TRUE
+),
+(
+    19,
+    'Electricity',
+    'expense',
+    8,
+    TRUE
+),
+(
+    20,
+    'Gas / Heating',
+    'expense',
+    8,
+    TRUE
+),
+(
+    21,
+    'Water / Waste',
+    'expense',
+    8,
+    TRUE
+),
+(
+    22,
+    'Internet',
+    'expense',
+    8,
+    TRUE
+),
+(
+    23,
+    'Home Insurance',
+    'expense',
+    8,
+    TRUE
+),
 
--- Housing & Utilities
-INSERT INTO categories (parent_id, name, type, is_system, display_order)
-VALUES
-  ((SELECT id FROM categories WHERE name = 'Housing & Utilities' AND type = 'expense'),
-    'Rent / Mortgage',     'expense', TRUE, 11),
-  ((SELECT id FROM categories WHERE name = 'Housing & Utilities' AND type = 'expense'),
-    'Electricity',         'expense', TRUE, 12),
-  ((SELECT id FROM categories WHERE name = 'Housing & Utilities' AND type = 'expense'),
-    'Gas / Heating',       'expense', TRUE, 13),
-  ((SELECT id FROM categories WHERE name = 'Housing & Utilities' AND type = 'expense'),
-    'Water / Waste',       'expense', TRUE, 14),
-  ((SELECT id FROM categories WHERE name = 'Housing & Utilities' AND type = 'expense'),
-    'Internet',            'expense', TRUE, 15),
-  ((SELECT id FROM categories WHERE name = 'Housing & Utilities' AND type = 'expense'),
-    'Home Insurance',      'expense', TRUE, 16)
-ON CONFLICT (name, type) DO NOTHING;
+-- FOOD & GROCERIES (parent 9)
+(
+    24,
+    'Groceries',
+    'expense',
+    9,
+    TRUE
+),
+(
+    25,
+    'Eating Out',
+    'expense',
+    9,
+    TRUE
+),
+(
+    26,
+    'Coffee / Snacks',
+    'expense',
+    9,
+    TRUE
+),
+(
+    27,
+    'Takeaway / Delivery',
+    'expense',
+    9,
+    TRUE
+),
 
--- Food & Groceries
-INSERT INTO categories (parent_id, name, type, is_system, display_order)
-VALUES
-  ((SELECT id FROM categories WHERE name = 'Food & Groceries' AND type = 'expense'),
-    'Groceries',           'expense', TRUE, 21),
-  ((SELECT id FROM categories WHERE name = 'Food & Groceries' AND type = 'expense'),
-    'Eating Out',          'expense', TRUE, 22),
-  ((SELECT id FROM categories WHERE name = 'Food & Groceries' AND type = 'expense'),
-    'Coffee / Snacks',     'expense', TRUE, 23),
-  ((SELECT id FROM categories WHERE name = 'Food & Groceries' AND type = 'expense'),
-    'Takeaway / Delivery', 'expense', TRUE, 24)
-ON CONFLICT (name, type) DO NOTHING;
+-- TRANSPORT (parent 10)
+(
+    28,
+    'Fuel',
+    'expense',
+    10,
+    TRUE
+),
+(
+    29,
+    'Public Transport',
+    'expense',
+    10,
+    TRUE
+),
+(
+    30,
+    'Taxi / Rideshare',
+    'expense',
+    10,
+    TRUE
+),
+(
+    31,
+    'Parking / Tolls',
+    'expense',
+    10,
+    TRUE
+),
+(
+    32,
+    'Vehicle Maintenance',
+    'expense',
+    10,
+    TRUE
+),
 
--- Transport
-INSERT INTO categories (parent_id, name, type, is_system, display_order)
-VALUES
-  ((SELECT id FROM categories WHERE name = 'Transport' AND type = 'expense'),
-    'Fuel',                'expense', TRUE, 31),
-  ((SELECT id FROM categories WHERE name = 'Transport' AND type = 'expense'),
-    'Public Transport',    'expense', TRUE, 32),
-  ((SELECT id FROM categories WHERE name = 'Transport' AND type = 'expense'),
-    'Taxi / Rideshare',    'expense', TRUE, 33),
-  ((SELECT id FROM categories WHERE name = 'Transport' AND type = 'expense'),
-    'Parking / Tolls',     'expense', TRUE, 34),
-  ((SELECT id FROM categories WHERE name = 'Transport' AND type = 'expense'),
-    'Vehicle Maintenance', 'expense', TRUE, 35)
-ON CONFLICT (name, type) DO NOTHING;
+-- BILLS & SUBSCRIPTIONS (parent 11)
+(
+    33,
+    'Mobile Phone',
+    'expense',
+    11,
+    TRUE
+),
+(
+    34,
+    'Streaming Services',
+    'expense',
+    11,
+    TRUE
+),
+(
+    35,
+    'Software / Apps',
+    'expense',
+    11,
+    TRUE
+),
+(
+    36,
+    'Gym / Memberships',
+    'expense',
+    11,
+    TRUE
+),
 
--- Bills & Subscriptions
-INSERT INTO categories (parent_id, name, type, is_system, display_order)
-VALUES
-  ((SELECT id FROM categories WHERE name = 'Bills & Subscriptions' AND type = 'expense'),
-    'Mobile Phone',        'expense', TRUE, 41),
-  ((SELECT id FROM categories WHERE name = 'Bills & Subscriptions' AND type = 'expense'),
-    'Streaming Services',  'expense', TRUE, 42),
-  ((SELECT id FROM categories WHERE name = 'Bills & Subscriptions' AND type = 'expense'),
-    'Software / Apps',     'expense', TRUE, 43),
-  ((SELECT id FROM categories WHERE name = 'Bills & Subscriptions' AND type = 'expense'),
-    'Gym / Memberships',   'expense', TRUE, 44),
-  ((SELECT id FROM categories WHERE name = 'Bills & Subscriptions' AND type = 'expense'),
-    'Insurance (Non-Home)','expense', TRUE, 45)
-ON CONFLICT (name, type) DO NOTHING;
+-- SHOPPING & LIFESTYLE (parent 12)
+(
+    37,
+    'Insurance (Non-Home)',
+    'expense',
+    12,
+    TRUE
+),
+(
+    38,
+    'Clothing & Shoes',
+    'expense',
+    12,
+    TRUE
+),
+(
+    39,
+    'Electronics & Gadgets',
+    'expense',
+    12,
+    TRUE
+),
+(
+    40,
+    'Home & Furniture',
+    'expense',
+    12,
+    TRUE
+),
+(
+    41,
+    'Beauty & Personal Care',
+    'expense',
+    12,
+    TRUE
+),
+(
+    42,
+    'Gifts & Donations',
+    'expense',
+    12,
+    TRUE
+),
 
--- Shopping & Lifestyle
-INSERT INTO categories (parent_id, name, type, is_system, display_order)
-VALUES
-  ((SELECT id FROM categories WHERE name = 'Shopping & Lifestyle' AND type = 'expense'),
-    'Clothing & Shoes',    'expense', TRUE, 51),
-  ((SELECT id FROM categories WHERE name = 'Shopping & Lifestyle' AND type = 'expense'),
-    'Electronics & Gadgets','expense', TRUE, 52),
-  ((SELECT id FROM categories WHERE name = 'Shopping & Lifestyle' AND type = 'expense'),
-    'Home & Furniture',    'expense', TRUE, 53),
-  ((SELECT id FROM categories WHERE name = 'Shopping & Lifestyle' AND type = 'expense'),
-    'Beauty & Personal Care','expense', TRUE, 54),
-  ((SELECT id FROM categories WHERE name = 'Shopping & Lifestyle' AND type = 'expense'),
-    'Gifts & Donations',   'expense', TRUE, 55)
-ON CONFLICT (name, type) DO NOTHING;
+-- HEALTH & WELLNESS (parent 13)
+(
+    43,
+    'Medical & Pharmacy',
+    'expense',
+    13,
+    TRUE
+),
+(
+    44,
+    'Health Insurance',
+    'expense',
+    13,
+    TRUE
+),
+(
+    45,
+    'Mental Health',
+    'expense',
+    13,
+    TRUE
+),
 
--- Health & Wellness
-INSERT INTO categories (parent_id, name, type, is_system, display_order)
-VALUES
-  ((SELECT id FROM categories WHERE name = 'Health & Wellness' AND type = 'expense'),
-    'Medical & Pharmacy',  'expense', TRUE, 61),
-  ((SELECT id FROM categories WHERE name = 'Health & Wellness' AND type = 'expense'),
-    'Health Insurance',    'expense', TRUE, 62),
-  ((SELECT id FROM categories WHERE name = 'Health & Wellness' AND type = 'expense'),
-    'Mental Health',       'expense', TRUE, 63)
-ON CONFLICT (name, type) DO NOTHING;
+-- ENTERTAINMENT & LEISURE (parent 14)
+(
+    46,
+    'Cinema / Events',
+    'expense',
+    14,
+    TRUE
+),
+(
+    47,
+    'Hobbies & Activities',
+    'expense',
+    14,
+    TRUE
+),
+(
+    48,
+    'Holidays & Travel',
+    'expense',
+    14,
+    TRUE
+),
 
--- Entertainment & Leisure
-INSERT INTO categories (parent_id, name, type, is_system, display_order)
-VALUES
-  ((SELECT id FROM categories WHERE name = 'Entertainment & Leisure' AND type = 'expense'),
-    'Cinema / Events',     'expense', TRUE, 71),
-  ((SELECT id FROM categories WHERE name = 'Entertainment & Leisure' AND type = 'expense'),
-    'Hobbies & Activities','expense', TRUE, 72),
-  ((SELECT id FROM categories WHERE name = 'Entertainment & Leisure' AND type = 'expense'),
-    'Holidays & Travel',   'expense', TRUE, 73)
-ON CONFLICT (name, type) DO NOTHING;
+-- FAMILY & CHILDREN (parent 15)
+(
+    49,
+    'Childcare',
+    'expense',
+    15,
+    TRUE
+),
+(
+    50,
+    'School & Education',
+    'expense',
+    15,
+    TRUE
+),
+(
+    51,
+    'Pet Care',
+    'expense',
+    15,
+    TRUE
+),
 
--- Family & Children
-INSERT INTO categories (parent_id, name, type, is_system, display_order)
-VALUES
-  ((SELECT id FROM categories WHERE name = 'Family & Children' AND type = 'expense'),
-    'Childcare',           'expense', TRUE, 81),
-  ((SELECT id FROM categories WHERE name = 'Family & Children' AND type = 'expense'),
-    'School & Education',  'expense', TRUE, 82),
-  ((SELECT id FROM categories WHERE name = 'Family & Children' AND type = 'expense'),
-    'Pet Care',            'expense', TRUE, 83)
-ON CONFLICT (name, type) DO NOTHING;
+-- FINANCIAL & FEES (parent 16)
+(
+    52,
+    'Bank Fees & Charges',
+    'expense',
+    16,
+    TRUE
+),
+(
+    53,
+    'Loan Payments',
+    'expense',
+    16,
+    TRUE
+),
+(
+    54,
+    'Credit Card Payments',
+    'expense',
+    16,
+    TRUE
+),
+(
+    55,
+    'Taxes Paid',
+    'expense',
+    16,
+    TRUE
+),
 
--- Financial & Fees
-INSERT INTO categories (parent_id, name, type, is_system, display_order)
-VALUES
-  ((SELECT id FROM categories WHERE name = 'Financial & Fees' AND type = 'expense'),
-    'Bank Fees & Charges', 'expense', TRUE, 91),
-  ((SELECT id FROM categories WHERE name = 'Financial & Fees' AND type = 'expense'),
-    'Loan Payments',       'expense', TRUE, 92),
-  ((SELECT id FROM categories WHERE name = 'Financial & Fees' AND type = 'expense'),
-    'Credit Card Payments','expense', TRUE, 93),
-  ((SELECT id FROM categories WHERE name = 'Financial & Fees' AND type = 'expense'),
-    'Taxes Paid',          'expense', TRUE, 94)
-ON CONFLICT (name, type) DO NOTHING;
+-- OTHER EXPENSES (parent 17)
+( 56, 'Uncategorised Expense', 'expense', 17, TRUE ),
 
--- Other Expenses
-INSERT INTO categories (parent_id, name, type, is_system, display_order)
-VALUES
-  ((SELECT id FROM categories WHERE name = 'Other Expenses' AND type = 'expense'),
-    'Uncategorised Expense','expense', TRUE, 99)
-ON CONFLICT (name, type) DO NOTHING;
+-- INCOME GROUPS
+(
+    57,
+    'Salary & Wages',
+    'income',
+    NULL,
+    TRUE
+),
+(
+    58,
+    'Benefits & Refunds',
+    'income',
+    NULL,
+    TRUE
+),
+(
+    59,
+    'Other Income',
+    'income',
+    NULL,
+    TRUE
+),
 
--- ==============
--- INCOME CATEGORIES
--- ==============
-INSERT INTO categories (name, type, is_system, display_order)
-VALUES
-  ('Salary & Wages',       'income', TRUE, 10),
-  ('Benefits & Refunds',   'income', TRUE, 20),
-  ('Other Income',         'income', TRUE, 30)
-ON CONFLICT (name, type)
-DO UPDATE SET display_order = EXCLUDED.display_order;
+-- INCOME CHILDREN
+(
+    60,
+    'Primary Salary',
+    'income',
+    57,
+    TRUE
+),
+(
+    61,
+    'Bonus / Commission',
+    'income',
+    57,
+    TRUE
+),
+(
+    62,
+    'Government Benefits',
+    'income',
+    58,
+    TRUE
+),
+(
+    63,
+    'Tax Refunds',
+    'income',
+    58,
+    TRUE
+),
+(
+    64,
+    'Side Hustle / Freelance',
+    'income',
+    59,
+    TRUE
+),
+(
+    65,
+    'Interest & Dividends',
+    'income',
+    59,
+    TRUE
+),
+(
+    66,
+    'Gifts Received',
+    'income',
+    59,
+    TRUE
+),
 
--- Optional children (if you want finer breakdown later)
-INSERT INTO categories (parent_id, name, type, is_system, display_order)
-VALUES
-  ((SELECT id FROM categories WHERE name = 'Salary & Wages' AND type = 'income'),
-    'Primary Salary',      'income', TRUE, 11),
-  ((SELECT id FROM categories WHERE name = 'Salary & Wages' AND type = 'income'),
-    'Bonus / Commission',  'income', TRUE, 12),
-  ((SELECT id FROM categories WHERE name = 'Benefits & Refunds' AND type = 'income'),
-    'Government Benefits', 'income', TRUE, 21),
-  ((SELECT id FROM categories WHERE name = 'Benefits & Refunds' AND type = 'income'),
-    'Tax Refunds',         'income', TRUE, 22),
-  ((SELECT id FROM categories WHERE name = 'Other Income' AND type = 'income'),
-    'Side Hustle / Freelance','income', TRUE, 31),
-  ((SELECT id FROM categories WHERE name = 'Other Income' AND type = 'income'),
-    'Interest & Dividends','income', TRUE, 32),
-  ((SELECT id FROM categories WHERE name = 'Other Income' AND type = 'income'),
-    'Gifts Received',      'income', TRUE, 33)
-ON CONFLICT (name, type) DO NOTHING;
+-- TRANSFER GROUPS
+(
+    67,
+    'Internal Transfers',
+    'transfer',
+    NULL,
+    TRUE
+),
+(
+    68,
+    'External Transfers',
+    'transfer',
+    NULL,
+    TRUE
+),
 
--- ==============
--- TRANSFER CATEGORIES
--- ==============
-INSERT INTO categories (name, type, is_system, display_order)
-VALUES
-  ('Internal Transfers',   'transfer', TRUE, 10),
-  ('External Transfers',   'transfer', TRUE, 20)
-ON CONFLICT (name, type)
-DO UPDATE SET display_order = EXCLUDED.display_order;
+-- TRANSFER CHILDREN
+(
+    69,
+    'Between Own Accounts',
+    'transfer',
+    67,
+    TRUE
+),
+(
+    70,
+    'To Savings / Investments',
+    'transfer',
+    68,
+    TRUE
+),
+(
+    71,
+    'To Friends & Family',
+    'transfer',
+    68,
+    TRUE
+),
+(
+    72,
+    'From Friends & Family',
+    'transfer',
+    68,
+    TRUE
+) ON CONFLICT (id) DO
+UPDATE
+SET
+    name = EXCLUDED.name,
+    type = EXCLUDED.type,
+    parent_id = EXCLUDED.parent_id,
+    is_system = TRUE;
 
-INSERT INTO categories (parent_id, name, type, is_system, display_order)
-VALUES
-  ((SELECT id FROM categories WHERE name = 'Internal Transfers' AND type = 'transfer'),
-    'Between Own Accounts','transfer', TRUE, 11),
-  ((SELECT id FROM categories WHERE name = 'External Transfers' AND type = 'transfer'),
-    'To Savings / Investments','transfer', TRUE, 21),
-  ((SELECT id FROM categories WHERE name = 'External Transfers' AND type = 'transfer'),
-    'To Friends & Family','transfer', TRUE, 22),
-  ((SELECT id FROM categories WHERE name = 'External Transfers' AND type = 'transfer'),
-    'From Friends & Family','transfer', TRUE, 23)
-ON CONFLICT (name, type) DO NOTHING;
+----------------------------------------------------------------------
+-- 3) REMOVE OLD SYSTEM CATEGORIES NOT IN THIS CANONICAL LIST
+--    (e.g. old "Grocerie" etc.), BUT KEEP user-defined (is_system = FALSE).
+----------------------------------------------------------------------
+
+DELETE FROM categories
+WHERE
+    is_system = TRUE
+    AND id NOT IN(
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72
+    );
+
+----------------------------------------------------------------------
+-- 4) RESET SEQUENCE FOR categories.id (since id is SERIAL)
+----------------------------------------------------------------------
+
+SELECT setval (
+        pg_get_serial_sequence ('categories', 'id'), (
+            SELECT COALESCE(MAX(id), 1)
+            FROM categories
+        ), TRUE
+    );
 
 COMMIT;

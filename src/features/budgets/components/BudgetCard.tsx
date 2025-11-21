@@ -1,4 +1,3 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Users } from "lucide-react";
 import type { BudgetSummary } from "../api/budgets.api";
@@ -34,7 +33,7 @@ export default function BudgetCard({ budget }: BudgetCardProps) {
 
       <div className="mt-auto pt-4 border-t border-slate-100">
         <button
-          onClick={() => navigate(`/budgets/${budget.id}`)}
+          onClick={() => navigate(`/budgets/${budget.id}/view`)}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-indigo-50 hover:text-indigo-600"
         >
           View more
