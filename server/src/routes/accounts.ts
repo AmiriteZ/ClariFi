@@ -367,4 +367,215 @@ router.post(
   }
 );
 
+/**
+ * POST /api/accounts/resync
+ * Resync all connected accounts to fetch latest balances and transactions
+ */
+router.post(
+  "/resync",
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const authUser = req.user;
+      if (!authUser) {
+        res.status(401).json({ error: "Unauthenticated" });
+        return;
+      }
+
+      // Resolve user ID
+      const userQuery = await pool.query(
+        "SELECT id FROM users WHERE firebase_uid = $1",
+        [authUser.uid]
+      );
+      if (userQuery.rows.length === 0) {
+        res.status(401).json({ error: "User not found" });
+        return;
+      }
+      const userId = userQuery.rows[0].id;
+
+      // Get all active Yapily connections
+      const connectionsResult = await pool.query(
+        `SELECT id, external_id 
+         FROM bank_connections 
+         WHERE user_id = $1 
+         AND provider = 'yapily' 
+         AND status = 'active'`,
+        [userId]
+      );
+
+      if (connectionsResult.rows.length === 0) {
+        res.json({
+          ok: true,
+          message: "No connected accounts to resync",
+          accountsUpdated: 0,
+        });
+        return;
+      }
+
+      let totalAccountsUpdated = 0;
+      const errors: string[] = [];
+
+      // Resync each connection
+      for (const connection of connectionsResult.rows) {
+        try {
+          console.log(
+            `🔄 Resyncing connection ${connection.id} (${connection.external_id})`
+          );
+
+          // First, fetch the consent details to get the fresh consentToken
+          // connection.external_id is the Consent ID
+          const consentResponse = await fetch(
+            `${YAPILY_CONFIG.baseUrl}/consents/${connection.external_id}`,
+            {
+              method: "GET",
+              headers: yapilyAuthHeaders(),
+            }
+          );
+
+          if (!consentResponse.ok) {
+            const errorText = await consentResponse.text();
+            console.error(
+              `❌ Failed to fetch consent for connection ${connection.id}:`,
+              errorText
+            );
+            errors.push(
+              `Connection ${connection.id}: Failed to retrieve consent token (${consentResponse.statusText})`
+            );
+            continue;
+          }
+
+          const consentData = await consentResponse.json();
+          const consentToken = consentData.data?.consentToken;
+
+          if (!consentToken) {
+            console.error(
+              `❌ No consent token found for connection ${connection.id}`
+            );
+            errors.push(
+              `Connection ${connection.id}: No consent token returned from Yapily`
+            );
+            continue;
+          }
+
+          // Fetch accounts from Yapily using the fresh consentToken
+          const yapilyResponse = await fetch(
+            `${YAPILY_CONFIG.baseUrl}/accounts`,
+            {
+              method: "GET",
+              headers: {
+                ...yapilyAuthHeaders(),
+                consent: consentToken,
+              },
+            }
+          );
+
+          if (!yapilyResponse.ok) {
+            const errorText = await yapilyResponse.text();
+            console.error(
+              `❌ Failed to resync connection ${connection.id}:`,
+              errorText
+            );
+            errors.push(
+              `Connection ${connection.id}: ${yapilyResponse.statusText}`
+            );
+            continue;
+          }
+
+          const yapilyData = await yapilyResponse.json();
+          const yapilyAccounts = yapilyData.data || [];
+
+          // Update each account
+          for (const ya of yapilyAccounts) {
+            const externalAccountId = ya.id;
+            const accountName =
+              ya.nickname || ya.accountNames?.[0]?.name || "Account";
+            const accountType = ya.accountType || "current";
+            const currencyCode = ya.currency;
+            const maskedAccountRef =
+              ya.accountIdentifications?.[0]?.identification || null;
+            const currentBalance = ya.balance?.current?.amount || 0;
+            const availableBalance = ya.balance?.available?.amount || 0;
+
+            // Check if account already exists
+            const existingAccount = await pool.query(
+              `SELECT id FROM accounts 
+               WHERE bank_connection_id = $1 AND external_account_id = $2`,
+              [connection.id, externalAccountId]
+            );
+
+            if (existingAccount.rows.length > 0) {
+              // Update existing account
+              await pool.query(
+                `UPDATE accounts SET
+                   name = $1,
+                   account_type = $2,
+                   currency_code = $3,
+                   masked_account_ref = $4,
+                   current_balance = $5,
+                   available_balance = $6,
+                   last_synced_at = now()
+                 WHERE id = $7`,
+                [
+                  accountName,
+                  accountType,
+                  currencyCode,
+                  maskedAccountRef,
+                  currentBalance,
+                  availableBalance,
+                  existingAccount.rows[0].id,
+                ]
+              );
+            } else {
+              // Insert new account
+              await pool.query(
+                `INSERT INTO accounts (
+                   bank_connection_id, household_id, external_account_id, name,
+                   account_type, currency_code, masked_account_ref,
+                   current_balance, available_balance, last_synced_at
+                 )
+                 VALUES ($1, NULL, $2, $3, $4, $5, $6, $7, $8, now())`,
+                [
+                  connection.id,
+                  externalAccountId,
+                  accountName,
+                  accountType,
+                  currencyCode,
+                  maskedAccountRef,
+                  currentBalance,
+                  availableBalance,
+                ]
+              );
+            }
+
+            totalAccountsUpdated++;
+          }
+
+          console.log(
+            `✅ Resynced ${yapilyAccounts.length} accounts for connection ${connection.id}`
+          );
+        } catch (error) {
+          console.error(
+            `❌ Error resyncing connection ${connection.id}:`,
+            error
+          );
+          errors.push(
+            `Connection ${connection.id}: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`
+          );
+        }
+      }
+
+      res.json({
+        ok: true,
+        accountsUpdated: totalAccountsUpdated,
+        connectionsProcessed: connectionsResult.rows.length,
+        errors: errors.length > 0 ? errors : undefined,
+      });
+    } catch (error) {
+      console.error("Error resyncing accounts:", error);
+      res.status(500).json({ error: "Failed to resync accounts" });
+    }
+  }
+);
+
 export default router;

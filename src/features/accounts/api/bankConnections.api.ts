@@ -93,3 +93,26 @@ export async function syncAccounts(
   if (!res.ok) throw new Error(data.error || "Failed to sync accounts");
   return data;
 }
+
+export async function resyncAllAccounts(): Promise<{
+  ok: boolean;
+  accountsUpdated: number;
+  connectionsProcessed: number;
+  errors?: string[];
+}> {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Not authenticated");
+  const token = await user.getIdToken();
+
+  const res = await fetch("http://localhost:5001/api/accounts/resync", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to resync accounts");
+  return data;
+}
