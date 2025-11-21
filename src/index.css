@@ -5,31 +5,32 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
---color-brand-50: #ecfdf5;
---color-brand-100: #d1fae5;
---color-brand-200: #a7f3d0;
---color-brand-300: #6ee7b7;
---color-brand-400: #34d399;
---color-brand-500: #10b981;
---color-brand-600: #059669;
---color-brand-700: #047857;
---color-brand-800: #065f46;
---color-brand-900: #064e3b;
+  --color-brand-50: #ecfdf5;
+  --color-brand-100: #d1fae5;
+  --color-brand-200: #a7f3d0;
+  --color-brand-300: #6ee7b7;
+  --color-brand-400: #34d399;
+  --color-brand-500: #10b981;
+  --color-brand-600: #059669;
+  --color-brand-700: #047857;
+  --color-brand-800: #065f46;
+  --color-brand-900: #064e3b;
 
---color-neutral-50: #f9fafb;
---color-neutral-100: #f3f4f6;
---color-neutral-200: #e5e7eb;
---color-neutral-300: #d1d5db;
---color-neutral-400: #9ca3af;
---color-neutral-500: #6b7280;
---color-neutral-600: #4b5563;
---color-neutral-700: #374151;
---color-neutral-800: #1f2937;
---color-neutral-900: #111827;
+  --color-neutral-50: #f9fafb;
+  --color-neutral-100: #f3f4f6;
+  --color-neutral-200: #e5e7eb;
+  --color-neutral-300: #d1d5db;
+  --color-neutral-400: #9ca3af;
+  --color-neutral-500: #6b7280;
+  --color-neutral-600: #4b5563;
+  --color-neutral-700: #374151;
+  --color-neutral-800: #1f2937;
+  --color-neutral-900: #111827;
 }
 
 @keyframes gradientShift {
-  0%, 100% {
+  0%,
+  100% {
     background-position: 0% 50%;
   }
   50% {
@@ -42,7 +43,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-gradient { animation: none; }
+  .animate-gradient {
+    animation: none;
+  }
 }
 
 @theme inline {
@@ -159,4 +162,18 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Page transition animations */
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.page-fade-in {
+  animation: pageFadeIn 0.3s ease-in;
 }

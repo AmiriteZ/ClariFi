@@ -5,6 +5,7 @@ import LoginPage from "../features/auth/pages/LoginPage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import AppShell from "../components/layout/AppShell";
 import { useAuthStore } from "../store/auth.store";
+import PageTransition from "../components/common/PageTransition";
 import SignUpPage from "../features/auth/pages/SignUpPage";
 import WelcomePage from "../features/welcome/pages/WelcomePage";
 import GoalsPage from "../features/goals/pages/GoalsPage";
@@ -42,7 +43,9 @@ export default function Router() {
           element={
             <ProtectedRoute>
               <AppShell>
-                <DashboardPage />
+                <PageTransition>
+                  <DashboardPage />
+                </PageTransition>
               </AppShell>
             </ProtectedRoute>
           }
@@ -52,7 +55,9 @@ export default function Router() {
           element={
             <ProtectedRoute>
               <AppShell>
-                <GoalsPage />
+                <PageTransition>
+                  <GoalsPage />
+                </PageTransition>
               </AppShell>
             </ProtectedRoute>
           }
@@ -62,7 +67,9 @@ export default function Router() {
           element={
             <ProtectedRoute>
               <AppShell>
-                <GoalDetailPage />
+                <PageTransition>
+                  <GoalDetailPage />
+                </PageTransition>
               </AppShell>
             </ProtectedRoute>
           }
@@ -72,7 +79,9 @@ export default function Router() {
           element={
             <ProtectedRoute>
               <AppShell>
-                <BudgetsPage />
+                <PageTransition>
+                  <BudgetsPage />
+                </PageTransition>
               </AppShell>
             </ProtectedRoute>
           }
@@ -82,7 +91,9 @@ export default function Router() {
           element={
             <ProtectedRoute>
               <AppShell>
-                <BudgetViewPage />
+                <PageTransition>
+                  <BudgetViewPage />
+                </PageTransition>
               </AppShell>
             </ProtectedRoute>
           }
@@ -92,7 +103,9 @@ export default function Router() {
           element={
             <ProtectedRoute>
               <AppShell>
-                <BudgetSetupPage />
+                <PageTransition>
+                  <BudgetSetupPage />
+                </PageTransition>
               </AppShell>
             </ProtectedRoute>
           }
@@ -102,7 +115,9 @@ export default function Router() {
           element={
             <ProtectedRoute>
               <AppShell>
-                <AccountsPage />
+                <PageTransition>
+                  <AccountsPage />
+                </PageTransition>
               </AppShell>
             </ProtectedRoute>
           }
