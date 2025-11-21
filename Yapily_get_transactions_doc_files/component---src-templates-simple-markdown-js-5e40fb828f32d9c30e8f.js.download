@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkyapily_developer_portal=self.webpackChunkyapily_developer_portal||[]).push([[174],{11028:function(e,t,r){r.r(t),r.d(t,{default:function(){return s}});var n=r(3013),a=r(17646);class s extends n.PureComponent{render(){const{html:e}=this.props.data.markdownRemark;return n.createElement(a.ZP,Object.assign({},this.props,{html:e}))}}}}]);

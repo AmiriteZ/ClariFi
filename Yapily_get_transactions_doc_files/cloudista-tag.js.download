@@ -1,0 +1,8 @@
+(function () {
+  if (
+    !localStorage.getItem("firstExternalPageURL") &&
+    document.referrer.indexOf(window.location.hostname) === -1
+  ) {
+    localStorage.setItem("firstExternalPageURL", document.location.href);
+  }
+})();

@@ -1,21 +1,66 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getAccounts, type Account } from "../api/accounts.api";
 import { Plus, RefreshCw, Building2, CreditCard, Wallet } from "lucide-react";
+import AddAccountModal from "../components/AddAccountModal";
+import { syncAccounts } from "../api/bankConnections.api";
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAddAccountModal, setShowAddAccountModal] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
-    loadAccounts();
+    console.log("🔄 AccountsPage mounted, checking for pending connections...");
+    const init = async () => {
+      // Check URL params for consent token (returned after Yapily redirect)
+      const urlParams = new URLSearchParams(window.location.search);
+      const consentToken = urlParams.get("consent");
+      const pendingId = localStorage.getItem("pendingYapilyConnection");
+
+      if (pendingId && consentToken) {
+        console.log("✅ Found pending connection:", pendingId);
+        console.log("🔑 Found consent token from URL");
+        localStorage.removeItem("pendingYapilyConnection");
+
+        // Clear the URL params to clean up the address bar
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+
+        setSyncing(true);
+        try {
+          console.log("🔄 Syncing accounts with consent token...");
+          const syncResult = await syncAccounts(pendingId, consentToken);
+          console.log("✅ Sync complete:", syncResult);
+        } catch (err) {
+          console.error("❌ Sync failed:", err);
+        } finally {
+          setSyncing(false);
+        }
+      } else if (pendingId && !consentToken) {
+        console.log("⚠️ Found pending connection but no consent token in URL");
+        localStorage.removeItem("pendingYapilyConnection");
+      } else {
+        console.log("ℹ️ No pending connection found");
+      }
+
+      console.log("🔄 Loading accounts...");
+      await loadAccounts();
+    };
+    init();
   }, []);
 
-  async function loadAccounts() {
+  const loadAccounts = async () => {
+    setLoading(true);
+    setError(null);
+    console.log("➡️ Calling getAccounts API...");
     try {
-      setLoading(true);
-      setError(null);
       const data = await getAccounts();
+      console.log("✅ Accounts data received:", data);
       setAccounts(data.accounts);
     } catch (err) {
       const message =
@@ -24,7 +69,7 @@ export default function AccountsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   const getAccountIcon = (type: string) => {
     const t = type.toLowerCase();
@@ -62,7 +107,7 @@ export default function AccountsPage() {
             </p>
           </div>
           <button
-            onClick={() => alert("Add Account flow coming soon!")}
+            onClick={() => setShowAddAccountModal(true)}
             className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-emerald-700"
           >
             <Plus className="w-4 h-4" />
@@ -83,10 +128,15 @@ export default function AccountsPage() {
           </div>
         )}
 
-        {/* Loading State */}
-        {loading && (
-          <div className="flex items-center justify-center py-12">
-            <p className="text-slate-500">Loading accounts...</p>
+        {/* Loading/Syncing State */}
+        {(loading || syncing) && (
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
+            <p className="mt-3 text-sm text-slate-500">
+              {syncing
+                ? "Syncing accounts from your bank..."
+                : "Loading accounts..."}
+            </p>
           </div>
         )}
 
@@ -104,7 +154,7 @@ export default function AccountsPage() {
               and balances.
             </p>
             <button
-              onClick={() => alert("Add Account flow coming soon!")}
+              onClick={() => setShowAddAccountModal(true)}
               className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-emerald-600 hover:text-emerald-700"
             >
               Link an account
@@ -152,6 +202,16 @@ export default function AccountsPage() {
           </div>
         )}
       </div>
+
+      {/* Add Account Modal */}
+      <AddAccountModal
+        isOpen={showAddAccountModal}
+        onClose={() => setShowAddAccountModal(false)}
+        onAccountAdded={() => {
+          setShowAddAccountModal(false);
+          loadAccounts();
+        }}
+      />
     </div>
   );
 }

@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<!-- saved from url=(0080)https://docs.yapily.com/pages/data/data-product/tutorial-account-and-trans-data/ -->
+<html lang="en-US" data-react-helmet="lang"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="x-ua-compatible" content="ie=edge"><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"><script type="text/javascript" src="./Yapily_get_transactions_doc_files/pd.js.download"></script><script async="" src="./Yapily_get_transactions_doc_files/clarity.js.download"></script><script async="" src="./Yapily_get_transactions_doc_files/137018620"></script><script async="" type="text/javascript" id="__radar__" data-settings="{&quot;cdn&quot;:&quot;cdn.claydar.com&quot;,&quot;apiEndpoint&quot;:&quot;https://api.claydar.com&quot;,&quot;profileId&quot;:&quot;c7XFGzv4Gc&quot;,&quot;namespace&quot;:&quot;Claydar&quot;}" src="./Yapily_get_transactions_doc_files/radar.min.js.download"></script><script src="./Yapily_get_transactions_doc_files/2043664116026411" async=""></script><script src="./Yapily_get_transactions_doc_files/172609709104962" async=""></script><script async="" src="./Yapily_get_transactions_doc_files/fbevents.js.download"></script><script type="text/javascript" async="" src="./Yapily_get_transactions_doc_files/bat.js.download"></script><script type="text/javascript" async="" src="./Yapily_get_transactions_doc_files/insight.min.js.download"></script><script type="text/javascript" async="" src="./Yapily_get_transactions_doc_files/analytics.js.download"></script><script type="text/javascript" async="" src="./Yapily_get_transactions_doc_files/js"></script><script type="text/javascript" async="" src="./Yapily_get_transactions_doc_files/js(1)"></script><script async="" src="./Yapily_get_transactions_doc_files/gtm.js.download"></script><script>window._onRedoclyRouteChange = function (cb) {
+    window.__redoclyRouteChangeListenres = window.__redoclyRouteChangeListenres || [];
+    window.__redoclyRouteChangeListenres.push(cb);
+  }
+  window._onRedoclyLoginResult = function(cb) {
+    window.__redoclyLoginResultListenres =  window.__redoclyLoginResultListenres || [];
+    window.__redoclyLoginResultListenres.push(cb);
+  }</script><style data-href="/styles.49bad58fc1dc4ad60000.css" data-identity="gatsby-global-css">.ps{-ms-overflow-style:none;overflow:hidden!important;overflow-anchor:none;touch-action:auto;-ms-touch-action:auto}.ps__rail-x{bottom:0;height:15px}.ps__rail-x,.ps__rail-y{display:none;opacity:0;position:absolute;transition:background-color .2s linear,opacity .2s linear;-webkit-transition:background-color .2s linear,opacity .2s linear}.ps__rail-y{right:0;width:15px}.ps--active-x>.ps__rail-x,.ps--active-y>.ps__rail-y{background-color:transparent;display:block}.ps--focus>.ps__rail-x,.ps--focus>.ps__rail-y,.ps--scrolling-x>.ps__rail-x,.ps--scrolling-y>.ps__rail-y,.ps:hover>.ps__rail-x,.ps:hover>.ps__rail-y{opacity:.6}.ps .ps__rail-x.ps--clicking,.ps .ps__rail-x:focus,.ps .ps__rail-x:hover,.ps .ps__rail-y.ps--clicking,.ps .ps__rail-y:focus,.ps .ps__rail-y:hover{background-color:#eee;opacity:.9}.ps__thumb-x{bottom:2px;height:6px;transition:background-color .2s linear,height .2s ease-in-out;-webkit-transition:background-color .2s linear,height .2s ease-in-out}.ps__thumb-x,.ps__thumb-y{background-color:#aaa;border-radius:6px;position:absolute}.ps__thumb-y{right:2px;transition:background-color .2s linear,width .2s ease-in-out;-webkit-transition:background-color .2s linear,width .2s ease-in-out;width:6px}.ps__rail-x.ps--clicking .ps__thumb-x,.ps__rail-x:focus>.ps__thumb-x,.ps__rail-x:hover>.ps__thumb-x{background-color:#999;height:11px}.ps__rail-y.ps--clicking .ps__thumb-y,.ps__rail-y:focus>.ps__thumb-y,.ps__rail-y:hover>.ps__thumb-y{background-color:#999;width:11px}@supports (-ms-overflow-style:none){.ps{overflow:auto!important}}@media (-ms-high-contrast:none),screen and (-ms-high-contrast:active){.ps{overflow:auto!important}}.yhp{margin:10px auto;max-width:960px!important;padding:0 1rem}.announcement{background-color:#eae7ee;border-radius:3rem;color:#4b3774;padding:6px 16px;width:-moz-fit-content;width:fit-content}.announcement a{color:#4b3774;font-weight:700}.announcement a:hover{color:#4b3774}aside div[data-cy="sidebar-item-Coming soon"],aside div[data-cy="sidebar-item-Tutorial: Get financial data"],aside div[data-cy=sidebar-item-Feedback],aside div[data-cy=sidebar-item-Home]{display:none!important}aside div ul>span{font-family:Inter!important;font-size:14px!important;font-weight:400;padding-bottom:10px!important;padding-top:35px!important;text-transform:uppercase}aside div ul a div>span,aside div ul div>span{letter-spacing:.01em;line-height:1.5}aside>div{padding-bottom:40px}.external-url>div{justify-content:flex-start}.external-url>div>span{width:-moz-fit-content;width:fit-content}.external-url i,nav .external-url:after{background-image:url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGNsYXNzPSJwcmVmaXhfX2Zvb3RlcnN0eWxlc19fQXJyb3ctc2MtMTF2emVqdi0xNiBwcmVmaXhfX2ZDRUtmTyIgdmlld0JveD0iMCAwIDE3IDE2Ij48cGF0aCBkPSJNNC4yNDIgMTIuNDY1YS41LjUgMCAxIDAgLjcwNy43MDdsOC4xNDYtOC4xNDZ2Ny43OTNhLjUuNSAwIDEgMCAxIDB2LTlhLjUuNSAwIDAgMC0uNDk5LS41bC05LS4wMThhLjUuNSAwIDAgMC0uMDAyIDFsNy43OTcuMDE1LTguMTUgOC4xNVoiLz48L3N2Zz4=)!important;height:15px!important;margin-left:0;margin-top:1px;top:60%!important;vertical-align:top;width:15px!important}nav+div>aside{z-index:3!important}.link-yapily{color:#0367db;-webkit-text-decoration:none;text-decoration:none}.link-yapily:hover{color:#8ab3ee;text-decoration:underline}.title{color:#4b3774!important;font-family:Poppins,sans-serif!important;font-weight:400}.language-json,.language-shell,.language-text{font-family:Source Code Pro!important}.language-text{background-color:#e1e0df;color:#272827!important}.product-items{display:grid;grid-template-columns:repeat(3,1fr)}.product-item-column{display:grid;gap:1rem;grid-template-rows:repeat(4,1fr)}@media only screen and (max-width:949px){.product-items{grid-template-columns:repeat(3,1fr);padding-left:1rem}}@media only screen and (max-width:899px){.product-items{grid-template-columns:repeat(2,1fr);padding-left:1rem}}@media only screen and (max-width:550px){.product-items{grid-template-columns:repeat(1,1fr);padding-left:1rem}}@font-face{font-display:swap;font-family:NEXT Pan Book;font-style:normal;font-weight:400;src:url(/static/NEXTPanBook-Regular-206aa3446bd25e4b055604535910518b.eot);src:url(/static/NEXTPanBook-Regular-206aa3446bd25e4b055604535910518b.eot?#iefix) format("embedded-opentype"),url(/static/NEXTPanBook-Regular-2bf1b3a3dcb893f7771131123ace3a73.woff2) format("woff2"),url(/static/NEXTPanBook-Regular-0ef16c724baf3963b3914dd9452dad54.woff) format("woff")}aside+div>div>section+aside{margin-top:40px}nav+div>span{z-index:4!important}aside+div>div>section+aside>div>div{color:#8e8e8e;font-family:Inter!important;font-size:14px!important}aside+div>div>section+aside>div>a{color:#444!important;font-family:Inter!important;font-size:14px!important;font-weight:400;padding-bottom:8px!important;padding-top:8px!important}aside+div>div>section+aside>div>a.active,aside+div>div>section+aside>div>a:hover{background-color:#f0f0eb!important}.api-content a:hover,article a:hover{text-decoration:underline!important}article hr{border-top:1px solid #dcdcdc!important;display:flex;margin:40px auto!important}.api-content,article p{-webkit-font-smoothing:initial;letter-spacing:.01em}article strong{color:#272826;font-weight:700!important}article code[class=language-text]{background-color:#f8f7f5;border:1px solid #e1e0df;color:#272827!important;font-family:Source Code Pro!important;line-height:1.5!important;margin:3px 0}article table code[class=language-text]{white-space:nowrap!important}@media only screen and (max-width:550px){img[data-yapily=img-tutorials]{max-height:260px!important;padding:10px 20px!important}.medium-spacing,.simple-spacing{margin-bottom:20px!important}.long-spacing{margin-bottom:50px!important}}.simple-spacing{margin-bottom:60px}.medium-spacing{margin-bottom:120px}.long-spacing{margin-bottom:195px}.yapily-second-button{background:#272826;border-radius:"2px";border-radius:2px;color:#fff!important;cursor:pointer;font-family:NEXT Pan Book;font-size:14px;padding:8px 20px}.yapily-second-button:hover{background:#444!important;color:#fff!important;text-decoration:none!important}.title-description{color:#444;font-size:16px!important;font-weight:400!important}article table thead tr th{background-color:#e1e0df!important;border-bottom:none;border-top:none!important;color:#272827!important;font-family:Inter;font-weight:600!important;line-height:1.5;padding:24px!important}article table tbody tr{background-color:transparent!important;border-bottom:none!important;border-top:none!important}article table tbody tr:nth-child(2n){background:#f8f7f5!important;border-bottom:none!important;border-top:none!important}article table tbody tr td{font-family:Inter;line-height:1.5}article table thead th{border:none!important;padding:6px 16px!important}article table tbody td{border:none!important;padding:16px!important}article table tr{background-color:none!important}.api-content{margin-bottom:45px;margin-top:25px}.api-content code{background-color:#f8f7f5;border:1px solid #e1e0df;color:#272827!important;font-family:Source Code Pro!important;line-height:175%!important}.redoc-json code{color:#fff!important}.api-content div[role=tabpanel] code{background-color:inherit!important;border:inherit!important}.operation-type{vertical-align:middle}.api-content h5{color:#8e8e8e;font-family:NEXT Pan Book,Monospace}.api-content a[download]:hover{text-decoration:none!important}.api-content+span>div>a{background:#f0f0ea!important}.api-content .react-tabs__tab--selected{border-bottom:4px solid #cdd4f6!important}.api-content div[data-section-id]{border-bottom:1px solid #dcdcdc}.api-content div[data-section-id="section/Authentication/basicAuth"]{border-bottom:none}.iOFOOg,article .admonition-warning{border:1px solid #fab300;border-radius:4px}.BEdEO,article .admonition-attention,article .admonition-info{border:1px solid #9ca9ed;border-radius:4px}.gcCEX,article .admonition-success{border:1px solid #63dfb3;border-radius:4px}.kcGzLD,article .admonition-danger{border:1px solid #ec534b;border-radius:4px}article .admonition-beta{align-items:center;background-color:#fffbef;border:1px solid #fbe17e;border-radius:4px;border-radius:2px;color:#272826;font-size:14px;font-weight:400;line-height:1.5;margin:25px 0;padding:25px 20px 25px 66px;position:relative}article .admonition-beta:before{background-image:url(/static/beta-tool-icon-659a4d3c307a15102fb4006ef6920848.svg);color:#0000;content:"";flex-shrink:0;height:25px;left:20px;margin-right:20px;position:absolute;top:44%;transform:translateY(-50%);width:25px}article .admonition-beta p{margin-bottom:0;margin-top:0}nav>a{color:#fff!important}nav a:hover{background:none;color:#fff;transition:none}nav ul li{cursor:pointer;font-weight:400!important}nav ul li:hover{background-color:transparent;cursor:pointer}nav ul li a{font-family:Open Sans;position:relative}nav ul li a:after{background:#fff;content:"";height:1px;left:0;position:absolute;top:100%;transform:scaleX(0);transform-origin:bottom right;transition:transform .25s ease-out;width:100%}nav ul li a:hover:after{transform:scaleX(1)!important;transform-origin:bottom left!important}nav>a{margin-right:0!important;width:246px}nav ul li:last-child{background-color:transparent!important;border:1px solid #fff;border-radius:3rem;padding:5px 16px 9px}nav ul li:last-child a{font-family:Inter}nav ul li:last-child a:after{content:"";position:inherit;transform:inherit;transform-origin:inherit;transition:inherit}nav ul li:last-child{position:relative}nav ul li:last-child:after{background:hsla(0,0%,100%,.15);border-radius:3rem;content:"";height:100%;left:0;position:absolute;top:0;transform:scaleX(0);transform-origin:bottom right;transition:transform .25s ease-out;width:100%;z-index:-1}nav ul li:last-child:hover:after{transform:scaleX(1)!important;transform-origin:bottom left!important}nav ul li:last-child:hover{color:#fff}nav ul li:last-child a,nav ul li:last-child a span:hover{color:#fff!important}nav ul li:last-child a span:after{content:"→";margin-left:.5rem}@media only screen and (min-width:950px) and (max-width:1270px){nav ul li:last-child:hover{padding:4px 9px 8px!important}}input[id=search]{background-color:#fff;border:1px solid #dcdcdc;border-radius:3rem;color:#000;padding:7px 2.5em 7px 1em;padding-left:3rem!important}input[id=search]::placeholder{color:#8c8c8c;padding-left:0}input[id=search]:hover{border:1px solid #000;transition:all .3s ease}@media only screen and (min-width:950px){input[id=search]{color:#191919;font-family:NEXT Pan Book;font-size:14px;margin-left:10px;max-height:40px;max-width:400px;width:400px}nav ul>span{margin-right:auto;padding-left:35px}nav ul>span>span>span{left:4.5em;right:0}nav ul>span>span>input{padding-left:2em!important}nav ul{align-items:center;display:flex;flex:1 1;justify-content:flex-end}nav ul li a{color:#fff!important}}@media only screen and (min-width:950px) and (max-width:1270px){input[id=search]{width:auto!important}}div[data-cy="sidebar-item-Application Management (Merchant sub-applications)"] span:after,div[data-cy="sidebar-item-Application Management"] span:after,div[data-cy="sidebar-item-Bulk Payments"] span:after,div[data-cy="sidebar-item-Data Plus"] span:after,div[data-cy="sidebar-item-Hosted Pages"] span:after,div[data-cy="sidebar-item-International payments"] span:after,div[data-cy="sidebar-item-Pay By Link"] span:after,div[data-cy="sidebar-item-Payment constraints"] span:after,div[data-cy="sidebar-item-Periodic payments"] span:after,div[data-cy="sidebar-item-Tutorial: Categorisation"] span:after,div[data-cy="sidebar-item-Variable Recurring Payments"] span:after,div[data-cy="sidebar-item-Webhook notifications"] span:after,div[data-cy=sidebar-item-Categorisation] span:after,div[data-cy=sidebar-item-Constraints] span:after,div[data-cy=sidebar-item-Validate] span:after,div[data-cy=sidebar-item-Webhooks] span:after{background-color:#003839;border-radius:3rem;color:#fff;content:"BETA";font-family:Inter;font-size:10px;font-weight:600;margin-left:4px;padding:4px;vertical-align:middle}div[data-cy="sidebar-item-Financial Profile"] span:after,div[data-cy="sidebar-item-Virtual Accounts"] span:after{background-color:#818589;border-radius:3rem;color:#fff;content:"DEPRECATED";font-family:Inter;font-size:10px;font-weight:600;margin-left:4px;padding:4px;vertical-align:middle}nav ul li a[aria-current=page]{border-bottom:1px solid #fff}@media only screen and (min-width:950px) and (max-width:1270px){nav ul li:first-child:hover{padding:9px!important}}@media only screen and (min-width:1270px){nav ul li:last-child{margin-left:30px}nav ul li{padding-left:20px!important;padding-right:20px!important}}@media only screen and (max-width:1269px){nav ul li:last-child{margin-left:10px}nav ul li{padding-left:10px!important;padding-right:10px!important}}@media only screen and (max-width:950px){nav ul a+li,nav ul li:last-child{margin-left:41px;margin-right:41px}nav ul li{padding-left:30px!important;padding-right:30px!important}}@media only screen and (max-width:550px){nav ul a+li,nav ul li:last-child{margin-left:20px;margin-right:20px}nav ul li{padding-left:30px!important;padding-right:30px!important}}nav ul li a{color:#fff!important}nav>ul>span>ul>a>div{padding:16px 24px!important}nav>ul>span>ul>a>div>div,nav>ul>span>ul>a>div>div>span{color:#5c5c5c!important}.CodeMirror{color:#000;direction:ltr;font-family:monospace;height:300px}.CodeMirror-lines{padding:4px 0}.CodeMirror pre.CodeMirror-line,.CodeMirror pre.CodeMirror-line-like{padding:0 4px}.CodeMirror-gutter-filler,.CodeMirror-scrollbar-filler{background-color:#fff}.CodeMirror-gutters{background-color:#f7f7f7;border-right:1px solid #ddd;white-space:nowrap}.CodeMirror-linenumber{color:#999;min-width:20px;padding:0 3px 0 5px;text-align:right;white-space:nowrap}.CodeMirror-guttermarker{color:#000}.CodeMirror-guttermarker-subtle{color:#999}.CodeMirror-cursor{border-left:1px solid #000;border-right:none;width:0}.CodeMirror div.CodeMirror-secondarycursor{border-left:1px solid silver}.cm-fat-cursor .CodeMirror-cursor{background:#7e7;border:0!important;width:auto}.cm-fat-cursor div.CodeMirror-cursors{z-index:1}.cm-fat-cursor .CodeMirror-line::selection,.cm-fat-cursor .CodeMirror-line>span::selection,.cm-fat-cursor .CodeMirror-line>span>span::selection{background:transparent}.cm-fat-cursor .CodeMirror-line::-moz-selection,.cm-fat-cursor .CodeMirror-line>span::-moz-selection,.cm-fat-cursor .CodeMirror-line>span>span::-moz-selection{background:transparent}.cm-fat-cursor{caret-color:transparent}@keyframes blink{50%{background-color:transparent}}.cm-tab{display:inline-block;text-decoration:inherit}.CodeMirror-rulers{bottom:0;left:0;overflow:hidden;position:absolute;right:0;top:-50px}.CodeMirror-ruler{border-left:1px solid #ccc;bottom:0;position:absolute;top:0}.cm-s-default .cm-header{color:blue}.cm-s-default .cm-quote{color:#090}.cm-negative{color:#d44}.cm-positive{color:#292}.cm-header,.cm-strong{font-weight:700}.cm-em{font-style:italic}.cm-link{text-decoration:underline}.cm-strikethrough{text-decoration:line-through}.cm-s-default .cm-keyword{color:#708}.cm-s-default .cm-atom{color:#219}.cm-s-default .cm-number{color:#164}.cm-s-default .cm-def{color:#00f}.cm-s-default .cm-variable-2{color:#05a}.cm-s-default .cm-type,.cm-s-default .cm-variable-3{color:#085}.cm-s-default .cm-comment{color:#a50}.cm-s-default .cm-string{color:#a11}.cm-s-default .cm-string-2{color:#f50}.cm-s-default .cm-meta,.cm-s-default .cm-qualifier{color:#555}.cm-s-default .cm-builtin{color:#30a}.cm-s-default .cm-bracket{color:#997}.cm-s-default .cm-tag{color:#170}.cm-s-default .cm-attribute{color:#00c}.cm-s-default .cm-hr{color:#999}.cm-s-default .cm-link{color:#00c}.cm-invalidchar,.cm-s-default .cm-error{color:red}.CodeMirror-composing{border-bottom:2px solid}div.CodeMirror span.CodeMirror-matchingbracket{color:#0b0}div.CodeMirror span.CodeMirror-nonmatchingbracket{color:#a22}.CodeMirror-matchingtag{background:rgba(255,150,0,.3)}.CodeMirror-activeline-background{background:#e8f2ff}.CodeMirror{background:#fff;overflow:hidden;position:relative}.CodeMirror-scroll{height:100%;margin-bottom:-50px;margin-right:-50px;outline:none;overflow:scroll!important;padding-bottom:50px;position:relative;z-index:0}.CodeMirror-sizer{border-right:50px solid transparent;position:relative}.CodeMirror-gutter-filler,.CodeMirror-hscrollbar,.CodeMirror-scrollbar-filler,.CodeMirror-vscrollbar{display:none;outline:none;position:absolute;z-index:6}.CodeMirror-vscrollbar{overflow-x:hidden;overflow-y:scroll;right:0;top:0}.CodeMirror-hscrollbar{bottom:0;left:0;overflow-x:scroll;overflow-y:hidden}.CodeMirror-scrollbar-filler{bottom:0;right:0}.CodeMirror-gutter-filler{bottom:0;left:0}.CodeMirror-gutters{left:0;min-height:100%;position:absolute;top:0;z-index:3}.CodeMirror-gutter{display:inline-block;height:100%;margin-bottom:-50px;vertical-align:top;white-space:normal}.CodeMirror-gutter-wrapper{background:none!important;border:none!important;position:absolute;z-index:4}.CodeMirror-gutter-background{bottom:0;position:absolute;top:0;z-index:4}.CodeMirror-gutter-elt{cursor:default;position:absolute;z-index:4}.CodeMirror-gutter-wrapper ::selection{background-color:transparent}.CodeMirror-gutter-wrapper ::-moz-selection{background-color:transparent}.CodeMirror-lines{cursor:text;min-height:1px}.CodeMirror pre.CodeMirror-line,.CodeMirror pre.CodeMirror-line-like{word-wrap:normal;-webkit-tap-highlight-color:transparent;background:transparent;border-radius:0;border-width:0;color:inherit;font-family:inherit;font-size:inherit;font-variant-ligatures:contextual;line-height:inherit;margin:0;overflow:visible;position:relative;white-space:pre;z-index:2}.CodeMirror-wrap pre.CodeMirror-line,.CodeMirror-wrap pre.CodeMirror-line-like{word-wrap:break-word;white-space:pre-wrap;word-break:normal}.CodeMirror-linebackground{bottom:0;left:0;position:absolute;right:0;top:0;z-index:0}.CodeMirror-linewidget{padding:.1px;position:relative;z-index:2}.CodeMirror-rtl pre{direction:rtl}.CodeMirror-code{outline:none}.CodeMirror-gutter,.CodeMirror-gutters,.CodeMirror-linenumber,.CodeMirror-scroll,.CodeMirror-sizer{box-sizing:content-box}.CodeMirror-measure{height:0;overflow:hidden;position:absolute;visibility:hidden;width:100%}.CodeMirror-cursor{pointer-events:none;position:absolute}.CodeMirror-measure pre{position:static}div.CodeMirror-cursors{position:relative;visibility:hidden;z-index:3}.CodeMirror-focused div.CodeMirror-cursors,div.CodeMirror-dragcursors{visibility:visible}.CodeMirror-selected{background:#d9d9d9}.CodeMirror-focused .CodeMirror-selected{background:#d7d4f0}.CodeMirror-crosshair{cursor:crosshair}.CodeMirror-line::selection,.CodeMirror-line>span::selection,.CodeMirror-line>span>span::selection{background:#d7d4f0}.CodeMirror-line::-moz-selection,.CodeMirror-line>span::-moz-selection,.CodeMirror-line>span>span::-moz-selection{background:#d7d4f0}.cm-searching{background-color:#ffa;background-color:rgba(255,255,0,.4)}.cm-force-border{padding-right:.1px}@media print{.CodeMirror div.CodeMirror-cursors{visibility:hidden}}.cm-tab-wrap-hack:after{content:""}span.CodeMirror-selectedtext{background:none}.cm-s-material.CodeMirror{background-color:#263238;color:#eff}.cm-s-material .CodeMirror-gutters{background:#263238;border:none;color:#546e7a}.cm-s-material .CodeMirror-guttermarker,.cm-s-material .CodeMirror-guttermarker-subtle,.cm-s-material .CodeMirror-linenumber{color:#546e7a}.cm-s-material .CodeMirror-cursor{border-left:1px solid #fc0}.cm-s-material .cm-animate-fat-cursor,.cm-s-material.cm-fat-cursor .CodeMirror-cursor{background-color:#5d6d5c80!important}.cm-s-material div.CodeMirror-selected,.cm-s-material.CodeMirror-focused div.CodeMirror-selected{background:rgba(128,203,196,.2)}.cm-s-material .CodeMirror-line::selection,.cm-s-material .CodeMirror-line>span::selection,.cm-s-material .CodeMirror-line>span>span::selection{background:rgba(128,203,196,.2)}.cm-s-material .CodeMirror-line::-moz-selection,.cm-s-material .CodeMirror-line>span::-moz-selection,.cm-s-material .CodeMirror-line>span>span::-moz-selection{background:rgba(128,203,196,.2)}.cm-s-material .CodeMirror-activeline-background{background:rgba(0,0,0,.5)}.cm-s-material .cm-keyword{color:#c792ea}.cm-s-material .cm-operator{color:#89ddff}.cm-s-material .cm-variable-2{color:#eff}.cm-s-material .cm-type,.cm-s-material .cm-variable-3{color:#f07178}.cm-s-material .cm-builtin{color:#ffcb6b}.cm-s-material .cm-atom{color:#f78c6c}.cm-s-material .cm-number{color:#ff5370}.cm-s-material .cm-def{color:#82aaff}.cm-s-material .cm-string{color:#c3e88d}.cm-s-material .cm-string-2{color:#f07178}.cm-s-material .cm-comment{color:#546e7a}.cm-s-material .cm-variable{color:#f07178}.cm-s-material .cm-tag{color:#ff5370}.cm-s-material .cm-meta{color:#ffcb6b}.cm-s-material .cm-attribute,.cm-s-material .cm-property{color:#c792ea}.cm-s-material .cm-qualifier,.cm-s-material .cm-type,.cm-s-material .cm-variable-3{color:#decb6b}.cm-s-material .cm-error{background-color:#ff5370;color:#fff}.cm-s-material .CodeMirror-matchingbracket{color:#fff!important;text-decoration:underline}.CodeMirror-lint-markers{width:16px}.CodeMirror-lint-tooltip{background-color:#ffd;border:1px solid #000;border-radius:4px 4px 4px 4px;color:#000;font-family:monospace;font-size:10pt;max-width:600px;opacity:0;overflow:hidden;padding:2px 5px;position:fixed;transition:opacity .4s;-moz-transition:opacity .4s;-webkit-transition:opacity .4s;-o-transition:opacity .4s;-ms-transition:opacity .4s;white-space:pre;white-space:pre-wrap;z-index:100}.CodeMirror-lint-mark{background-position:0 100%;background-repeat:repeat-x}.CodeMirror-lint-mark-warning{background-image:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAADCAYAAAC09K7GAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9sJFhQXEbhTg7YAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAAMklEQVQI12NkgIIvJ3QXMjAwdDN+OaEbysDA4MPAwNDNwMCwiOHLCd1zX07o6kBVGQEAKBANtobskNMAAAAASUVORK5CYII=")}.CodeMirror-lint-mark-error{background-image:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAADCAYAAAC09K7GAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9sJDw4cOCW1/KIAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAAHElEQVQI12NggIL/DAz/GdA5/xkY/qPKMDAwAADLZwf5rvm+LQAAAABJRU5ErkJggg==")}.CodeMirror-lint-marker{background-position:50%;background-repeat:no-repeat;cursor:pointer;display:inline-block;height:16px;position:relative;vertical-align:middle;width:16px}.CodeMirror-lint-message{background-position:0 0;background-repeat:no-repeat;padding-left:18px}.CodeMirror-lint-marker-warning,.CodeMirror-lint-message-warning{background-image:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAANlBMVEX/uwDvrwD/uwD/uwD/uwD/uwD/uwD/uwD/uwD6twD/uwAAAADurwD2tQD7uAD+ugAAAAD/uwDhmeTRAAAADHRSTlMJ8mN1EYcbmiixgACm7WbuAAAAVklEQVR42n3PUQqAIBBFUU1LLc3u/jdbOJoW1P08DA9Gba8+YWJ6gNJoNYIBzAA2chBth5kLmG9YUoG0NHAUwFXwO9LuBQL1giCQb8gC9Oro2vp5rncCIY8L8uEx5ZkAAAAASUVORK5CYII=")}.CodeMirror-lint-marker-error,.CodeMirror-lint-message-error{background-image:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAHlBMVEW7AAC7AACxAAC7AAC7AAAAAAC4AAC5AAD///+7AAAUdclpAAAABnRSTlMXnORSiwCK0ZKSAAAATUlEQVR42mWPOQ7AQAgDuQLx/z8csYRmPRIFIwRGnosRrpamvkKi0FTIiMASR3hhKW+hAN6/tIWhu9PDWiTGNEkTtIOucA5Oyr9ckPgAWm0GPBog6v4AAAAASUVORK5CYII=")}.CodeMirror-lint-marker-multiple{background-image:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAMAAADzjKfhAAAACVBMVEUAAAAAAAC/v7914kyHAAAAAXRSTlMAQObYZgAAACNJREFUeNo1ioEJAAAIwmz/H90iFFSGJgFMe3gaLZ0od+9/AQZ0ADosbYraAAAAAElFTkSuQmCC");background-position:100% 100%;background-repeat:no-repeat;height:100%;width:100%}.CodeMirror-lint-line-error{background-color:rgba(183,76,81,.08)}.CodeMirror-lint-line-warning{background-color:rgba(255,211,0,.1)}.CodeMirror-hints{background:#fff;border:1px solid silver;border-radius:3px;box-shadow:2px 3px 5px rgba(0,0,0,.2);box-sizing:border-box;font-family:monospace;font-size:90%;list-style:none;margin:0;max-height:20em;overflow:hidden;overflow-y:auto;padding:2px;position:absolute;z-index:10}.CodeMirror-hint{border-radius:2px;color:#000;cursor:pointer;margin:0;padding:0 4px;white-space:pre}li.CodeMirror-hint-active{background:#08f;color:#fff}.tile-main{background-color:#fff;box-sizing:border-box;flex-direction:row;margin-bottom:15px;margin-left:2px;margin-right:16px;text-decoration:none}.tile-content-text{color:#272827e5;font-family:Inter;font-weight:400;letter-spacing:.01em;line-height:1.5}.tile-img{display:flex;max-width:100%;min-width:32px}.tile-img img{margin:20px 25px 10px;max-width:100%}.border-bottom-img{border-bottom:1px solid #dcdcdc}.tile-content{padding:0 0 0 1rem}.tile-content h4,.tile-header h4{color:#191919;font-family:Inter;font-size:17px;font-style:normal;font-weight:700;letter-spacing:.01em;margin-bottom:14px;margin-top:10px}.tile-header h4{line-height:38px}.tile-header{display:flex;padding:10px 20px;width:100%}</style><meta name="generator" content="Gatsby 3.10.2"><title>Tutorial: Get account and transaction data</title><link data-react-helmet="true" href="./Yapily_get_transactions_doc_files/css2" rel="stylesheet"><link data-react-helmet="true" href="./Yapily_get_transactions_doc_files/css2(1)" rel="stylesheet"><link data-react-helmet="true" href="./Yapily_get_transactions_doc_files/css2(2)" rel="stylesheet"><link data-react-helmet="true" href="./Yapily_get_transactions_doc_files/css2(3)" rel="stylesheet"><meta data-react-helmet="true" name="title" content="Tutorial: Get account and transaction data"><meta data-react-helmet="true" name="description" content="This tutorial walks you through each of the steps required to obtain a user&#39;s account and transaction data."><meta data-react-helmet="true" name="keywords" content="yapily, developer portal, api portal, api reference, docs, documentation"><meta data-react-helmet="true" property="og:type" content="website"><meta data-react-helmet="true" property="og:title" content="Tutorial: Get account and transaction data"><meta data-react-helmet="true" property="og:description" content="This tutorial walks you through each of the steps required to obtain a user&#39;s account and transaction data."><meta data-react-helmet="true" property="og:site_name" content="Yapily API Documentation"><meta data-react-helmet="true" name="twitter:title" content="Tutorial: Get account and transaction data"><meta data-react-helmet="true" name="twitter:description" content="This tutorial walks you through each of the steps required to obtain a user&#39;s account and transaction data."><meta data-react-helmet="true" name="twitter:card" content="summary"><script data-react-helmet="true" src="./Yapily_get_transactions_doc_files/cloudista-tag.js.download"></script><style type="text/css">
+    .anchor.before {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform: translateX(-100%);
+      padding-right: 4px;
+    }
+    .anchor.after {
+      display: inline-block;
+      padding-left: 4px;
+    }
+    h1 .anchor svg,
+    h2 .anchor svg,
+    h3 .anchor svg,
+    h4 .anchor svg,
+    h5 .anchor svg,
+    h6 .anchor svg {
+      visibility: hidden;
+    }
+    h1:hover .anchor svg,
+    h2:hover .anchor svg,
+    h3:hover .anchor svg,
+    h4:hover .anchor svg,
+    h5:hover .anchor svg,
+    h6:hover .anchor svg,
+    h1 .anchor:focus svg,
+    h2 .anchor:focus svg,
+    h3 .anchor:focus svg,
+    h4 .anchor:focus svg,
+    h5 .anchor:focus svg,
+    h6 .anchor:focus svg {
+      visibility: visible;
+    }
+    .hidden-anchor { 
+      position: absolute;
+      top: 0px;
+    }
+  </style><style data-styled="active" data-styled-version="5.3.11"></style><link rel="icon" href="https://docs.yapily.com/favicon-32x32.png?v=3cd9c6bd18d16de002f09e1f806454b6" type="image/png"><link rel="manifest" href="https://docs.yapily.com/manifest.webmanifest" crossorigin="anonymous"><link rel="apple-touch-icon" sizes="48x48" href="https://docs.yapily.com/icons/icon-48x48.png?v=3cd9c6bd18d16de002f09e1f806454b6"><link rel="apple-touch-icon" sizes="72x72" href="https://docs.yapily.com/icons/icon-72x72.png?v=3cd9c6bd18d16de002f09e1f806454b6"><link rel="apple-touch-icon" sizes="96x96" href="https://docs.yapily.com/icons/icon-96x96.png?v=3cd9c6bd18d16de002f09e1f806454b6"><link rel="apple-touch-icon" sizes="144x144" href="https://docs.yapily.com/icons/icon-144x144.png?v=3cd9c6bd18d16de002f09e1f806454b6"><link rel="apple-touch-icon" sizes="192x192" href="https://docs.yapily.com/icons/icon-192x192.png?v=3cd9c6bd18d16de002f09e1f806454b6"><link rel="apple-touch-icon" sizes="256x256" href="https://docs.yapily.com/icons/icon-256x256.png?v=3cd9c6bd18d16de002f09e1f806454b6"><link rel="apple-touch-icon" sizes="384x384" href="https://docs.yapily.com/icons/icon-384x384.png?v=3cd9c6bd18d16de002f09e1f806454b6"><link rel="apple-touch-icon" sizes="512x512" href="https://docs.yapily.com/icons/icon-512x512.png?v=3cd9c6bd18d16de002f09e1f806454b6"><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src= 'https://www.googletagmanager.com/gtm.js?id='+i+dl+'';f.parentNode.insertBefore(j,f); })(window,document,'script','dataLayer', 'GTM-TNRNLCV');</script><link rel="canonical" href="https://docs.yapily.com/pages/data/data-product/tutorial-account-and-trans-data/" data-baseprotocol="https:" data-basehost="docs.yapily.com"><link rel="sitemap" type="application/xml" href="https://docs.yapily.com/sitemap.xml"><link as="script" rel="preload" href="./Yapily_get_transactions_doc_files/webpack-runtime-dba2e9475ee0ef28e029.js.download"><link as="script" rel="preload" href="./Yapily_get_transactions_doc_files/framework-8070d1f4731684b4dd9a.js.download"><link as="script" rel="preload" href="./Yapily_get_transactions_doc_files/d4eeb59c-033ffabebcee88d40ddd.js.download"><link as="script" rel="preload" href="./Yapily_get_transactions_doc_files/f74d91fd-c1f8e49cefaf841ec566.js.download"><link as="script" rel="preload" href="./Yapily_get_transactions_doc_files/app-a43a14a3d011de90b038.js.download"><link as="script" rel="preload" href="./Yapily_get_transactions_doc_files/component---src-templates-simple-markdown-js-5e40fb828f32d9c30e8f.js.download"><link as="fetch" rel="preload" href="https://docs.yapily.com/page-data/pages/data/data-product/tutorial-account-and-trans-data/page-data.json" crossorigin="anonymous"><link as="fetch" rel="preload" href="https://docs.yapily.com/page-data/sq/d/1123603147.json" crossorigin="anonymous"><link as="fetch" rel="preload" href="https://docs.yapily.com/page-data/sq/d/1180902673.json" crossorigin="anonymous"><link as="fetch" rel="preload" href="https://docs.yapily.com/page-data/sq/d/1302185487.json" crossorigin="anonymous"><link as="fetch" rel="preload" href="https://docs.yapily.com/page-data/sq/d/1344209882.json" crossorigin="anonymous"><link as="fetch" rel="preload" href="https://docs.yapily.com/page-data/sq/d/1398840060.json" crossorigin="anonymous"><link as="fetch" rel="preload" href="https://docs.yapily.com/page-data/sq/d/1520077861.json" crossorigin="anonymous"><link as="fetch" rel="preload" href="https://docs.yapily.com/page-data/sq/d/1975142765.json" crossorigin="anonymous"><link as="fetch" rel="preload" href="https://docs.yapily.com/page-data/sq/d/2667623876.json" crossorigin="anonymous"><link as="fetch" rel="preload" href="https://docs.yapily.com/page-data/sq/d/2950305614.json" crossorigin="anonymous"><link as="fetch" rel="preload" href="https://docs.yapily.com/page-data/sq/d/3743992808.json" crossorigin="anonymous"><link as="fetch" rel="preload" href="https://docs.yapily.com/page-data/sq/d/561138138.json" crossorigin="anonymous"><link as="fetch" rel="preload" href="https://docs.yapily.com/page-data/app-data.json" crossorigin="anonymous"><style id="nprogress-styles">
+    #nprogress {
+     pointer-events: none;
+    }
+    #nprogress .bar {
+      background: #29d;
+      position: fixed;
+      z-index: 1031;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+    }
+    #nprogress .peg {
+      display: block;
+      position: absolute;
+      right: 0px;
+      width: 100px;
+      height: 100%;
+      box-shadow: 0 0 10px #29d, 0 0 5px #29d;
+      opacity: 1.0;
+      -webkit-transform: rotate(3deg) translate(0px, -4px);
+      -ms-transform: rotate(3deg) translate(0px, -4px);
+      transform: rotate(3deg) translate(0px, -4px);
+    }
+    #nprogress .spinner {
+      display: block;
+      position: fixed;
+      z-index: 1031;
+      top: 15px;
+      right: 15px;
+    }
+    #nprogress .spinner-icon {
+      width: 18px;
+      height: 18px;
+      box-sizing: border-box;
+      border: solid 2px transparent;
+      border-top-color: #29d;
+      border-left-color: #29d;
+      border-radius: 50%;
+      -webkit-animation: nprogress-spinner 400ms linear infinite;
+      animation: nprogress-spinner 400ms linear infinite;
+    }
+    .nprogress-custom-parent {
+      overflow: hidden;
+      position: relative;
+    }
+    .nprogress-custom-parent #nprogress .spinner,
+    .nprogress-custom-parent #nprogress .bar {
+      position: absolute;
+    }
+    @-webkit-keyframes nprogress-spinner {
+      0% {
+        -webkit-transform: rotate(0deg);
+      }
+      100% {
+        -webkit-transform: rotate(360deg);
+      }
+    }
+    @keyframes nprogress-spinner {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style><link rel="prefetch" href="https://docs.yapily.com/page-data/index/page-data.json" crossorigin="anonymous" as="fetch"><link rel="prefetch" href="https://docs.yapily.com/page-data/pages/getting-started/overview/page-data.json" crossorigin="anonymous" as="fetch"><link rel="prefetch" href="https://docs.yapily.com/page-data/index/page-data.json" crossorigin="anonymous" as="fetch"><link rel="prefetch" href="https://docs.yapily.com/page-data/api/reference/page-data.json" crossorigin="anonymous" as="fetch"><link rel="prefetch" href="https://docs.yapily.com/page-data/pages/getting-started/application-management/page-data.json" crossorigin="anonymous" as="fetch"><link rel="prefetch" href="https://docs.yapily.com/page-data/pages/getting-started/get-started/page-data.json" crossorigin="anonymous" as="fetch"><link rel="prefetch" href="https://docs.yapily.com/page-data/index/page-data.json" crossorigin="anonymous" as="fetch"><link rel="prefetch" href="https://docs.yapily.com/page-data/pages/data/data-product/overview/page-data.json" crossorigin="anonymous" as="fetch"><link rel="prefetch" href="https://docs.yapily.com/component---src-templates-redoc-operation-js-64d15671f8cc9451478c.js"><link rel="prefetch" href="https://docs.yapily.com/component---index-mdx-3e6afd540dc3583168de.js"><link rel="prefetch" href="https://docs.yapily.com/component---index-mdx-3e6afd540dc3583168de.js"><link rel="prefetch" href="https://docs.yapily.com/component---index-mdx-3e6afd540dc3583168de.js"><script src="./Yapily_get_transactions_doc_files/137018620.js.download" type="text/javascript" async="" data-ueto="ueto_561a66a206"></script><link rel="prefetch" href="./Yapily_get_transactions_doc_files/component---src-templates-simple-markdown-js-5e40fb828f32d9c30e8f.js.download"><script type="text/javascript" src="./Yapily_get_transactions_doc_files/analytics"></script><script type="text/javascript" src="./Yapily_get_transactions_doc_files/analytics(1)"></script></head><body><noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TNRNLCV" height="0" width="0" style="display: none; visibility: hidden" aria-hidden="true"></iframe></noscript><div id="___gatsby"><div style="outline:none" tabindex="-1" id="gatsby-focus-wrapper"><div class="LayoutWrapper-sc-9434ya-0 iRGcWt"><nav class="sc-dBFDNq idILKv" id="navbar"><a class="sc-djVXDX dHWPlo" href="https://docs.yapily.com/"><img src="./Yapily_get_transactions_doc_files/logo-yapily-docs-4505d1904545ae38e04eee3df605e312.svg" alt="Yapily" class="sc-ggqIjW cDegUa"></a><ul class="sc-epRvzc eyAUGZ"><span class="sc-hGMjit AuMvn"><span class="sc-rPWID gnyvDV"><input type="text" autocomplete="off" value="" id="search" placeholder="Search the docs" aria-label="Search the docs" class="sc-jBeBSR iTyXOH"><span class="sc-izQBue sc-gtJxfw ZaYOR jDJjOO"></span></span><ul class="sc-ezreuY BLVkf"><div class="sc-pKqro lnfVsc"> Nothing Found </div></ul></span><li data-cy="Docs" class="sc-btwKTd hQQLZY"><a href="https://docs.yapily.com/"><span style="vertical-align:middle">Docs</span></a></li><li data-cy="API Reference" class="sc-btwKTd hQQLZY"><a href="https://docs.yapily.com/api/reference/"><span style="vertical-align:middle">API Reference</span></a></li><li data-cy="Login to Console" class="sc-btwKTd hQQLZY"><a href="https://console.yapily.com/" target="_self" class="sc-fPrdXf iUKIKo  undefined" data-cy="universalLink-with-nested-jsx"><span style="vertical-align:middle">Login to Console</span></a></li></ul><div class="sc-gFnajm bttNus"><span class="sc-dISpDn ftLXJc"></span></div><ul class="sc-eONNys hDENmg"><i class="sc-bStcSt bdiTgK"></i><a href="https://docs.yapily.com/"><img src="./Yapily_get_transactions_doc_files/logo-yapily-docs-4505d1904545ae38e04eee3df605e312.svg" alt="Yapily" class="sc-ggqIjW sc-iaJaUu cDegUa jvNSze"></a><li class="sc-feoqov Gszcz"><a href="https://docs.yapily.com/">Docs</a></li><li class="sc-feoqov Gszcz"><a href="https://docs.yapily.com/api/reference/">API Reference</a></li><li class="sc-feoqov Gszcz"><a href="https://console.yapily.com/" target="_self" class="sc-fPrdXf iUKIKo  undefined" data-cy="universalLink-Login to Console">Login to Console</a></li></ul></nav><div class="sc-iQbOkh sc-fIGJwM sc-kufkCr cgrkxB jQBAmF jICydu"><span class="sc-inyXkq dqwmkN"></span><aside class="sc-fremEr jmpwZh"><div class="sc-djTQaJ fZtdmO"><ul class="sc-gwZKzw bGBnMO"><a href="https://docs.yapily.com/"><div data-cy="sidebar-item-Home" class="sc-fscmHZ kgRJON"><span class="sc-lfYzqA gHfAzG">Home</span></div></a><span class="sc-lmUcrn fPuMKx">Getting started</span><a href="https://docs.yapily.com/pages/getting-started/overview/"><div data-cy="sidebar-item-Overview" class="sc-fscmHZ kgRJON"><span class="sc-lfYzqA gHfAzG">Overview</span></div></a><a href="https://docs.yapily.com/pages/getting-started/get-started/"><div data-cy="sidebar-item-Get started" class="sc-fscmHZ kgRJON"><span class="sc-lfYzqA gHfAzG">Get started</span></div></a><a href="https://demo.yapily.com/" target="_blank" class="sc-fPrdXf iUKIKo external-url undefined" data-cy="universalLink-with-nested-jsx"><div data-cy="sidebar-item-Demo" class="sc-fscmHZ kgRJON"><span class="sc-lfYzqA gHfAzG">Demo</span><div><i class="sc-cTTdyq efOmDi"></i></div></div></a><a href="https://docs.yapily.com/pages/getting-started/application-management/"><div data-cy="sidebar-item-Application Management" class="sc-fscmHZ kgRJON"><span class="sc-lfYzqA gHfAzG">Application Management</span></div></a><div data-cy="sidebar-item-Integration setup" class="sc-fscmHZ kcQvZb"><div class="sc-bWJUgm bYmEGB"><i color="#8E8E8E" direction="right" width="8px" height="8px" data-cy="arrow" class="sc-cQCQeq cgpTSW"></i></div><span class="sc-lfYzqA gHfAzG">Integration setup</span></div><span class="sc-lmUcrn fPuMKx">Payments</span><div data-cy="sidebar-item-Payments" class="sc-fscmHZ kcQvZb"><div class="sc-bWJUgm bYmEGB"><i color="#8E8E8E" direction="right" width="8px" height="8px" data-cy="arrow" class="sc-cQCQeq cgpTSW"></i></div><span class="sc-lfYzqA gHfAzG">Payments</span></div><div data-cy="sidebar-item-Bulk Payments" class="sc-fscmHZ kcQvZb"><div class="sc-bWJUgm bYmEGB"><i color="#8E8E8E" direction="right" width="8px" height="8px" data-cy="arrow" class="sc-cQCQeq cgpTSW"></i></div><span class="sc-lfYzqA gHfAzG">Bulk Payments</span></div><div data-cy="sidebar-item-Variable Recurring Payments" class="sc-fscmHZ kcQvZb"><div class="sc-bWJUgm bYmEGB"><i color="#8E8E8E" direction="right" width="8px" height="8px" data-cy="arrow" class="sc-cQCQeq cgpTSW"></i></div><span class="sc-lfYzqA gHfAzG">Variable Recurring Payments</span></div><div data-cy="sidebar-item-Payments resources" class="sc-fscmHZ kcQvZb"><div class="sc-bWJUgm bYmEGB"><i color="#8E8E8E" direction="right" width="8px" height="8px" data-cy="arrow" class="sc-cQCQeq cgpTSW"></i></div><span class="sc-lfYzqA gHfAzG">Payments resources</span></div><span class="sc-lmUcrn fPuMKx">Data</span><div data-cy="sidebar-item-Data" class="sc-fscmHZ kcQvZb"><div class="sc-bWJUgm bYmEGB"><i color="#8E8E8E" direction="down" width="8px" height="8px" data-cy="arrow" class="sc-cQCQeq dGRbZy"></i></div><span class="sc-lfYzqA gHfAzG">Data</span></div><ul class="sc-gwZKzw bGBnMO"><a href="https://docs.yapily.com/pages/data/data-product/overview/"><div data-cy="sidebar-item-Overview" class="sc-fscmHZ tfbDC"><span class="sc-lfYzqA gHfAzG">Overview</span></div></a><a aria-current="page" class="" href="https://docs.yapily.com/pages/data/data-product/tutorial-account-and-trans-data/"><div data-cy="sidebar-item-Tutorial: Get account and transaction data" class="sc-fscmHZ fbKsGC"><span class="sc-lfYzqA gHfAzG">Tutorial: Get account and transaction data</span></div></a></ul><div data-cy="sidebar-item-Data Plus" class="sc-fscmHZ kcQvZb"><div class="sc-bWJUgm bYmEGB"><i color="#8E8E8E" direction="right" width="8px" height="8px" data-cy="arrow" class="sc-cQCQeq cgpTSW"></i></div><span class="sc-lfYzqA gHfAzG">Data Plus</span></div><div data-cy="sidebar-item-Validate" class="sc-fscmHZ kcQvZb"><div class="sc-bWJUgm bYmEGB"><i color="#8E8E8E" direction="right" width="8px" height="8px" data-cy="arrow" class="sc-cQCQeq cgpTSW"></i></div><span class="sc-lfYzqA gHfAzG">Validate</span></div><div data-cy="sidebar-item-Financial data resources" class="sc-fscmHZ kcQvZb"><div class="sc-bWJUgm bYmEGB"><i color="#8E8E8E" direction="right" width="8px" height="8px" data-cy="arrow" class="sc-cQCQeq cgpTSW"></i></div><span class="sc-lfYzqA gHfAzG">Financial data resources</span></div><span class="sc-lmUcrn fPuMKx">Open Banking Flow</span><div data-cy="sidebar-item-User authorisation flows" class="sc-fscmHZ kcQvZb"><div class="sc-bWJUgm bYmEGB"><i color="#8E8E8E" direction="right" width="8px" height="8px" data-cy="arrow" class="sc-cQCQeq cgpTSW"></i></div><span class="sc-lfYzqA gHfAzG">User authorisation flows</span></div><div data-cy="sidebar-item-Handling redirects" class="sc-fscmHZ kcQvZb"><div class="sc-bWJUgm bYmEGB"><i color="#8E8E8E" direction="right" width="8px" height="8px" data-cy="arrow" class="sc-cQCQeq cgpTSW"></i></div><span class="sc-lfYzqA gHfAzG">Handling redirects</span></div><span class="sc-lmUcrn fPuMKx">Developer Tools &amp; Services</span><div data-cy="sidebar-item-Yapily Connect" class="sc-fscmHZ kcQvZb"><div class="sc-bWJUgm bYmEGB"><i color="#8E8E8E" direction="right" width="8px" height="8px" data-cy="arrow" class="sc-cQCQeq cgpTSW"></i></div><span class="sc-lfYzqA gHfAzG">Yapily Connect</span></div><div data-cy="sidebar-item-Hosted Pages" class="sc-fscmHZ kcQvZb"><div class="sc-bWJUgm bYmEGB"><i color="#8E8E8E" direction="right" width="8px" height="8px" data-cy="arrow" class="sc-cQCQeq cgpTSW"></i></div><span class="sc-lfYzqA gHfAzG">Hosted Pages</span></div><div data-cy="sidebar-item-Pay By Link" class="sc-fscmHZ kcQvZb"><div class="sc-bWJUgm bYmEGB"><i color="#8E8E8E" direction="right" width="8px" height="8px" data-cy="arrow" class="sc-cQCQeq cgpTSW"></i></div><span class="sc-lfYzqA gHfAzG">Pay By Link</span></div><div data-cy="sidebar-item-Webhooks" class="sc-fscmHZ kcQvZb"><div class="sc-bWJUgm bYmEGB"><i color="#8E8E8E" direction="right" width="8px" height="8px" data-cy="arrow" class="sc-cQCQeq cgpTSW"></i></div><span class="sc-lfYzqA gHfAzG">Webhooks</span></div><span class="sc-lmUcrn fPuMKx">Resources</span><a href="https://docs.yapily.com/pages/resources/client-libraries/"><div data-cy="sidebar-item-Client libraries" class="sc-fscmHZ kgRJON"><span class="sc-lfYzqA gHfAzG">Client libraries</span></div></a><a href="https://docs.yapily.com/pages/resources/change-logs/"><div data-cy="sidebar-item-Changelog" class="sc-fscmHZ kgRJON"><span class="sc-lfYzqA gHfAzG">Changelog</span></div></a><a href="https://docs.yapily.com/pages/resources/error-codes/"><div data-cy="sidebar-item-Error codes" class="sc-fscmHZ kgRJON"><span class="sc-lfYzqA gHfAzG">Error codes</span></div></a><a href="https://docs.yapily.com/pages/resources/error-handling/"><div data-cy="sidebar-item-Error handling" class="sc-fscmHZ kgRJON"><span class="sc-lfYzqA gHfAzG">Error handling</span></div></a><div data-cy="sidebar-item-Sandbox" class="sc-fscmHZ kcQvZb"><div class="sc-bWJUgm bYmEGB"><i color="#8E8E8E" direction="right" width="8px" height="8px" data-cy="arrow" class="sc-cQCQeq cgpTSW"></i></div><span class="sc-lfYzqA gHfAzG">Sandbox</span></div><a href="https://docs.yapily.com/pages/resources/support/"><div data-cy="sidebar-item-Support" class="sc-fscmHZ kgRJON"><span class="sc-lfYzqA gHfAzG">Support</span></div></a><a href="https://status.yapily.com/" target="_blank" class="sc-fPrdXf iUKIKo external-url undefined" data-cy="universalLink-with-nested-jsx"><div data-cy="sidebar-item-API Status" class="sc-fscmHZ kgRJON"><span class="sc-lfYzqA gHfAzG">API Status</span><div><i class="sc-cTTdyq efOmDi"></i></div></div></a><a href="https://docs.yapily.com/institutions"><div data-cy="sidebar-item-Institution Configurations" class="sc-fscmHZ kgRJON"><span class="sc-lfYzqA gHfAzG">Institution Configurations</span></div></a></ul></div></aside><div width="[object Object]" class="sc-iQbOkh sc-fIGJwM fImLNe iDveqM"><div class="sc-lpYOg edytuR"><section class="sc-bizigk jzlLe"><div class="sc-bSiGmx lpavp"></div><article class="sc-cDvQBt ksZZho"><h1 style="position:relative;"><a href="https://docs.yapily.com/pages/data/data-product/tutorial-account-and-trans-data/#tutorial-get-account-and-transaction-data" aria-label="tutorial get account and transaction data permalink" class="anchor before"><svg aria-hidden="true" focusable="false" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><div class="hidden-anchor" id="tutorial-get-account-and-transaction-data" style="top: -70px;"></div>Tutorial: Get account and transaction data</h1>
+<h2 style="position:relative;"><a href="https://docs.yapily.com/pages/data/data-product/tutorial-account-and-trans-data/#introduction" aria-label="introduction permalink" class="anchor before"><svg aria-hidden="true" focusable="false" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><div class="hidden-anchor" id="introduction" style="top: -70px;"></div>Introduction</h2>
+<p>This tutorial explains how to access account and transaction information in the UK with the Modelo Sandbox.</p>
+<p><strong>Note:</strong> All requests made to the Yapily API require <a href="https://docs.yapily.com/pages/getting-started/integration-setup/api-authentication/">basic authentication</a>.</p>
+<hr>
+<h2 style="position:relative;"><a href="https://docs.yapily.com/pages/data/data-product/tutorial-account-and-trans-data/#overview-of-steps" aria-label="overview of steps permalink" class="anchor before"><svg aria-hidden="true" focusable="false" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><div class="hidden-anchor" id="overview-of-steps" style="top: -70px;"></div>Overview of steps</h2>
+<p>The following diagram illustrates how to access account and transaction information in the UK:</p>
+<p><span class="gatsby-img-attributes" style="display:block; "><span class="gatsby-resp-image-wrapper" style="position: relative; display: block; margin-left: auto; margin-right: auto; max-width: 910px; ">
+      <span class="gatsby-resp-image-background-image" style="padding-bottom: 146.93%; position: relative; bottom: 0px; left: 0px; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAdCAYAAACqhkzFAAAACXBIWXMAAD2EAAA9hAHVrK90AAAF5ElEQVR42n1Wa2wUVRRexEcgiigaYiQmhGg0/jIkxkT/6R+Nib8wpUbKsxig0kILJagFjEQ0BIqPBGKMoolxlYJSGiI/CokhBhoR6APa3e57d3Z33ndm7jzuzPW7sy1CbNnkZCazZ78553zf+e4mOOdzBnni3gQ+g3xh2wX+KP+1vMhOFh5zT9Uecc+yJ2h78Sdt3fU+c/XF70jLxe9JW/Wc9vLh3ea8l17xnm9udl94dxVd/Pob4YJXX8snBnp7HxgeHHxQACrk2raQZ7hsXWOISKPDXKXX3WEjd+CyUe64rBW3DWnF7UNE2jpcyJ5P5XN8ZGI8HJ2YiG5kJvnwxLiUcEq/P9V7oncJH1o+37X8LlTMPYcxRMQ83NuhwxnvsFX9jEucS45uXvU0spd7flLkKrLMalIlYoHPA9+TEjcuHF966KsPnhvoeXGB7xrbRZJLCXM9Kwp8yqlDHNd3u3PF4tVMIa9mcjm7Vq8fUVXlBKUOLxQKbBwVGobBTVOXEm8uXz6/qalpsWiZ+e5WAaiqcqAocoQEblsmZYx1aqa5biKf34xoQ0qT79N+zkNu6ApTlTpe7qIQWxI4CSTEpPiu3S4AJycng5GRkUiWZa4pMjV1fSeldDVnbA3A1xFCmnVNHQiZz01DYxYxIh6x/wCHhobuiwF9t70xl3pQrUqRaegiycGjTkVR9iuK1ovrl5pm7vA853RjPDajjhUJ8FkrlKrVIJPNomWTE1O3pXL5I13Xy6JiVMptm57H/E6KXErtkFIrisKgAZg8eHBefezPhwQgBhuTgh8zw9Aji5jcIsQB8C5NM46k05njpVLlB9zvoY6oMBIzRstm5LuUO7YlJWj2t6WHvz3wdPpc68OOZcSycWwSt+F7gmVLkLKdWNYvuVzuEqq8bFnWEcsip0IWcFmus1qtFuEFyEWF438dW7KrZ8uzR3sS812XxBUCJAYMAChmiM+Oaq02ms3lgnKlwut1uR+yOem6Dq9UymGpVEI3pNHyihUr5ra0tCy8fYYACwQgIgZUTbN7NJ3eUqhU3k+VSu1jmcxakHB6aoYxy7dmeAcpfgMQbwzK5XIsVkPXKPP9TrS91md+K64bEc1or1/MEGDM0NW7A0L9AbQYqaoKCdUoSNkJojYiNuNZG160ytS1WzoEMbMATrVsWySABkGKKwZN8WgbYi2iFfEeYiXzvbhlz3XuosNY2BGXpEpQLBajer0mKog3RVSISjf5vr8J+c2eJ1avMcNZAV3b7oiFDcBSqRipihLvMtgUclqtK7qY3wZRIYR95nZF3AIsjvYtunIx+STw7iFTwhZipbYVuY4t2qe+63YRg7Tn88UPZVndbVl0jUfRcsgEaQx7HSGfW6YhJarjfctaP+5cduXkWwt91+q6Q4cNB7HRZjeIKIrVwz0nxP5GV5Uk5sshdpbFmlarNVGIlBhIfvL4/p7Nz6DCudMsY9ABIgbEVZhDFyo7cyOV+idTKAxjl/c5jtUXgtl6vc7EvAnW1LbNeIZzksnk/be7TaVSgdvUQEpdeCPFqu2oVqst2Xx+fbZUWg+CVsI0YtnomoKWlVg26GomljnP5/NBsQCWazUhXJDiduLxGsR6xAbG+Ers+xlhsNPj4dEMOnSnV88WOtSmzMGGn5JPsTlD2KC/cR2DuI8J+wpwjqByhn2G1RmYoTELIHZZrBOGLPzQANDXhmnGroIPzg7zrFyrwhwoT6cnw4mpMyW2r5kAfc/By12cZF5sDqVKZU8ql/t8LJ0+lMpkvhhOpXaChLhlTZVDcaYI53GmSPnf6pXKpSCfz0U4qGC2qiClSyfkHcOyViFaiOO8bdtkQOSKXRakNITtzAwIzwtu3rwZ6WhDVWTHgjmA8X1g9zPM76BckztgDv2iA+E2ArDRjTMzy/gCZzadNgcb67ZL1bSqJEnQmi2094cwWHHSocJwWjbQ7J2AjPkxIMoP8MaI4y8D7vE/gnWD6aPYlB8x/J+Jbe8Nw4bBAog1cuPfSf8CNARb7eb5HFQAAAAASUVORK5CYII=&quot;); background-size: cover; display: block; opacity: 0;"></span>
+  <img class="gatsby-resp-image-image" alt="Access data tutorial steps" title="" src="./Yapily_get_transactions_doc_files/data-tutorial-steps.png" srcset="/static/bbd6d4820577eb6edd7835919c6f2619/d4770/data-tutorial-steps.png 228w,
+/static/bbd6d4820577eb6edd7835919c6f2619/379c3/data-tutorial-steps.png 455w,
+/static/bbd6d4820577eb6edd7835919c6f2619/c6bbc/data-tutorial-steps.png 910w,
+/static/bbd6d4820577eb6edd7835919c6f2619/d8104/data-tutorial-steps.png 1365w,
+/static/bbd6d4820577eb6edd7835919c6f2619/fb937/data-tutorial-steps.png 1820w,
+/static/bbd6d4820577eb6edd7835919c6f2619/b0096/data-tutorial-steps.png 2928w" sizes="(max-width: 910px) 100vw, 910px" style="width: 100%; height: 100%; margin: 0px; vertical-align: middle; position: absolute; top: 0px; left: 0px; opacity: 1; color: inherit; box-shadow: white 0px 0px 0px 400px inset;" loading="lazy">
+    </span></span></p>
+<hr>
+<h3 style="position:relative;"><a href="https://docs.yapily.com/pages/data/data-product/tutorial-account-and-trans-data/#1-select-bank" aria-label="1 select bank permalink" class="anchor before"><svg aria-hidden="true" focusable="false" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><div class="hidden-anchor" id="1-select-bank" style="top: -70px;"></div>1. Select bank</h3>
+<p>To find which banks support accessing account and transaction information use <a href="https://docs.yapily.com/api/reference/#operation/getInstitutions">GET institutions</a> to retrieve the list of your supported institutions.</p>
+<p><strong>Request:</strong></p>
+<div class="code-wrapper">
+        <div class="gatsby-code-button-container" data-toaster-id="44599585936854400000" data-toaster-duration="1500" onclick="copyCodeToClipboard(`curl -L -X GET &#39;https://api.yapily.com/institutions&#39; \
+  -u &#39;APPLICATION_KEY:APPLICATION_SECRET&#39;`, `44599585936854400000`)">
+          <div class="gatsby-code-button" title="Copy the code snippet">Copy</div>
+          <div class="done-indicator done-indicator-44599585936854400000">Copied</div>
+        </div>
+        <div class="gatsby-highlight" data-language="shell"><pre class="language-shell"><code class="language-shell"><span class="token function">curl</span> <span class="token parameter variable">-L</span> <span class="token parameter variable">-X</span> GET <span class="token string">'https://api.yapily.com/institutions'</span> <span class="token punctuation">\</span>
+  <span class="token parameter variable">-u</span> <span class="token string">'APPLICATION_KEY:APPLICATION_SECRET'</span></code></pre></div>
+      </div>
+<p><strong>Response:</strong></p>
+<div class="code-wrapper">
+        <div class="gatsby-code-button-container" data-toaster-id="35948710756503855000" data-toaster-duration="1500" onclick="copyCodeToClipboard(`{  
+  &quot;meta&quot;: {
+    &quot;tracingId&quot;: &quot;acbb76db4ab8f4ac7f039d000456c13f&quot;,
+    &quot;count&quot;: 1
+  },
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: &quot;modelo-sandbox&quot;,
+      &quot;name&quot;: &quot;Modelo Sandbox&quot;,
+      &quot;fullName&quot;: &quot;Modelo Sandbox&quot;,
+      &quot;countries&quot;: [
+        {
+          &quot;displayName&quot;: &quot;United Kingdom&quot;,
+          &quot;countryCode2&quot;: &quot;GB&quot;
+        }
+      ],
+      &quot;environmentType&quot;: &quot;SANDBOX&quot;,
+      &quot;credentialsType&quot;: &quot;OPEN_BANKING_UK_AUTO&quot;,
+      &quot;media&quot;: [
+        {
+          &quot;source&quot;: &quot;https://images.yapily.com/image/ce2bfdbf-1ae2-4919-ab7b-e8b3d5e93b36?size=0&quot;,
+          &quot;type&quot;: &quot;icon&quot;
+        },
+        {
+          &quot;source&quot;: &quot;https://images.yapily.com/image/ca502f24-d6df-4785-b4b8-1034b100af77?size=0&quot;,
+          &quot;type&quot;: &quot;logo&quot;
+        }
+      ],
+      &quot;features&quot;: [
+        &quot;INITIATE_ACCOUNT_REQUEST&quot;,
+        &quot;ACCOUNT_REQUEST_DETAILS&quot;,
+        &quot;EXISTING_PAYMENTS_DETAILS&quot;,
+        &quot;ACCOUNT_BALANCES&quot;,
+        &quot;CREATE_BULK_PAYMENT&quot;,
+        &quot;ACCOUNT_PERIODIC_PAYMENTS&quot;,
+        &quot;ACCOUNT_STATEMENTS&quot;,
+        &quot;INITIATE_BULK_PAYMENT&quot;,
+        &quot;ACCOUNT_STATEMENT&quot;,
+        &quot;ACCOUNT&quot;,
+        &quot;INITIATE_DOMESTIC_PERIODIC_PAYMENT&quot;,
+        &quot;INITIATE_SINGLE_PAYMENT_SORTCODE&quot;,
+        &quot;ACCOUNT_DIRECT_DEBITS&quot;,
+        &quot;ACCOUNTS&quot;,
+        &quot;ACCOUNT_TRANSACTIONS&quot;,
+        &quot;EXISTING_PAYMENT_INITIATION_DETAILS&quot;,
+        &quot;CREATE_DOMESTIC_SINGLE_PAYMENT&quot;,
+        &quot;INITIATE_DOMESTIC_SINGLE_PAYMENT&quot;,
+        &quot;ACCOUNT_STATEMENT_FILE&quot;,
+        &quot;CREATE_INTERNATIONAL_SINGLE_PAYMENT&quot;,
+        &quot;IDENTITY&quot;,
+        &quot;CREATE_DOMESTIC_SCHEDULED_PAYMENT&quot;,
+        &quot;INITIATE_DOMESTIC_SCHEDULED_PAYMENT&quot;,
+        &quot;CREATE_SINGLE_PAYMENT_SORTCODE&quot;,
+        &quot;ACCOUNT_TRANSACTIONS_WITH_MERCHANT&quot;,
+        &quot;INITIATE_INTERNATIONAL_SINGLE_PAYMENT&quot;,
+        &quot;PERIODIC_PAYMENT_FREQUENCY_EXTENDED&quot;,
+        &quot;ACCOUNT_SCHEDULED_PAYMENTS&quot;,
+        &quot;CREATE_DOMESTIC_PERIODIC_PAYMENT&quot;
+      ]
+    }
+  ]
+}`, `35948710756503855000`)">
+          <div class="gatsby-code-button" title="Copy the code snippet">Copy</div>
+          <div class="done-indicator done-indicator-35948710756503855000">Copied</div>
+        </div>
+        <div class="gatsby-highlight" data-language="json"><pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>  
+  <span class="token property">"meta"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">"tracingId"</span><span class="token operator">:</span> <span class="token string">"acbb76db4ab8f4ac7f039d000456c13f"</span><span class="token punctuation">,</span>
+    <span class="token property">"count"</span><span class="token operator">:</span> <span class="token number">1</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token property">"data"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">"id"</span><span class="token operator">:</span> <span class="token string">"modelo-sandbox"</span><span class="token punctuation">,</span>
+      <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"Modelo Sandbox"</span><span class="token punctuation">,</span>
+      <span class="token property">"fullName"</span><span class="token operator">:</span> <span class="token string">"Modelo Sandbox"</span><span class="token punctuation">,</span>
+      <span class="token property">"countries"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">{</span>
+          <span class="token property">"displayName"</span><span class="token operator">:</span> <span class="token string">"United Kingdom"</span><span class="token punctuation">,</span>
+          <span class="token property">"countryCode2"</span><span class="token operator">:</span> <span class="token string">"GB"</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token property">"environmentType"</span><span class="token operator">:</span> <span class="token string">"SANDBOX"</span><span class="token punctuation">,</span>
+      <span class="token property">"credentialsType"</span><span class="token operator">:</span> <span class="token string">"OPEN_BANKING_UK_AUTO"</span><span class="token punctuation">,</span>
+      <span class="token property">"media"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">{</span>
+          <span class="token property">"source"</span><span class="token operator">:</span> <span class="token string">"https://images.yapily.com/image/ce2bfdbf-1ae2-4919-ab7b-e8b3d5e93b36?size=0"</span><span class="token punctuation">,</span>
+          <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"icon"</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+          <span class="token property">"source"</span><span class="token operator">:</span> <span class="token string">"https://images.yapily.com/image/ca502f24-d6df-4785-b4b8-1034b100af77?size=0"</span><span class="token punctuation">,</span>
+          <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"logo"</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token property">"features"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token string">"INITIATE_ACCOUNT_REQUEST"</span><span class="token punctuation">,</span>
+        <span class="token string">"ACCOUNT_REQUEST_DETAILS"</span><span class="token punctuation">,</span>
+        <span class="token string">"EXISTING_PAYMENTS_DETAILS"</span><span class="token punctuation">,</span>
+        <span class="token string">"ACCOUNT_BALANCES"</span><span class="token punctuation">,</span>
+        <span class="token string">"CREATE_BULK_PAYMENT"</span><span class="token punctuation">,</span>
+        <span class="token string">"ACCOUNT_PERIODIC_PAYMENTS"</span><span class="token punctuation">,</span>
+        <span class="token string">"ACCOUNT_STATEMENTS"</span><span class="token punctuation">,</span>
+        <span class="token string">"INITIATE_BULK_PAYMENT"</span><span class="token punctuation">,</span>
+        <span class="token string">"ACCOUNT_STATEMENT"</span><span class="token punctuation">,</span>
+        <span class="token string">"ACCOUNT"</span><span class="token punctuation">,</span>
+        <span class="token string">"INITIATE_DOMESTIC_PERIODIC_PAYMENT"</span><span class="token punctuation">,</span>
+        <span class="token string">"INITIATE_SINGLE_PAYMENT_SORTCODE"</span><span class="token punctuation">,</span>
+        <span class="token string">"ACCOUNT_DIRECT_DEBITS"</span><span class="token punctuation">,</span>
+        <span class="token string">"ACCOUNTS"</span><span class="token punctuation">,</span>
+        <span class="token string">"ACCOUNT_TRANSACTIONS"</span><span class="token punctuation">,</span>
+        <span class="token string">"EXISTING_PAYMENT_INITIATION_DETAILS"</span><span class="token punctuation">,</span>
+        <span class="token string">"CREATE_DOMESTIC_SINGLE_PAYMENT"</span><span class="token punctuation">,</span>
+        <span class="token string">"INITIATE_DOMESTIC_SINGLE_PAYMENT"</span><span class="token punctuation">,</span>
+        <span class="token string">"ACCOUNT_STATEMENT_FILE"</span><span class="token punctuation">,</span>
+        <span class="token string">"CREATE_INTERNATIONAL_SINGLE_PAYMENT"</span><span class="token punctuation">,</span>
+        <span class="token string">"IDENTITY"</span><span class="token punctuation">,</span>
+        <span class="token string">"CREATE_DOMESTIC_SCHEDULED_PAYMENT"</span><span class="token punctuation">,</span>
+        <span class="token string">"INITIATE_DOMESTIC_SCHEDULED_PAYMENT"</span><span class="token punctuation">,</span>
+        <span class="token string">"CREATE_SINGLE_PAYMENT_SORTCODE"</span><span class="token punctuation">,</span>
+        <span class="token string">"ACCOUNT_TRANSACTIONS_WITH_MERCHANT"</span><span class="token punctuation">,</span>
+        <span class="token string">"INITIATE_INTERNATIONAL_SINGLE_PAYMENT"</span><span class="token punctuation">,</span>
+        <span class="token string">"PERIODIC_PAYMENT_FREQUENCY_EXTENDED"</span><span class="token punctuation">,</span>
+        <span class="token string">"ACCOUNT_SCHEDULED_PAYMENTS"</span><span class="token punctuation">,</span>
+        <span class="token string">"CREATE_DOMESTIC_PERIODIC_PAYMENT"</span>
+      <span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre></div>
+      </div>
+<p>Filter the list for all institutions that support the <code class="language-text">ACCOUNTS</code> and <code class="language-text">ACCOUNT_TRANSACTIONS</code> features. Then display these institutions in your application so the user can select which bank to share their account information from. </p>
+<p>Once the user selects a bank, store the <code class="language-text">id</code> of the institution to use in step 2.</p>
+<hr>
+<h3 style="position:relative;"><a href="https://docs.yapily.com/pages/data/data-product/tutorial-account-and-trans-data/#2-authorise" aria-label="2 authorise permalink" class="anchor before"><svg aria-hidden="true" focusable="false" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><div class="hidden-anchor" id="2-authorise" style="top: -70px;"></div>2. Authorise</h3>
+<div class="admonition admonition-note alert alert--secondary"><div class="admonition-heading"><h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="16" viewBox="0 0 14 16"><path fill-rule="evenodd" d="M6.3 5.69a.942.942 0 0 1-.28-.7c0-.28.09-.52.28-.7.19-.18.42-.28.7-.28.28 0 .52.09.7.28.18.19.28.42.28.7 0 .28-.09.52-.28.7a1 1 0 0 1-.7.3c-.28 0-.52-.11-.7-.3zM8 7.99c-.02-.25-.11-.48-.31-.69-.2-.19-.42-.3-.69-.31H6c-.27.02-.48.13-.69.31-.2.2-.3.44-.31.69h1v3c.02.27.11.5.31.69.2.2.42.31.69.31h1c.27 0 .48-.11.69-.31.2-.19.3-.42.31-.69H8V7.98v.01zM7 2.3c-3.14 0-5.7 2.54-5.7 5.68 0 3.14 2.56 5.7 5.7 5.7s5.7-2.55 5.7-5.7c0-3.15-2.56-5.69-5.7-5.69v.01zM7 .98c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.12-7-7 3.14-7 7-7z"></path></svg></span>note</h5></div><div class="admonition-content"><p>This example uses a <a href="https://docs.yapily.com/pages/open-banking-flow/user-authorisation/single-redirect/#callback-url">single redirect flow using a callback URL</a>.</p></div></div>
+<p>Execute <a href="https://docs.yapily.com/api/reference/#operation/initiateAccountRequest">create account authorisation</a>, including the institution ID and your callback URL.</p>
+<p><strong>Request:</strong></p>
+<div class="code-wrapper">
+        <div class="gatsby-code-button-container" data-toaster-id="55031003206760890000" data-toaster-duration="1500" onclick="copyCodeToClipboard(`curl -L -X POST &#39;https://api.yapily.com/account-auth-requests&#39; \
+ -H &#39;Content-Type: application/json&#39; \
+ -u &#39;APPLICATION_KEY:APPLICATION_SECRET&#39; \
+ -d &#39;{
+   &quot;applicationUserId&quot;: &quot;account-data-and-transactions-tutorial&quot;,
+   &quot;institutionId&quot;: &quot;modelo-sandbox&quot;,
+   &quot;callback&quot;: &quot;https://display-parameters.com/&quot;
+ }&#39;`, `55031003206760890000`)">
+          <div class="gatsby-code-button" title="Copy the code snippet">Copy</div>
+          <div class="done-indicator done-indicator-55031003206760890000">Copied</div>
+        </div>
+        <div class="gatsby-highlight" data-language="shell"><pre class="language-shell"><code class="language-shell"><span class="token function">curl</span> <span class="token parameter variable">-L</span> <span class="token parameter variable">-X</span> POST <span class="token string">'https://api.yapily.com/account-auth-requests'</span> <span class="token punctuation">\</span>
+ <span class="token parameter variable">-H</span> <span class="token string">'Content-Type: application/json'</span> <span class="token punctuation">\</span>
+ <span class="token parameter variable">-u</span> <span class="token string">'APPLICATION_KEY:APPLICATION_SECRET'</span> <span class="token punctuation">\</span>
+ <span class="token parameter variable">-d</span> <span class="token string">'{
+   "applicationUserId": "account-data-and-transactions-tutorial",
+   "institutionId": "modelo-sandbox",
+   "callback": "https://display-parameters.com/"
+ }'</span></code></pre></div>
+      </div>
+<p><strong>Response:</strong></p>
+<div class="code-wrapper">
+        <div class="gatsby-code-button-container" data-toaster-id="21210898960097980000" data-toaster-duration="1500" onclick="copyCodeToClipboard(`{
+  &quot;meta&quot;: {
+    &quot;tracingId&quot;: &quot;ceab45e96f852afdb59ec8eaf8f93594&quot;
+  },
+  &quot;data&quot;: {
+    &quot;id&quot;: &quot;979f8a58-c955-46b5-b25d-bdc447c28a80&quot;,
+    &quot;userUuid&quot;: &quot;c78035e1-3140-44f7-9539-527785069356&quot;,
+    &quot;applicationUserId&quot;: &quot;account-data-and-transactions-tutorial&quot;,
+    &quot;institutionId&quot;: &quot;modelo-sandbox&quot;,
+    &quot;status&quot;: &quot;AWAITING_AUTHORIZATION&quot;,
+    &quot;createdAt&quot;: &quot;2021-03-04T11:05:17.234Z&quot;,
+    &quot;featureScope&quot;: [
+      &quot;ACCOUNT_STATEMENT_FILE&quot;,
+      &quot;ACCOUNT_STATEMENTS&quot;,
+      &quot;ACCOUNT_BALANCES&quot;,
+      &quot;ACCOUNT_SCHEDULED_PAYMENTS&quot;,
+      &quot;ACCOUNT_STATEMENT&quot;,
+      &quot;ACCOUNT_TRANSACTIONS_WITH_MERCHANT&quot;,
+      &quot;ACCOUNT_TRANSACTIONS&quot;,
+      &quot;ACCOUNT_DIRECT_DEBITS&quot;,
+      &quot;IDENTITY&quot;,
+      &quot;ACCOUNT&quot;,
+      &quot;ACCOUNTS&quot;,
+      &quot;ACCOUNT_PERIODIC_PAYMENTS&quot;
+    ],
+    &quot;state&quot;: &quot;e539228113de43b3a3d4c3b9944620d3&quot;,
+    &quot;institutionConsentId&quot;: &quot;aac-74e55df8-a673-48b4-b8ae-3e8d0e45080f&quot;,
+    &quot;authorisationUrl&quot;: &quot;{authorisationUrl}&quot;,
+    &quot;qrCodeUrl&quot;: &quot;https://images.yapily.com/image/d4113d96-9d6c-4e69-a840-2e327cff1b1d/1614855917?size=0&quot;
+  }
+}`, `21210898960097980000`)">
+          <div class="gatsby-code-button" title="Copy the code snippet">Copy</div>
+          <div class="done-indicator done-indicator-21210898960097980000">Copied</div>
+        </div>
+        <div class="gatsby-highlight" data-language="json"><pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"meta"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">"tracingId"</span><span class="token operator">:</span> <span class="token string">"ceab45e96f852afdb59ec8eaf8f93594"</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token property">"data"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">"id"</span><span class="token operator">:</span> <span class="token string">"979f8a58-c955-46b5-b25d-bdc447c28a80"</span><span class="token punctuation">,</span>
+    <span class="token property">"userUuid"</span><span class="token operator">:</span> <span class="token string">"c78035e1-3140-44f7-9539-527785069356"</span><span class="token punctuation">,</span>
+    <span class="token property">"applicationUserId"</span><span class="token operator">:</span> <span class="token string">"account-data-and-transactions-tutorial"</span><span class="token punctuation">,</span>
+    <span class="token property">"institutionId"</span><span class="token operator">:</span> <span class="token string">"modelo-sandbox"</span><span class="token punctuation">,</span>
+    <span class="token property">"status"</span><span class="token operator">:</span> <span class="token string">"AWAITING_AUTHORIZATION"</span><span class="token punctuation">,</span>
+    <span class="token property">"createdAt"</span><span class="token operator">:</span> <span class="token string">"2021-03-04T11:05:17.234Z"</span><span class="token punctuation">,</span>
+    <span class="token property">"featureScope"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+      <span class="token string">"ACCOUNT_STATEMENT_FILE"</span><span class="token punctuation">,</span>
+      <span class="token string">"ACCOUNT_STATEMENTS"</span><span class="token punctuation">,</span>
+      <span class="token string">"ACCOUNT_BALANCES"</span><span class="token punctuation">,</span>
+      <span class="token string">"ACCOUNT_SCHEDULED_PAYMENTS"</span><span class="token punctuation">,</span>
+      <span class="token string">"ACCOUNT_STATEMENT"</span><span class="token punctuation">,</span>
+      <span class="token string">"ACCOUNT_TRANSACTIONS_WITH_MERCHANT"</span><span class="token punctuation">,</span>
+      <span class="token string">"ACCOUNT_TRANSACTIONS"</span><span class="token punctuation">,</span>
+      <span class="token string">"ACCOUNT_DIRECT_DEBITS"</span><span class="token punctuation">,</span>
+      <span class="token string">"IDENTITY"</span><span class="token punctuation">,</span>
+      <span class="token string">"ACCOUNT"</span><span class="token punctuation">,</span>
+      <span class="token string">"ACCOUNTS"</span><span class="token punctuation">,</span>
+      <span class="token string">"ACCOUNT_PERIODIC_PAYMENTS"</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token property">"state"</span><span class="token operator">:</span> <span class="token string">"e539228113de43b3a3d4c3b9944620d3"</span><span class="token punctuation">,</span>
+    <span class="token property">"institutionConsentId"</span><span class="token operator">:</span> <span class="token string">"aac-74e55df8-a673-48b4-b8ae-3e8d0e45080f"</span><span class="token punctuation">,</span>
+    <span class="token property">"authorisationUrl"</span><span class="token operator">:</span> <span class="token string">"{authorisationUrl}"</span><span class="token punctuation">,</span>
+    <span class="token property">"qrCodeUrl"</span><span class="token operator">:</span> <span class="token string">"https://images.yapily.com/image/d4113d96-9d6c-4e69-a840-2e327cff1b1d/1614855917?size=0"</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></div>
+      </div>
+<p>Redirect the user to the <code class="language-text">authorisationUrl</code> returned in the response. </p>
+<p>The user is then asked to login and authorise the account sharing request with their bank. The <a href="https://docs.yapily.com/pages/resources/sandbox/sandbox-credentials/">Modelo sandbox credentials</a> are: <code class="language-text">mits</code> / <code class="language-text">mits</code>.</p>
+<p>Upon completion, the user is redirected back to the <a href="https://docs.yapily.com/pages/open-banking-flow/handling-redirects/callback_url/">callback URL</a> supplied in the request. In this example, the callback is <code class="language-text">https://display-parameters.com/</code> which displays the parameters returned with the redirect. </p>
+<p>Store the <code class="language-text">consentToken</code> to use when accessing account information in step 3. The <code class="language-text">featureScope</code> array defines the account features you'll be able to access for each account the user authorises.</p>
+<p><strong>Note:</strong> Access to the user's account information is for <a href="https://docs.yapily.com/pages/data/financial-data-resources/uk-data-consent-changes/">a maximum of 90 days</a> by default before requiring re-authorisation from the user.</p>
+<hr>
+<h3 style="position:relative;"><a href="https://docs.yapily.com/pages/data/data-product/tutorial-account-and-trans-data/#3-return-data" aria-label="3 return data permalink" class="anchor before"><svg aria-hidden="true" focusable="false" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><div class="hidden-anchor" id="3-return-data" style="top: -70px;"></div>3. Return data</h3>
+<h4 style="position:relative;"><a href="https://docs.yapily.com/pages/data/data-product/tutorial-account-and-trans-data/#get-accounts" aria-label="get accounts permalink" class="anchor before"><svg aria-hidden="true" focusable="false" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><div class="hidden-anchor" id="get-accounts" style="top: -70px;"></div>Get accounts</h4>
+<p><a href="https://docs.yapily.com/api/reference/#operation/getAccounts">Retrieve account information</a>, specifying the <code class="language-text">consentToken</code> in the header.</p>
+<p><strong>Request:</strong></p>
+<div class="code-wrapper">
+        <div class="gatsby-code-button-container" data-toaster-id="93253020387744730000" data-toaster-duration="1500" onclick="copyCodeToClipboard(`curl -L -X GET &#39;https://api.yapily.com/accounts&#39; \
+  -H &#39;Consent: {consentToken}&#39; \
+  -u &#39;APPLICATION_KEY:APPLICATION_SECRET&#39;`, `93253020387744730000`)">
+          <div class="gatsby-code-button" title="Copy the code snippet">Copy</div>
+          <div class="done-indicator done-indicator-93253020387744730000">Copied</div>
+        </div>
+        <div class="gatsby-highlight" data-language="shell"><pre class="language-shell"><code class="language-shell"><span class="token function">curl</span> <span class="token parameter variable">-L</span> <span class="token parameter variable">-X</span> GET <span class="token string">'https://api.yapily.com/accounts'</span> <span class="token punctuation">\</span>
+  <span class="token parameter variable">-H</span> <span class="token string">'Consent: {consentToken}'</span> <span class="token punctuation">\</span>
+  <span class="token parameter variable">-u</span> <span class="token string">'APPLICATION_KEY:APPLICATION_SECRET'</span></code></pre></div>
+      </div>
+<p><strong>Response:</strong></p>
+<div class="code-wrapper">
+        <div class="gatsby-code-button-container" data-toaster-id="20851933098927145000" data-toaster-duration="1500" onclick="copyCodeToClipboard(`{
+  &quot;meta&quot;: {
+    &quot;tracingId&quot;: &quot;14df65068fd38689b392ad39602143cb&quot;,
+    &quot;count&quot;: 1
+  },
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: &quot;700004000000000000000007&quot;,
+      &quot;type&quot;: &quot;Personal - Current&quot;,
+      &quot;balance&quot;: -99765867307.74,
+      &quot;currency&quot;: &quot;GBP&quot;,
+      &quot;usageType&quot;: &quot;PERSONAL&quot;,
+      &quot;accountType&quot;: &quot;CURRENT&quot;,
+      &quot;nickname&quot;: &quot;xxxx0009&quot;,
+      &quot;accountNames&quot;: [
+        {
+          &quot;name&quot;: &quot;Mr. Mitsuhirato&quot;
+        }
+      ],
+      &quot;accountIdentifications&quot;: [
+        {
+          &quot;type&quot;: &quot;PAN&quot;,
+          &quot;identification&quot;: &quot;1234000000000001&quot;
+        }
+      ],
+      &quot;accountBalances&quot;: [
+        {
+          &quot;type&quot;: &quot;EXPECTED&quot;,
+          &quot;dateTime&quot;: &quot;2021-03-04T11:08:39.291Z&quot;,
+          &quot;balanceAmount&quot;: {
+            &quot;amount&quot;: -99765867307.74,
+            &quot;currency&quot;: &quot;GBP&quot;
+          },
+          &quot;creditLineIncluded&quot;: false,
+          &quot;creditLines&quot;: []
+        }
+      ]
+    }
+  ]
+}`, `20851933098927145000`)">
+          <div class="gatsby-code-button" title="Copy the code snippet">Copy</div>
+          <div class="done-indicator done-indicator-20851933098927145000">Copied</div>
+        </div>
+        <div class="gatsby-highlight" data-language="json"><pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"meta"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">"tracingId"</span><span class="token operator">:</span> <span class="token string">"14df65068fd38689b392ad39602143cb"</span><span class="token punctuation">,</span>
+    <span class="token property">"count"</span><span class="token operator">:</span> <span class="token number">1</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token property">"data"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">"id"</span><span class="token operator">:</span> <span class="token string">"700004000000000000000007"</span><span class="token punctuation">,</span>
+      <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"Personal - Current"</span><span class="token punctuation">,</span>
+      <span class="token property">"balance"</span><span class="token operator">:</span> <span class="token number">-99765867307.74</span><span class="token punctuation">,</span>
+      <span class="token property">"currency"</span><span class="token operator">:</span> <span class="token string">"GBP"</span><span class="token punctuation">,</span>
+      <span class="token property">"usageType"</span><span class="token operator">:</span> <span class="token string">"PERSONAL"</span><span class="token punctuation">,</span>
+      <span class="token property">"accountType"</span><span class="token operator">:</span> <span class="token string">"CURRENT"</span><span class="token punctuation">,</span>
+      <span class="token property">"nickname"</span><span class="token operator">:</span> <span class="token string">"xxxx0009"</span><span class="token punctuation">,</span>
+      <span class="token property">"accountNames"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">{</span>
+          <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"Mr. Mitsuhirato"</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token property">"accountIdentifications"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">{</span>
+          <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"PAN"</span><span class="token punctuation">,</span>
+          <span class="token property">"identification"</span><span class="token operator">:</span> <span class="token string">"1234000000000001"</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token property">"accountBalances"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">{</span>
+          <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"EXPECTED"</span><span class="token punctuation">,</span>
+          <span class="token property">"dateTime"</span><span class="token operator">:</span> <span class="token string">"2021-03-04T11:08:39.291Z"</span><span class="token punctuation">,</span>
+          <span class="token property">"balanceAmount"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token property">"amount"</span><span class="token operator">:</span> <span class="token number">-99765867307.74</span><span class="token punctuation">,</span>
+            <span class="token property">"currency"</span><span class="token operator">:</span> <span class="token string">"GBP"</span>
+          <span class="token punctuation">}</span><span class="token punctuation">,</span>
+          <span class="token property">"creditLineIncluded"</span><span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+          <span class="token property">"creditLines"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre></div>
+      </div>
+<p>The response returns an array of <a href="https://docs.yapily.com/api/reference/#operation/getAccount!c=200&amp;path=data&amp;t=response">account objects</a> for each account the user has provided consent to share information from. The response from every institution is normalised so you can handle the data consistently.</p>
+<h4 style="position:relative;"><a href="https://docs.yapily.com/pages/data/data-product/tutorial-account-and-trans-data/#get-transactions" aria-label="get transactions permalink" class="anchor before"><svg aria-hidden="true" focusable="false" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><div class="hidden-anchor" id="get-transactions" style="top: -70px;"></div>Get transactions</h4>
+<p>Display the available accounts to the end user so they can select which account to get transaction data for. Once selected, store the account <code class="language-text">id</code>. </p>
+<p><a href="https://docs.yapily.com/api/reference/#operation/getTransactions">Get account transactions</a> for a specified account by including the account <code class="language-text">id</code> in the path and the <code class="language-text">consentToken</code> in the header.</p>
+<p><strong>Request:</strong></p>
+<div class="code-wrapper">
+        <div class="gatsby-code-button-container" data-toaster-id="99072422389098480000" data-toaster-duration="1500" onclick="copyCodeToClipboard(`curl -L -X GET &#39;https://api.yapily.com/accounts/{accountId}/transactions&#39; \
+  -H &#39;Consent: {consentToken}&#39; \
+  -u &#39;APPLICATION_KEY:APPLICATION_SECRET&#39;`, `99072422389098480000`)">
+          <div class="gatsby-code-button" title="Copy the code snippet">Copy</div>
+          <div class="done-indicator done-indicator-99072422389098480000">Copied</div>
+        </div>
+        <div class="gatsby-highlight" data-language="shell"><pre class="language-shell"><code class="language-shell"><span class="token function">curl</span> <span class="token parameter variable">-L</span> <span class="token parameter variable">-X</span> GET <span class="token string">'https://api.yapily.com/accounts/{accountId}/transactions'</span> <span class="token punctuation">\</span>
+  <span class="token parameter variable">-H</span> <span class="token string">'Consent: {consentToken}'</span> <span class="token punctuation">\</span>
+  <span class="token parameter variable">-u</span> <span class="token string">'APPLICATION_KEY:APPLICATION_SECRET'</span></code></pre></div>
+      </div>
+<p><strong>Response:</strong></p>
+<div class="code-wrapper">
+        <div class="gatsby-code-button-container" data-toaster-id="36402649709120905000" data-toaster-duration="1500" onclick="copyCodeToClipboard(`{
+  &quot;meta&quot;: {
+    &quot;tracingId&quot;: &quot;0d9835a9c83204f8c0607ddfef961bab&quot;,
+    &quot;count&quot;: 760,
+    &quot;pagination&quot;: {
+      &quot;totalCount&quot;: 760,
+      &quot;self&quot;: {
+        &quot;limit&quot;: 1000,
+        &quot;sort&quot;: &quot;-date&quot;,
+        &quot;offset&quot;: 0
+      }
+    }
+  },
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: &quot;15f5b8b3-d8ca-422a-af4e-2538546788e8&quot;,
+      &quot;date&quot;: &quot;2021-02-26T11:07:41.79Z&quot;,
+      &quot;bookingDateTime&quot;: &quot;2021-02-26T11:07:41.79Z&quot;,
+      &quot;valueDateTime&quot;: &quot;2021-02-26T11:07:41.79Z&quot;,
+      &quot;status&quot;: &quot;BOOKED&quot;,
+      &quot;amount&quot;: -0.99,
+      &quot;currency&quot;: &quot;GBP&quot;,
+      &quot;transactionAmount&quot;: {
+        &quot;amount&quot;: -0.99,
+        &quot;currency&quot;: &quot;GBP&quot;
+      },
+      &quot;reference&quot;: &quot;7&quot;,
+      &quot;description&quot;: &quot;Debit for Payment Id: sdp-1-58718033-969e-4941-832b-3ad7b76c3e71&quot;,
+      &quot;transactionInformation&quot;: [
+        &quot;Debit for Payment Id: sdp-1-58718033-969e-4941-832b-3ad7b76c3e71&quot;
+      ],
+      &quot;isoBankTransactionCode&quot;: {
+        &quot;domainCode&quot;: {
+          &quot;code&quot;: &quot;PMNT&quot;,
+          &quot;name&quot;: &quot;Payments&quot;
+        },
+        &quot;familyCode&quot;: {
+          &quot;code&quot;: &quot;ICDT&quot;,
+          &quot;name&quot;: &quot;Issued Credit Transfers&quot;
+        },
+        &quot;subFamilyCode&quot;: {
+          &quot;code&quot;: &quot;DMCT&quot;,
+          &quot;name&quot;: &quot;Domestic Credit Transfer&quot;
+        }
+      },
+      &quot;proprietaryBankTransactionCode&quot;: {
+        &quot;code&quot;: &quot;PMT&quot;,
+        &quot;issuer&quot;: &quot;modelo-sandbox&quot;
+      },
+      &quot;balance&quot;: {
+        &quot;type&quot;: &quot;CLOSING_AVAILABLE&quot;,
+        &quot;balanceAmount&quot;: {
+          &quot;amount&quot;: 99765867307.74,
+          &quot;currency&quot;: &quot;GBP&quot;
+        }
+      },
+      &quot;enrichment&quot;: {
+        &quot;transactionHash&quot;: {
+          &quot;hash&quot;: &quot;54be0baf91aaa732cd8b6bacc6396042.1&quot;
+        }
+      }
+    },
+    ...
+  ],
+  &quot;links&quot;: {
+    &quot;self&quot;: &quot;https://api.yapily.com/accounts/700004000000000000000007/transactions?from&amp;before&amp;limit=1000&amp;sort=-date&amp;offset=0&amp;cursor&quot;
+  }
+}`, `36402649709120905000`)">
+          <div class="gatsby-code-button" title="Copy the code snippet">Copy</div>
+          <div class="done-indicator done-indicator-36402649709120905000">Copied</div>
+        </div>
+        <div class="gatsby-highlight" data-language="json"><pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"meta"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">"tracingId"</span><span class="token operator">:</span> <span class="token string">"0d9835a9c83204f8c0607ddfef961bab"</span><span class="token punctuation">,</span>
+    <span class="token property">"count"</span><span class="token operator">:</span> <span class="token number">760</span><span class="token punctuation">,</span>
+    <span class="token property">"pagination"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token property">"totalCount"</span><span class="token operator">:</span> <span class="token number">760</span><span class="token punctuation">,</span>
+      <span class="token property">"self"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">"limit"</span><span class="token operator">:</span> <span class="token number">1000</span><span class="token punctuation">,</span>
+        <span class="token property">"sort"</span><span class="token operator">:</span> <span class="token string">"-date"</span><span class="token punctuation">,</span>
+        <span class="token property">"offset"</span><span class="token operator">:</span> <span class="token number">0</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token property">"data"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">"id"</span><span class="token operator">:</span> <span class="token string">"15f5b8b3-d8ca-422a-af4e-2538546788e8"</span><span class="token punctuation">,</span>
+      <span class="token property">"date"</span><span class="token operator">:</span> <span class="token string">"2021-02-26T11:07:41.79Z"</span><span class="token punctuation">,</span>
+      <span class="token property">"bookingDateTime"</span><span class="token operator">:</span> <span class="token string">"2021-02-26T11:07:41.79Z"</span><span class="token punctuation">,</span>
+      <span class="token property">"valueDateTime"</span><span class="token operator">:</span> <span class="token string">"2021-02-26T11:07:41.79Z"</span><span class="token punctuation">,</span>
+      <span class="token property">"status"</span><span class="token operator">:</span> <span class="token string">"BOOKED"</span><span class="token punctuation">,</span>
+      <span class="token property">"amount"</span><span class="token operator">:</span> <span class="token number">-0.99</span><span class="token punctuation">,</span>
+      <span class="token property">"currency"</span><span class="token operator">:</span> <span class="token string">"GBP"</span><span class="token punctuation">,</span>
+      <span class="token property">"transactionAmount"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">"amount"</span><span class="token operator">:</span> <span class="token number">-0.99</span><span class="token punctuation">,</span>
+        <span class="token property">"currency"</span><span class="token operator">:</span> <span class="token string">"GBP"</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token property">"reference"</span><span class="token operator">:</span> <span class="token string">"7"</span><span class="token punctuation">,</span>
+      <span class="token property">"description"</span><span class="token operator">:</span> <span class="token string">"Debit for Payment Id: sdp-1-58718033-969e-4941-832b-3ad7b76c3e71"</span><span class="token punctuation">,</span>
+      <span class="token property">"transactionInformation"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token string">"Debit for Payment Id: sdp-1-58718033-969e-4941-832b-3ad7b76c3e71"</span>
+      <span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token property">"isoBankTransactionCode"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">"domainCode"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+          <span class="token property">"code"</span><span class="token operator">:</span> <span class="token string">"PMNT"</span><span class="token punctuation">,</span>
+          <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"Payments"</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token property">"familyCode"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+          <span class="token property">"code"</span><span class="token operator">:</span> <span class="token string">"ICDT"</span><span class="token punctuation">,</span>
+          <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"Issued Credit Transfers"</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token property">"subFamilyCode"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+          <span class="token property">"code"</span><span class="token operator">:</span> <span class="token string">"DMCT"</span><span class="token punctuation">,</span>
+          <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"Domestic Credit Transfer"</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token property">"proprietaryBankTransactionCode"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">"code"</span><span class="token operator">:</span> <span class="token string">"PMT"</span><span class="token punctuation">,</span>
+        <span class="token property">"issuer"</span><span class="token operator">:</span> <span class="token string">"modelo-sandbox"</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token property">"balance"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"CLOSING_AVAILABLE"</span><span class="token punctuation">,</span>
+        <span class="token property">"balanceAmount"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+          <span class="token property">"amount"</span><span class="token operator">:</span> <span class="token number">99765867307.74</span><span class="token punctuation">,</span>
+          <span class="token property">"currency"</span><span class="token operator">:</span> <span class="token string">"GBP"</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token property">"enrichment"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">"transactionHash"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+          <span class="token property">"hash"</span><span class="token operator">:</span> <span class="token string">"54be0baf91aaa732cd8b6bacc6396042.1"</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    ...
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">"links"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">"self"</span><span class="token operator">:</span> <span class="token string">"https://api.yapily.com/accounts/700004000000000000000007/transactions?from&amp;before&amp;limit=1000&amp;sort=-date&amp;offset=0&amp;cursor"</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></div>
+      </div>
+<p>The response returns an array of <a href="https://docs.yapily.com/api/reference/#operation/getTransactions!c=200&amp;path=data&amp;t=response">transaction objects</a> for the specified account. </p>
+<p>You can then display the transaction information to the end user or process the data internally depending on your use-case.</p>
+<p><strong>Note:</strong> By default, Yapily limits the results to the most recent 1000 transactions. See <a href="https://docs.yapily.com/pages/data/financial-data-resources/pagination/">pagination</a> for more information on how to manage transaction responses that contain more than 1000 transactions. </p>
+<hr></article></section><aside class="sc-etlCFv hulNXb"><div class="sc-eFRcpv jruYsb"><div class="sc-cYYuRe ePmQdK">On this page</div><a href="https://docs.yapily.com/pages/data/data-product/tutorial-account-and-trans-data/#introduction" class="sc-hpGnlu PKUuT" data-cy="toc-Introduction">Introduction</a><a href="https://docs.yapily.com/pages/data/data-product/tutorial-account-and-trans-data/#overview-of-steps" class="sc-hpGnlu PKUuT" data-cy="toc-Overview of steps">Overview of steps</a><a href="https://docs.yapily.com/pages/data/data-product/tutorial-account-and-trans-data/#1-select-bank" class="sc-hpGnlu jvTQKk" data-cy="toc-1. Select bank">1. Select bank</a><a href="https://docs.yapily.com/pages/data/data-product/tutorial-account-and-trans-data/#2-authorise" class="sc-hpGnlu jvTQKk" data-cy="toc-2. Authorise">2. Authorise</a><a href="https://docs.yapily.com/pages/data/data-product/tutorial-account-and-trans-data/#3-return-data" class="sc-hpGnlu jvTQKk" data-cy="toc-3. Return data">3. Return data</a></div></aside></div></div></div><div class="Footer__FooterMain-sc-1icwsln-1 fuHLUf"><div class="sc-iQbOkh sc-fIGJwM hjMOJa cCcuZB footerContainer" width="100%"><div width="100%" class="sc-iQbOkh sc-fIGJwM jJBjfm fJSFNO"><ul font-size="14px" class="Footer__FooterItems-sc-1icwsln-4 GVYNw"><li><a href="https://www.yapily.com/" target="_self" class="sc-fPrdXf iUKIKo  undefined" data-cy="universalLink-Yapily.com">Yapily.com</a><span class="Footer__Separator-sc-1icwsln-2 iQxzcc">|</span></li><li><a href="https://demo.yapily.com/" target="_self" class="sc-fPrdXf iUKIKo  undefined" data-cy="universalLink-Demo">Demo</a><span class="Footer__Separator-sc-1icwsln-2 iQxzcc">|</span></li><li><a href="https://status.yapily.com/" target="_self" class="sc-fPrdXf iUKIKo  undefined" data-cy="universalLink-Status">Status</a><span class="Footer__Separator-sc-1icwsln-2 iQxzcc">|</span></li><li><a href="https://support.yapily.com/hc/en-gb" target="_self" class="sc-fPrdXf iUKIKo  undefined" data-cy="universalLink-Support">Support</a></li><li><label class="Footer__NotLink-sc-1icwsln-3 bCmAfl">© 2023 Yapily Ltd. All Rights Reserved.</label></li></ul></div></div></div></div></div><div id="gatsby-announcer" style="position:absolute;top:0;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border:0" aria-live="assertive" aria-atomic="true"></div></div><script id="gatsby-script-loader">/*<![CDATA[*/window.pagePath="/pages/data/data-product/tutorial-account-and-trans-data/";/*]]>*/</script><script id="gatsby-chunk-mapping">/*<![CDATA[*/window.___chunkMapping={"polyfill":["/polyfill-cb18985b14f7f4b1256b.js"],"app":["/app-a43a14a3d011de90b038.js"],"component---index-mdx":["/component---index-mdx-3e6afd540dc3583168de.js"],"component---src-pages-404-js":["/component---src-pages-404-js-50e0e5b0915a8e2602b8.js"],"component---src-templates-redoc-operation-js":["/component---src-templates-redoc-operation-js-64d15671f8cc9451478c.js"],"component---src-templates-simple-markdown-js":["/component---src-templates-simple-markdown-js-5e40fb828f32d9c30e8f.js"]};/*]]>*/</script><script src="./Yapily_get_transactions_doc_files/polyfill-cb18985b14f7f4b1256b.js.download" nomodule=""></script><script src="./Yapily_get_transactions_doc_files/component---src-templates-simple-markdown-js-5e40fb828f32d9c30e8f.js.download" async=""></script><script src="./Yapily_get_transactions_doc_files/app-a43a14a3d011de90b038.js.download" async=""></script><script src="./Yapily_get_transactions_doc_files/f74d91fd-c1f8e49cefaf841ec566.js.download" async=""></script><script src="./Yapily_get_transactions_doc_files/d4eeb59c-033ffabebcee88d40ddd.js.download" async=""></script><script src="./Yapily_get_transactions_doc_files/framework-8070d1f4731684b4dd9a.js.download" async=""></script><script src="./Yapily_get_transactions_doc_files/webpack-runtime-dba2e9475ee0ef28e029.js.download" async=""></script><script type="text/javascript" id="" charset="">piAId="823123";piCId="79583";piHostname="pi.pardot.com";(function(){function b(){var a=document.createElement("script");a.type="text/javascript";a.src=("https:"==document.location.protocol?"https://pi":"http://cdn")+".pardot.com/pd.js";var c=document.getElementsByTagName("script")[0];c.parentNode.insertBefore(a,c)}window.attachEvent?window.attachEvent("onload",b):window.addEventListener("load",b,!1)})();</script><script type="text/javascript" id="" charset="">function getParam(a){return(a=RegExp("[?\x26]"+a+"\x3d([^\x26]*)").exec(window.location.search))&&decodeURIComponent(a[1].replace(/\+/g," "))}function getExpiryRecord(a){var c=7776E6;c=(new Date).getTime()+c;return{value:a,expiryDate:c}}
+function addGclid(){var a=getParam("gclid"),c=["822123_108558pi_822123_108558"],f=null,g,d=getParam("gclsrc");d=!d||-1!==d.indexOf("aw");c.forEach(function(b){document.getElementById(b)&&(g=document.getElementById(b))});a&&d&&(f=getExpiryRecord(a),localStorage.setItem("gclid",JSON.stringify(f)));var e=f||JSON.parse(localStorage.getItem("gclid")),k=e&&(new Date).getTime()<e.expiryDate;g&&k&&(g.value=e.value);(function(){var b=document.getElementsByTagName("iframe");Object.keys(b).forEach(function(h){k&&
+(b[h].src=b[h].src+(-1!=b[h].src.indexOf("?")?"\x26":"?")+"gclid\x3d"+e.value)})})()}window.addEventListener("load",addGclid);</script>
+<script type="text/javascript" id="" charset="">!function(b,e,f,g,a,c,d){b.fbq||(a=b.fbq=function(){a.callMethod?a.callMethod.apply(a,arguments):a.queue.push(arguments)},b._fbq||(b._fbq=a),a.push=a,a.loaded=!0,a.version="2.0",a.queue=[],c=e.createElement(f),c.async=!0,c.src=g,d=e.getElementsByTagName(f)[0],d.parentNode.insertBefore(c,d))}(window,document,"script","https://connect.facebook.net/en_US/fbevents.js");fbq("init","172609709104962");fbq("set","agent","tmgoogletagmanager","172609709104962");fbq("track","PageView");</script>
+<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=172609709104962&amp;ev=PageView&amp;noscript=1"></noscript>
+
+<script type="text/javascript" id="" charset="">!function(b,e,f,g,a,c,d){b.fbq||(a=b.fbq=function(){a.callMethod?a.callMethod.apply(a,arguments):a.queue.push(arguments)},b._fbq||(b._fbq=a),a.push=a,a.loaded=!0,a.version="2.0",a.queue=[],c=e.createElement(f),c.async=!0,c.src=g,d=e.getElementsByTagName(f)[0],d.parentNode.insertBefore(c,d))}(window,document,"script","https://connect.facebook.net/en_US/fbevents.js");fbq("init","2043664116026411");fbq("track","PageView");</script>
+<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=2043664116026411&amp;ev=PageView&amp;noscript=1"></noscript>
+<script type="text/javascript" id="" charset="">(function(){localStorage.getItem("firstExternalPageURL")||document.referrer.indexOf(window.location.hostname)!==-1||localStorage.setItem("firstExternalPageURL",document.location.href)})();</script>
+<script type="text/javascript" id="" charset="">window.uetq=window.uetq||[];window.uetq.push("consent","default",{ad_storage:"granted"});</script><script type="text/javascript" id="" charset="">window.uetq=window.uetq||[];window.uetq.push("consent","update",{ad_storage:"granted"});</script><iframe height="0" width="0" style="display: none; visibility: hidden;" src="./Yapily_get_transactions_doc_files/saved_resource.html"></iframe><script id="" text="" charset="" type="text/javascript" src="./Yapily_get_transactions_doc_files/init.v1.js.download"></script><div id="batBeacon732800259944" style="width: 0px; height: 0px; display: none; visibility: hidden;"><img id="batBeacon912643114528" width="0" height="0" alt="" src="./Yapily_get_transactions_doc_files/0" style="width: 0px; height: 0px; display: none; visibility: hidden;"></div></body></html>
