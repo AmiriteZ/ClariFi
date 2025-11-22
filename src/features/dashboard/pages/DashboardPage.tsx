@@ -1,12 +1,14 @@
 // src/features/dashboard/pages/DashboardPage.tsx
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 import { useAuthStore } from "../../../store/auth.store";
+import { auth } from "../../../lib/firebase";
 
 import { getDashboard, type DashboardResponse } from "../api/dashboard.api";
 import { renewExpiredBudgets } from "../../budgets/api/budgets.api";
 import { useNavigate } from "react-router-dom";
+import { RefreshCw } from "lucide-react";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -20,6 +22,7 @@ export default function DashboardPage() {
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   // 3) Wait for Firebase to finish restoring the user (after reloads, etc.)
 
@@ -32,7 +35,12 @@ export default function DashboardPage() {
         setLoading(true);
         setError(null);
 
-        if (!token) return;
+        // Get fresh token from Firebase
+        const freshToken = await auth.currentUser?.getIdToken();
+        if (!freshToken) {
+          setError("Not authenticated");
+          return;
+        }
 
         // Renew any expired budgets before loading dashboard
         await renewExpiredBudgets().catch((err) => {
@@ -40,7 +48,7 @@ export default function DashboardPage() {
           // Don't block dashboard load if renewal fails
         });
 
-        const data = await getDashboard(token);
+        const data = await getDashboard(freshToken);
         setDashboardData(data);
       } catch (err) {
         console.error(err);
@@ -56,6 +64,38 @@ export default function DashboardPage() {
       void load();
     }
   }, [user, token]);
+
+  // Manual refresh function
+  const handleRefresh = async () => {
+    if (!user || refreshing) return;
+
+    try {
+      setRefreshing(true);
+      setError(null);
+
+      // Get fresh token from Firebase
+      const freshToken = await auth.currentUser?.getIdToken();
+      if (!freshToken) {
+        setError("Not authenticated");
+        return;
+      }
+
+      // Renew any expired budgets before loading dashboard
+      await renewExpiredBudgets().catch((err) => {
+        console.warn("Failed to renew budgets:", err);
+      });
+
+      const data = await getDashboard(freshToken);
+      setDashboardData(data);
+    } catch (err) {
+      console.error(err);
+      setError(
+        err instanceof Error ? err.message : "Failed to refresh dashboard"
+      );
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   if (!user) {
     return (
@@ -99,6 +139,21 @@ export default function DashboardPage() {
   return (
     <div className="w-full h-full px-10 py-8">
       <div className="max-w-6xl mx-auto">
+        {/* Header with refresh button */}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Refresh dashboard"
+          >
+            <RefreshCw
+              className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
+            />
+            {refreshing ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
         <div className="grid gap-6">
           {/* === TOP ROW === */}
           <div className="grid grid-cols-2 gap-6">

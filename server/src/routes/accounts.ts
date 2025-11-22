@@ -119,20 +119,48 @@ router.post(
       const institution = instRes.rows[0];
 
       // Create consent with Yapily
-      const yapilyResponse = await fetch(
-        `${YAPILY_CONFIG.baseUrl}/account-auth-requests`,
-        {
-          method: "POST",
-          headers: yapilyAuthHeaders(),
-          body: JSON.stringify({
-            applicationUserId: String(userId),
-            institutionId: institution.provider_code,
-            callback: `${
-              process.env.CLIENT_URL || "http://localhost:5173"
-            }/accounts?connected=true`,
-          }),
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+      let yapilyResponse;
+      try {
+        yapilyResponse = await fetch(
+          `${YAPILY_CONFIG.baseUrl}/account-auth-requests`,
+          {
+            method: "POST",
+            headers: yapilyAuthHeaders(),
+            body: JSON.stringify({
+              applicationUserId: String(userId),
+              institutionId: institution.provider_code,
+              callback: `${
+                process.env.CLIENT_URL || "http://localhost:5173"
+              }/accounts?connected=true`,
+            }),
+            signal: controller.signal,
+          }
+        );
+        clearTimeout(timeoutId);
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        if (fetchError instanceof Error && fetchError.name === "AbortError") {
+          console.error("Yapily API request timed out after 30 seconds");
+          res
+            .status(504)
+            .json({
+              error: "Connection to Yapily timed out. Please try again.",
+            });
+        } else {
+          console.error("Error connecting to Yapily:", fetchError);
+          res
+            .status(500)
+            .json({
+              error:
+                "Failed to connect to banking service. Please try again later.",
+            });
         }
-      );
+        return;
+      }
 
       if (!yapilyResponse.ok) {
         const errorText = await yapilyResponse.text();
@@ -813,6 +841,68 @@ router.post(
     } catch (error) {
       console.error("Error resyncing accounts:", error);
       res.status(500).json({ error: "Failed to resync accounts" });
+    }
+  }
+);
+
+/**
+ * DELETE /api/accounts/:id
+ * Delete a bank account and all associated transactions
+ */
+router.delete(
+  "/:id",
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const authUser = req.user;
+      if (!authUser) {
+        res.status(401).json({ error: "Unauthenticated" });
+        return;
+      }
+
+      // Resolve user ID from DB
+      const userQuery = await pool.query(
+        "SELECT id FROM users WHERE firebase_uid = $1",
+        [authUser.uid]
+      );
+
+      if (userQuery.rows.length === 0) {
+        res.status(401).json({ error: "User not found" });
+        return;
+      }
+
+      const userId = userQuery.rows[0].id;
+      const accountId = req.params.id;
+
+      // Verify the account belongs to this user
+      const accountCheck = await pool.query(
+        `SELECT a.id 
+         FROM accounts a
+         JOIN bank_connections bc ON a.bank_connection_id = bc.id
+         WHERE a.id = $1 AND bc.user_id = $2`,
+        [accountId, userId]
+      );
+
+      if (accountCheck.rows.length === 0) {
+        res.status(404).json({ error: "Account not found or unauthorized" });
+        return;
+      }
+
+      // Delete all transactions for this account (if not using CASCADE)
+      await pool.query("DELETE FROM transactions WHERE account_id = $1", [
+        accountId,
+      ]);
+
+      // Delete the account
+      await pool.query("DELETE FROM accounts WHERE id = $1", [accountId]);
+
+      console.log(`✅ Deleted account ${accountId} and its transactions`);
+
+      res.status(200).json({
+        message: "Account deleted successfully",
+      });
+    } catch (err) {
+      console.error("Error deleting account:", err);
+      res.status(500).json({ error: "Failed to delete account" });
     }
   }
 );

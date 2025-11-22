@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
-import { getAccounts, type Account } from "../api/accounts.api";
-import { Plus, RefreshCw, Building2, CreditCard, Wallet } from "lucide-react";
+import { getAccounts, deleteAccount, type Account } from "../api/accounts.api";
+import {
+  Plus,
+  RefreshCw,
+  Building2,
+  CreditCard,
+  Wallet,
+  Trash2,
+} from "lucide-react";
 import AddAccountModal from "../components/AddAccountModal";
 import { syncAccounts } from "../api/bankConnections.api";
 
@@ -68,6 +75,28 @@ export default function AccountsPage() {
       setError(message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async (
+    accountId: string,
+    accountName: string
+  ) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete "${accountName}"? This will also delete all associated transactions.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await deleteAccount(accountId);
+      await loadAccounts(); // Reload accounts after deletion
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to delete account";
+      setError(message);
     }
   };
 
@@ -184,17 +213,28 @@ export default function AccountsPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-lg font-semibold text-slate-900">
-                      {formatCurrency(
-                        account.currentBalance,
-                        account.currencyCode
-                      )}
-                    </p>
-                    <p className="text-xs text-slate-400 flex items-center justify-end gap-1 mt-1">
-                      <RefreshCw className="w-3 h-3" />
-                      Synced {formatDate(account.lastSyncedAt)}
-                    </p>
+                  <div className="flex items-start gap-2">
+                    <div className="text-right">
+                      <p className="text-lg font-semibold text-slate-900">
+                        {formatCurrency(
+                          account.currentBalance,
+                          account.currencyCode
+                        )}
+                      </p>
+                      <p className="text-xs text-slate-400 flex items-center justify-end gap-1 mt-1">
+                        <RefreshCw className="w-3 h-3" />
+                        Synced {formatDate(account.lastSyncedAt)}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() =>
+                        handleDeleteAccount(account.id, account.name)
+                      }
+                      className="ml-4 p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Delete account"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               </div>
