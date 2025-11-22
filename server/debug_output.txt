@@ -1,0 +1,8 @@
+Starting Debug...
+Target User ID: 200bec91-f562-4b51-ab6a-9dc963880983
+Target Account ID: b776920f-44f7-4a9d-8a08-ca4b52c90124
+✅ User found: {"id":"200bec91-f562-4b51-ab6a-9dc963880983","email":"ML@ML.com","display_name":null}
+✅ Account found: {"id":"b776920f-44f7-4a9d-8a08-ca4b52c90124","name":"Manual Test Account","current_balance":"2000.00"}
+ℹ️ User has 1 bank connections.
+Attempting test insertion...
+✅ Test transaction inserted with ID: c8e05c13-ebea-44da-9d33-185d99d3aef9

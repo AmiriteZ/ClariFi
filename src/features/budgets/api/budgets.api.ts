@@ -8,6 +8,9 @@ export interface BudgetSummary {
   periodEnd: string;
   currencyCode: string;
   createdAt: string;
+  status: string;
+  archivedAt: string | null;
+  parentBudgetId: string | null;
   ownerName: string;
   householdName: string | null;
   memberNames: string[];
@@ -64,16 +67,21 @@ export interface BudgetDetail {
   categoryLimits: CategoryLimit[];
 }
 
-export async function getBudgets(): Promise<{ budgets: BudgetSummary[] }> {
+export async function getBudgets(
+  status: "active" | "completed" = "active"
+): Promise<{ budgets: BudgetSummary[] }> {
   const user = auth.currentUser;
   if (!user) throw new Error("Not authenticated");
   const token = await user.getIdToken();
 
-  const res = await fetch("http://localhost:5001/api/budgets", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const res = await fetch(
+    `http://localhost:5001/api/budgets?status=${status}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
   if (!res.ok) throw new Error("Failed to fetch budgets");
   return res.json();

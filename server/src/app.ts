@@ -8,6 +8,8 @@ import goalsRouter from "./routes/goals";
 import budgetsRouter from "./routes/budgets";
 import accountsRouter from "./routes/accounts";
 import institutionsRouter from "./routes/institutions";
+import mlRouter from "./routes/ml";
+import aiRouter from "./routes/ai";
 
 const app = express();
 
@@ -41,5 +43,7 @@ app.use("/api/goals", goalsRouter);
 app.use("/api/budgets", budgetsRouter);
 app.use("/api/accounts", accountsRouter);
 app.use("/api/institutions", institutionsRouter);
+app.use("/api/ml", mlRouter);
+app.use("/api/ai", aiRouter);
 
 export default app;

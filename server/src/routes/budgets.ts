@@ -18,6 +18,9 @@ interface BudgetRow {
   period_end: string;
   currency_code: string;
   created_at: string;
+  status: string;
+  archived_at: string | null;
+  parent_budget_id: string | null;
   owner_name: string;
   household_name: string | null;
   member_names: string[];
@@ -82,6 +85,7 @@ router.post(
       const expiredBudgets = await pool.query(findExpiredQuery, [userId]);
 
       let renewedCount = 0;
+      let archivedCount = 0;
 
       for (const budget of expiredBudgets.rows) {
         const { id, period_type, period_end } = budget;
@@ -113,12 +117,61 @@ router.post(
           continue; // Skip if not monthly or weekly
         }
 
-        // Update budget with new dates
+        // 1. Archive the old budget
         await pool.query(
           `UPDATE budgets 
-           SET period_start = $1, period_end = $2, updated_at = now()
-           WHERE id = $3`,
-          [newStart, newEnd, id]
+           SET status = 'completed', archived_at = NOW(), updated_at = NOW()
+           WHERE id = $1`,
+          [id]
+        );
+        archivedCount++;
+
+        // 2. Clone the budget for the new period
+        // First, get all the budget data
+        const budgetData = await pool.query(
+          `SELECT * FROM budgets WHERE id = $1`,
+          [id]
+        );
+        const oldBudget = budgetData.rows[0];
+
+        // Create new budget with same settings but new dates
+        const newBudgetResult = await pool.query(
+          `INSERT INTO budgets (
+            user_id, household_id, name, period_type, period_start, period_end,
+            currency_code, auto_renew, status, parent_budget_id
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9)
+          RETURNING id`,
+          [
+            oldBudget.user_id,
+            oldBudget.household_id,
+            oldBudget.name,
+            oldBudget.period_type,
+            newStart,
+            newEnd,
+            oldBudget.currency_code,
+            oldBudget.auto_renew,
+            id, // parent_budget_id links to old budget
+          ]
+        );
+
+        const newBudgetId = newBudgetResult.rows[0].id;
+
+        // 3. Copy budget_categories (allocations) to new budget
+        await pool.query(
+          `INSERT INTO budget_categories (budget_id, category_id, allocated_amount)
+           SELECT $1, category_id, allocated_amount
+           FROM budget_categories
+           WHERE budget_id = $2`,
+          [newBudgetId, id]
+        );
+
+        // 4. Copy budget_members if any
+        await pool.query(
+          `INSERT INTO budget_members (budget_id, user_id, role)
+           SELECT $1, user_id, role
+           FROM budget_members
+           WHERE budget_id = $2`,
+          [newBudgetId, id]
         );
 
         renewedCount++;
@@ -126,8 +179,9 @@ router.post(
 
       res.json({
         success: true,
+        archivedCount,
         renewedCount,
-        message: `${renewedCount} budget(s) renewed`,
+        message: `${archivedCount} budget(s) archived, ${renewedCount} new budget(s) created`,
       });
     } catch (error) {
       console.error("Error renewing budgets:", error);
@@ -494,8 +548,9 @@ router.get(
 );
 
 /**
- * GET /api/budgets
+ * GET /api/budgets?status=active|completed
  * Fetch all budgets for the user (personal + household)
+ * Optional status filter: active (default) or completed
  */
 router.get(
   "/",
@@ -509,6 +564,17 @@ router.get(
         return;
       }
 
+      // Get status filter from query params (default to 'active')
+      const status = (req.query.status as string) || "active";
+
+      // Validate status
+      if (!["active", "completed", "all"].includes(status)) {
+        res.status(400).json({
+          error: "Invalid status. Must be 'active', 'completed', or 'all'",
+        });
+        return;
+      }
+
       // Fetch budgets where user is owner OR user is part of the household
       const query = `
         SELECT
@@ -519,6 +585,9 @@ router.get(
           b.period_end,
           b.currency_code,
           b.created_at,
+          b.status,
+          b.archived_at,
+          b.parent_budget_id,
           u.display_name as owner_name,
           h.name as household_name,
           ARRAY_AGG(DISTINCT hm_users.display_name) FILTER (WHERE hm_users.id IS NOT NULL) as member_names
@@ -527,15 +596,17 @@ router.get(
         LEFT JOIN households h ON b.household_id = h.id
         LEFT JOIN household_members hm ON h.id = hm.household_id
         LEFT JOIN users hm_users ON hm.user_id = hm_users.id
-        WHERE b.user_id = $1
+        WHERE (b.user_id = $1
            OR b.household_id IN (
                 SELECT household_id FROM household_members WHERE user_id = $1
-              )
+              ))
+          ${status !== "all" ? "AND b.status = $2" : ""}
         GROUP BY b.id, u.display_name, h.name
         ORDER BY b.created_at DESC
       `;
 
-      const result = await pool.query<BudgetRow>(query, [userId]);
+      const params = status !== "all" ? [userId, status] : [userId];
+      const result = await pool.query<BudgetRow>(query, params);
 
       const budgets = result.rows.map((row) => ({
         id: row.id,
@@ -545,6 +616,9 @@ router.get(
         periodEnd: row.period_end,
         currencyCode: row.currency_code,
         createdAt: row.created_at,
+        status: row.status,
+        archivedAt: row.archived_at,
+        parentBudgetId: row.parent_budget_id,
         ownerName: row.owner_name,
         householdName: row.household_name,
         memberNames: row.member_names || [],

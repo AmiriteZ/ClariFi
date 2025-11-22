@@ -10,20 +10,23 @@ export default function BudgetsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
 
   useEffect(() => {
     loadBudgets();
-  }, []);
+  }, [activeTab]);
 
   async function loadBudgets() {
     try {
       setLoading(true);
 
-      // Check and renew expired budgets first
-      await renewExpiredBudgets();
+      // Check and renew expired budgets first (only when viewing active)
+      if (activeTab === "active") {
+        await renewExpiredBudgets();
+      }
 
-      // Then fetch all budgets
-      const data = await getBudgets();
+      // Fetch budgets filtered by status
+      const data = await getBudgets(activeTab);
       setBudgets(data.budgets);
     } catch (err) {
       console.error("Failed to load budgets", err);
@@ -52,6 +55,32 @@ export default function BudgetsPage() {
           </button>
         </div>
 
+        {/* Tab Navigation */}
+        <div className="mb-6 border-b border-slate-200">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab("active")}
+              className={`whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors ${
+                activeTab === "active"
+                  ? "border-emerald-600 text-emerald-600"
+                  : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
+              }`}
+            >
+              Active Budgets
+            </button>
+            <button
+              onClick={() => setActiveTab("completed")}
+              className={`whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors ${
+                activeTab === "completed"
+                  ? "border-emerald-600 text-emerald-600"
+                  : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
+              }`}
+            >
+              Completed Budgets
+            </button>
+          </nav>
+        </div>
+
         {error && (
           <div className="mb-6 rounded-xl bg-red-50 p-4 text-sm text-red-600">
             {error}
@@ -73,18 +102,23 @@ export default function BudgetsPage() {
               <Plus className="h-8 w-8 text-emerald-600" />
             </div>
             <h3 className="text-lg font-medium text-slate-900">
-              No budgets yet
+              {activeTab === "active"
+                ? "No active budgets"
+                : "No completed budgets"}
             </h3>
             <p className="mt-1 max-w-sm text-sm text-slate-500">
-              Create your first budget to start tracking your expenses and
-              saving goals.
+              {activeTab === "active"
+                ? "Create your first budget to start tracking your expenses and saving goals."
+                : "Completed budgets will appear here once their period ends."}
             </p>
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="mt-6 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-emerald-700 hover:shadow-md"
-            >
-              Create Budget
-            </button>
+            {activeTab === "active" && (
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="mt-6 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-emerald-700 hover:shadow-md"
+              >
+                Create Budget
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">

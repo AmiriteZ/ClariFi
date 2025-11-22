@@ -62,7 +62,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <Link to="/dashboard" className="block">
               Overview
             </Link>
-            <span className="block opacity-50">(3D scene later)</span>
+
+            {/* 🔥 AI ASSISTANT */}
+            <Link
+              to="/assistant"
+              className="block mt-4 font-medium text-slate-700 hover:text-emerald-600"
+            >
+              🤖 AI Assistant
+            </Link>
 
             {/* 🔥 NEW GOALS BUTTON */}
             <Link
