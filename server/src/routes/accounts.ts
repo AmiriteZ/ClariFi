@@ -547,6 +547,245 @@ router.post(
             }
 
             totalAccountsUpdated++;
+
+            // Fetch transactions for this account
+            try {
+              // Try to trigger enrichment for the transactions
+              // Note: This may not be available in sandbox environments
+              console.log(
+                `Attempting to trigger enrichment for account ${externalAccountId}...`
+              );
+
+              try {
+                const enrichmentResponse = await fetch(
+                  `${YAPILY_CONFIG.baseUrl}/accounts/${externalAccountId}/transactions/enrichment`,
+                  {
+                    method: "POST",
+                    headers: {
+                      ...yapilyAuthHeaders(),
+                      consent: consentToken,
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      countryCode: "GB",
+                      categorisationType: "consumer",
+                    }),
+                  }
+                );
+
+                if (enrichmentResponse.ok) {
+                  console.log(
+                    `✅ Enrichment triggered for account ${externalAccountId}`
+                  );
+                } else {
+                  console.log(
+                    `ℹ️ Enrichment not available (${enrichmentResponse.status}). Transactions may already include enrichment data if categorisation scope is enabled.`
+                  );
+                }
+              } catch {
+                console.log(
+                  `ℹ️ Enrichment endpoint not available. Continuing with transaction fetch...`
+                );
+              }
+
+              // Now fetch the transactions
+              const transactionsResponse = await fetch(
+                `${YAPILY_CONFIG.baseUrl}/accounts/${externalAccountId}/transactions`,
+                {
+                  method: "GET",
+                  headers: {
+                    ...yapilyAuthHeaders(),
+                    consent: consentToken,
+                  },
+                }
+              );
+
+              if (transactionsResponse.ok) {
+                const transactionsData = await transactionsResponse.json();
+                const transactions = transactionsData.data || [];
+
+                console.log(
+                  `Fetched ${transactions.length} transactions for account ${externalAccountId}`
+                );
+
+                // Log if enrichment data is present
+                const enrichedCount = transactions.filter(
+                  (tx: Record<string, unknown>) => tx.enrichment
+                ).length;
+                console.log(
+                  `  ${enrichedCount}/${transactions.length} transactions have enrichment data`
+                );
+
+                // Debug: Log first enriched transaction structure
+                const firstEnriched = transactions.find(
+                  (tx: Record<string, unknown>) => tx.enrichment
+                );
+                if (firstEnriched) {
+                  console.log(
+                    "📊 Sample enrichment data:",
+                    JSON.stringify(firstEnriched.enrichment, null, 2)
+                  );
+                }
+
+                for (const tx of transactions) {
+                  const externalTransactionId = tx.id;
+                  const postedAt =
+                    tx.bookingDateTime || tx.date || new Date().toISOString();
+                  const description =
+                    tx.description ||
+                    tx.transactionInformation ||
+                    "Transaction";
+
+                  // Extract merchant name from enrichment data (Yapily categorization)
+                  // This comes from the enrichment.merchant field if categorization is enabled
+                  const merchantName =
+                    tx.enrichment?.merchant?.merchantName ||
+                    tx.merchant?.merchantName ||
+                    null;
+
+                  // Extract category from enrichment data
+                  const categoryName =
+                    tx.enrichment?.categorisation?.category || null;
+
+                  // Debug logging for first transaction
+                  if (tx === transactions[0]) {
+                    console.log("🔍 First transaction enrichment debug:");
+                    console.log("  - Has enrichment:", !!tx.enrichment);
+                    console.log(
+                      "  - Merchant path 1:",
+                      tx.enrichment?.merchant?.merchantName
+                    );
+                    console.log(
+                      "  - Merchant path 2:",
+                      tx.merchant?.merchantName
+                    );
+                    console.log("  - Category:", categoryName);
+                    console.log("  - Final merchant:", merchantName);
+                  }
+
+                  const status = tx.status || "BOOKED";
+
+                  // Handle amount and direction
+                  let rawAmount = 0;
+                  let currency = "GBP";
+
+                  if (tx.transactionAmount) {
+                    rawAmount = tx.transactionAmount.amount;
+                    currency = tx.transactionAmount.currency;
+                  } else if (tx.amount) {
+                    rawAmount = tx.amount;
+                  }
+
+                  const direction = rawAmount < 0 ? "debit" : "credit";
+                  const absAmount = Math.abs(rawAmount);
+
+                  // Look up category ID from the Yapily category name
+                  let categoryId = null;
+                  if (categoryName) {
+                    const categoryResult = await pool.query(
+                      `SELECT id FROM categories WHERE name = $1`,
+                      [categoryName]
+                    );
+                    if (categoryResult.rows.length > 0) {
+                      categoryId = categoryResult.rows[0].id;
+                    }
+                  }
+
+                  // Upsert transaction
+                  // Assuming 'transactions' table has (account_id, external_transaction_id) unique constraint
+                  // If not, we might get duplicates, but we'll try to handle it like accounts if needed.
+                  // For now, let's assume ON CONFLICT works or we do a check.
+                  // Given the previous issue, let's do a check-and-update for safety.
+
+                  const existingTx = await pool.query(
+                    `SELECT id FROM transactions 
+                     WHERE account_id = $1 AND external_transaction_id = $2`,
+                    [
+                      existingAccount.rows[0]?.id ||
+                        (
+                          await pool.query(
+                            `SELECT id FROM accounts WHERE bank_connection_id = $1 AND external_account_id = $2`,
+                            [connection.id, externalAccountId]
+                          )
+                        ).rows[0].id,
+                      externalTransactionId,
+                    ]
+                  );
+
+                  // Get the correct account ID (it might have been just inserted)
+                  let accountId =
+                    existingAccount.rows.length > 0
+                      ? existingAccount.rows[0].id
+                      : null;
+                  if (!accountId) {
+                    const newAccountParams = await pool.query(
+                      `SELECT id FROM accounts WHERE bank_connection_id = $1 AND external_account_id = $2`,
+                      [connection.id, externalAccountId]
+                    );
+                    accountId = newAccountParams.rows[0]?.id;
+                  }
+
+                  if (accountId) {
+                    if (existingTx.rows.length > 0) {
+                      await pool.query(
+                        `UPDATE transactions SET
+                             posted_at = $1,
+                             amount = $2,
+                             currency_code = $3,
+                             direction = $4,
+                             description = $5,
+                             merchant_name = $6,
+                             status = $7,
+                             category_id = $8,
+                             updated_at = now()
+                           WHERE id = $9`,
+                        [
+                          postedAt,
+                          absAmount,
+                          currency,
+                          direction,
+                          description,
+                          merchantName,
+                          status,
+                          categoryId,
+                          existingTx.rows[0].id,
+                        ]
+                      );
+                    } else {
+                      await pool.query(
+                        `INSERT INTO transactions (
+                             account_id, external_transaction_id, posted_at, amount,
+                             currency_code, direction, description, merchant_name,
+                             status, category_id, created_at, updated_at
+                           )
+                           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now(), now())`,
+                        [
+                          accountId,
+                          externalTransactionId,
+                          postedAt,
+                          absAmount,
+                          currency,
+                          direction,
+                          description,
+                          merchantName,
+                          status,
+                          categoryId,
+                        ]
+                      );
+                    }
+                  }
+                }
+              } else {
+                console.error(
+                  `Failed to fetch transactions for account ${externalAccountId}: ${transactionsResponse.statusText}`
+                );
+              }
+            } catch (txError) {
+              console.error(
+                `Error fetching transactions for account ${externalAccountId}:`,
+                txError
+              );
+            }
           }
 
           console.log(
