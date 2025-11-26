@@ -121,7 +121,7 @@ export default function BudgetSetupPage() {
   };
 
   const handleCategoryLimitChange = (categoryId: number, value: string) => {
-    const amount = parseFloat(value) || 0;
+    const amount = Math.max(0, parseFloat(value) || 0);
     setCategoryLimits((prev) => ({
       ...prev,
       [categoryId]: amount,
@@ -396,9 +396,11 @@ export default function BudgetSetupPage() {
               </label>
               <input
                 type="number"
+                min="0"
+                step="0.01"
                 value={incomeAmount || ""}
                 onChange={(e) =>
-                  setIncomeAmount(parseFloat(e.target.value) || 0)
+                  setIncomeAmount(Math.max(0, parseFloat(e.target.value) || 0))
                 }
                 className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
                 placeholder="Enter your expected income"
@@ -412,9 +414,13 @@ export default function BudgetSetupPage() {
                 </label>
                 <input
                   type="number"
+                  min="0"
+                  step="0.01"
                   value={savingsTargetAmount || ""}
                   onChange={(e) =>
-                    setSavingsTargetAmount(parseFloat(e.target.value) || 0)
+                    setSavingsTargetAmount(
+                      Math.max(0, parseFloat(e.target.value) || 0)
+                    )
                   }
                   className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
                   placeholder="Amount or %"
@@ -540,6 +546,8 @@ export default function BudgetSetupPage() {
                     <p className="flex-1 text-sm text-slate-700">{item.name}</p>
                     <input
                       type="number"
+                      min="0"
+                      step="0.01"
                       value={categoryLimits[item.id] || ""}
                       onChange={(e) =>
                         handleCategoryLimitChange(item.id, e.target.value)
