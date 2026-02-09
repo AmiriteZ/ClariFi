@@ -1,5 +1,6 @@
 import { Router, Response } from "express";
 import { pool } from "../db";
+import { DateUtils } from "../utils/dateUtils";
 import {
   verifyFirebaseToken,
   AuthenticatedRequest,
@@ -22,6 +23,7 @@ interface BudgetRow {
   archived_at: string | null;
   parent_budget_id: string | null;
   owner_name: string;
+  household_id: string | null;
   household_name: string | null;
   member_names: string[];
 }
@@ -31,7 +33,7 @@ interface BudgetRow {
  * Uses req.user.id if present; otherwise looks up by firebase_uid.
  */
 async function resolveUserId(
-  req: AuthenticatedRequest
+  req: AuthenticatedRequest,
 ): Promise<string | null> {
   const authUser = req.user;
 
@@ -47,7 +49,7 @@ async function resolveUserId(
 
   const result = await pool.query(
     `SELECT id FROM users WHERE firebase_uid = $1 LIMIT 1`,
-    [firebaseUid]
+    [firebaseUid],
   );
 
   if (result.rows.length === 0) {
@@ -78,11 +80,15 @@ router.post(
         SELECT id, period_type, period_start, period_end, auto_renew
         FROM budgets
         WHERE user_id = $1
+          AND status = 'active'
           AND auto_renew = true
-          AND period_end < CURRENT_DATE
+          AND period_end < $2
       `;
 
-      const expiredBudgets = await pool.query(findExpiredQuery, [userId]);
+      const expiredBudgets = await pool.query(findExpiredQuery, [
+        userId,
+        DateUtils.getCurrentDate(),
+      ]);
 
       let renewedCount = 0;
       let archivedCount = 0;
@@ -95,17 +101,18 @@ router.post(
         let newStart: Date;
         let newEnd: Date;
 
+        // Default to monthly if not provided
         if (period_type === "monthly") {
           // Move to next month
           newStart = new Date(
             currentEnd.getFullYear(),
             currentEnd.getMonth() + 1,
-            1
+            1,
           );
           newEnd = new Date(
             currentEnd.getFullYear(),
             currentEnd.getMonth() + 2,
-            0
+            0,
           );
         } else if (period_type === "weekly") {
           // Move to next week
@@ -122,7 +129,7 @@ router.post(
           `UPDATE budgets 
            SET status = 'completed', archived_at = NOW(), updated_at = NOW()
            WHERE id = $1`,
-          [id]
+          [id],
         );
         archivedCount++;
 
@@ -130,7 +137,7 @@ router.post(
         // First, get all the budget data
         const budgetData = await pool.query(
           `SELECT * FROM budgets WHERE id = $1`,
-          [id]
+          [id],
         );
         const oldBudget = budgetData.rows[0];
 
@@ -151,21 +158,22 @@ router.post(
             oldBudget.currency_code,
             oldBudget.auto_renew,
             id, // parent_budget_id links to old budget
-          ]
+          ],
         );
 
         const newBudgetId = newBudgetResult.rows[0].id;
 
-        // 3. Copy budget_categories (allocations) to new budget
+        // 3. Copy budget_items (allocations) to new budget
         await pool.query(
-          `INSERT INTO budget_categories (budget_id, category_id, allocated_amount)
-           SELECT $1, category_id, allocated_amount
-           FROM budget_categories
+          `INSERT INTO budget_items (budget_id, category_id, limit_amount)
+           SELECT $1, category_id, limit_amount
+           FROM budget_items
            WHERE budget_id = $2`,
-          [newBudgetId, id]
+          [newBudgetId, id],
         );
 
-        // 4. Copy budget_members if any
+        // 4. Copy budget_members if any (Table does not exist yet)
+        /*
         await pool.query(
           `INSERT INTO budget_members (budget_id, user_id, role)
            SELECT $1, user_id, role
@@ -173,6 +181,7 @@ router.post(
            WHERE budget_id = $2`,
           [newBudgetId, id]
         );
+        */
 
         renewedCount++;
       }
@@ -187,7 +196,7 @@ router.post(
       console.error("Error renewing budgets:", error);
       res.status(500).json({ error: "Failed to renew budgets" });
     }
-  }
+  },
 );
 
 /**
@@ -209,15 +218,22 @@ router.get(
       const budgetId = req.params.id;
 
       // 1. Load budget details
+      // 1. Load budget details (ALLOW household members)
       const budgetQuery = await pool.query(
-        `SELECT id, name, period_type, period_start, period_end, currency_code, user_id
-         FROM budgets
-         WHERE id = $1 AND user_id = $2`,
-        [budgetId, userId]
+        `SELECT b.id, b.name, b.period_type, b.period_start, b.period_end, b.currency_code, b.user_id, b.household_id
+         FROM budgets b
+         WHERE b.id = $1
+           AND (
+             b.user_id = $2
+             OR b.household_id IN (
+               SELECT household_id FROM household_members WHERE user_id = $2
+             )
+           )`,
+        [budgetId, userId],
       );
 
       if (budgetQuery.rows.length === 0) {
-        res.status(404).json({ error: "Budget not found" });
+        res.status(404).json({ error: "Budget not found or access denied" });
         return;
       }
 
@@ -230,15 +246,27 @@ router.get(
          JOIN categories c ON bi.category_id = c.id
          WHERE bi.budget_id = $1
          ORDER BY c.name`,
-        [budgetId]
+        [budgetId],
       );
 
       const budgetItems = budgetItemsQuery.rows;
       const categoryIds = budgetItems.map(
-        (item: { category_id: number }) => item.category_id
+        (item: { category_id: number }) => item.category_id,
       );
 
+      // Determine whose transactions to include
+      let targetUserIds = [userId];
+      if (budget.household_id) {
+        // Fetch all members of the household
+        const membersQuery = await pool.query(
+          "SELECT user_id FROM household_members WHERE household_id = $1",
+          [budget.household_id],
+        );
+        targetUserIds = membersQuery.rows.map((r) => r.user_id);
+      }
+
       // 3. Calculate spending per category
+      // We join accounts -> users to filter by the list of targetUserIds
       const spendingQuery = await pool.query(
         `SELECT 
           t.category_id,
@@ -246,13 +274,17 @@ router.get(
           COUNT(*) as transaction_count
          FROM transactions t
          JOIN accounts a ON t.account_id = a.id
-         WHERE (a.external_account_id = $1 OR a.external_account_id = 'tool-account-' || $1)
+         WHERE (
+           a.external_account_id = ANY($1)
+           OR 
+           a.external_account_id IN (SELECT 'tool-account-' || u_id FROM unnest($1::text[]) AS u_id)
+         )
            AND t.posted_at >= $2
            AND t.posted_at <= $3
            AND t.direction = 'debit'
            AND t.category_id = ANY($4)
          GROUP BY t.category_id`,
-        [userId, budget.period_start, budget.period_end, categoryIds]
+        [targetUserIds, budget.period_start, budget.period_end, categoryIds],
       );
 
       const spendingMap = new Map();
@@ -266,7 +298,7 @@ router.get(
             spent: parseFloat(row.spent),
             transactionCount: parseInt(row.transaction_count),
           });
-        }
+        },
       );
 
       // 4. Build category breakdown
@@ -309,9 +341,10 @@ router.get(
             status,
             transactionCount: spendingData.transactionCount,
           };
-        }
+        },
       );
 
+      // 5. Load all transactions for period
       // 5. Load all transactions for period
       const transactionsQuery = await pool.query(
         `SELECT 
@@ -322,13 +355,17 @@ router.get(
          FROM transactions t
          JOIN accounts a ON t.account_id = a.id
          LEFT JOIN categories c ON t.category_id = c.id
-         WHERE (a.external_account_id = $1 OR a.external_account_id = 'tool-account-' || $1)
+         WHERE (
+           a.external_account_id = ANY($1)
+           OR 
+           a.external_account_id IN (SELECT 'tool-account-' || u_id FROM unnest($1::text[]) AS u_id)
+         )
            AND t.posted_at >= $2
            AND t.posted_at <= $3
            AND t.direction = 'debit'
          ORDER BY t.posted_at DESC
          LIMIT 200`,
-        [userId, budget.period_start, budget.period_end]
+        [targetUserIds, budget.period_start, budget.period_end],
       );
 
       const transactions = transactionsQuery.rows.map(
@@ -352,22 +389,27 @@ router.get(
           categoryName: row.category_name,
           accountName: row.account_name,
           status: row.status,
-        })
+        }),
       );
 
+      // 6. Find unassigned transactions
       // 6. Find unassigned transactions
       const unassignedQuery = await pool.query(
         `SELECT t.id, t.posted_at, t.description, t.merchant_name, t.amount, a.name as account_name
          FROM transactions t
          JOIN accounts a ON t.account_id = a.id
-         WHERE (a.external_account_id = $1 OR a.external_account_id = 'tool-account-' || $1)
+         WHERE (
+           a.external_account_id = ANY($1)
+           OR 
+           a.external_account_id IN (SELECT 'tool-account-' || u_id FROM unnest($1::text[]) AS u_id)
+         )
            AND t.posted_at >= $2
            AND t.posted_at <= $3
            AND t.category_id IS NULL
            AND t.direction = 'debit'
          ORDER BY t.posted_at DESC
          LIMIT 50`,
-        [userId, budget.period_start, budget.period_end]
+        [targetUserIds, budget.period_start, budget.period_end],
       );
 
       const unassigned = unassignedQuery.rows.map(
@@ -388,7 +430,7 @@ router.get(
           categoryName: null,
           accountName: row.account_name,
           status: "posted",
-        })
+        }),
       );
 
       // 7. Calculate analytics
@@ -399,15 +441,15 @@ router.get(
       // Calculate period elapsed
       const periodStart = new Date(budget.period_start);
       const periodEnd = new Date(budget.period_end);
-      const today = new Date();
+      const today = DateUtils.getCurrentDate();
       const totalDays = Math.ceil(
-        (periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24)
+        (periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24),
       );
       const daysElapsed = Math.max(
         0,
         Math.ceil(
-          (today.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24)
-        )
+          (today.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24),
+        ),
       );
       const periodElapsed = Math.min(100, (daysElapsed / totalDays) * 100);
 
@@ -434,10 +476,10 @@ router.get(
       const overBudgetCategories = categories
         .filter(
           (cat: { status: string; categoryName: string }) =>
-            cat.status === "over"
+            cat.status === "over",
         )
         .map(
-          (cat: { status: string; categoryName: string }) => cat.categoryName
+          (cat: { status: string; categoryName: string }) => cat.categoryName,
         );
 
       // 8. Load historical performance
@@ -450,7 +492,7 @@ router.get(
            AND period_end < $4
          ORDER BY period_start DESC
          LIMIT 6`,
-        [userId, budget.name, budget.period_type, budget.period_start]
+        [userId, budget.name, budget.period_type, budget.period_start],
       );
 
       const history = await Promise.all(
@@ -465,27 +507,32 @@ router.get(
               `SELECT SUM(limit_amount) as total_budgeted
              FROM budget_items
              WHERE budget_id = $1`,
-              [histBudget.id]
+              [histBudget.id],
             );
 
             const histBudgeted = parseFloat(
-              histItemsQuery.rows[0]?.total_budgeted || "0"
+              histItemsQuery.rows[0]?.total_budgeted || "0",
             );
 
+            // Get spending for this historical period
             // Get spending for this historical period
             const histSpendingQuery = await pool.query(
               `SELECT SUM(ABS(t.amount)) as total_spent
              FROM transactions t
              JOIN accounts a ON t.account_id = a.id
-             WHERE (a.external_account_id = $1 OR a.external_account_id = 'tool-account-' || $1)
+             WHERE (
+               a.external_account_id = ANY($1)
+               OR 
+               a.external_account_id IN (SELECT 'tool-account-' || u_id FROM unnest($1::text[]) AS u_id)
+             )
                AND t.posted_at >= $2
                AND t.posted_at <= $3
                AND t.direction = 'debit'`,
-              [userId, histBudget.period_start, histBudget.period_end]
+              [targetUserIds, histBudget.period_start, histBudget.period_end],
             );
 
             const histSpent = parseFloat(
-              histSpendingQuery.rows[0]?.total_spent || "0"
+              histSpendingQuery.rows[0]?.total_spent || "0",
             );
             const histPercentage =
               histBudgeted > 0 ? (histSpent / histBudgeted) * 100 : 0;
@@ -506,8 +553,8 @@ router.get(
               percentageUsed: histPercentage,
               status: histStatus,
             };
-          }
-        )
+          },
+        ),
       );
 
       // 9. Return comprehensive response
@@ -544,7 +591,7 @@ router.get(
       console.error("Error fetching budget view:", error);
       res.status(500).json({ error: "Failed to fetch budget view" });
     }
-  }
+  },
 );
 
 /**
@@ -601,7 +648,7 @@ router.get(
                 SELECT household_id FROM household_members WHERE user_id = $1
               ))
           ${status !== "all" ? "AND b.status = $2" : ""}
-        GROUP BY b.id, u.display_name, h.name
+        GROUP BY b.id, b.household_id, u.display_name, h.name
         ORDER BY b.created_at DESC
       `;
 
@@ -621,6 +668,7 @@ router.get(
         parentBudgetId: row.parent_budget_id,
         ownerName: row.owner_name,
         householdName: row.household_name,
+        householdId: row.household_id,
         memberNames: row.member_names || [],
       }));
 
@@ -629,7 +677,7 @@ router.get(
       console.error("Error fetching budgets:", error);
       res.status(500).json({ error: "Failed to fetch budgets" });
     }
-  }
+  },
 );
 
 /**
@@ -655,12 +703,53 @@ router.post(
         return;
       }
 
-      // Default values for now
-      const periodType = "monthly";
+      // Default values
       const currencyCode = "EUR"; // Default, can be changed later
-      const periodStart = new Date();
-      const periodEnd = new Date();
-      periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+      // Determine period type and dates
+      const periodType = req.body.periodType || "monthly";
+      let periodStart: Date;
+      let periodEnd: Date;
+
+      if (req.body.periodStart && req.body.periodEnd) {
+        periodStart = new Date(req.body.periodStart);
+        periodEnd = new Date(req.body.periodEnd);
+      } else {
+        const today = DateUtils.getCurrentDate();
+
+        if (periodType === "monthly") {
+          // Snap to first and last day of current month
+          periodStart = new Date(today.getFullYear(), today.getMonth(), 1);
+          periodEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        } else if (periodType === "weekly") {
+          // Snap to start of week (Monday)
+          const day = today.getDay();
+          const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+          periodStart = new Date(today);
+          periodStart.setDate(diff);
+
+          periodEnd = new Date(periodStart);
+          periodEnd.setDate(periodStart.getDate() + 6);
+        } else {
+          // Fallback
+          periodStart = new Date(today);
+          periodEnd = new Date(today);
+          periodEnd.setDate(periodEnd.getDate() + 30);
+        }
+      }
+
+      // 1. Determine household context
+      const householdId = req.body.householdId || null; // Optional
+      if (householdId) {
+        const memberCheck = await pool.query(
+          "SELECT 1 FROM household_members WHERE household_id = $1 AND user_id = $2",
+          [householdId, userId],
+        );
+        if (memberCheck.rows.length === 0) {
+          res.status(403).json({ error: "Not a member of this household" });
+          return;
+        }
+      }
 
       const insertQuery = `
         INSERT INTO budgets (
@@ -670,14 +759,33 @@ router.post(
           period_type,
           period_start,
           period_end,
+          period_end,
           currency_code
         )
-        VALUES ($1, NULL, $2, $3, $4, $5, $6)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id, name
       `;
+      // Note: we have a typo in original insert (period_end twice?) or just missing column in original?
+      // Original: VALUES ($1, NULL, $2, $3, $4, $5, $6) -> 7 params
+      // Insert columns: user_id, household_id, name, period_type, period_start, period_end, currency_code -> 7 cols
+      // New: usage of householdId arg
+      const finalInsertQuery = `
+         INSERT INTO budgets (
+           user_id,
+           household_id,
+           name,
+           period_type,
+           period_start,
+           period_end,
+           currency_code
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING id, name
+      `;
 
-      const result = await pool.query(insertQuery, [
+      const result = await pool.query(finalInsertQuery, [
         userId,
+        householdId,
         name.trim(),
         periodType,
         periodStart,
@@ -692,7 +800,7 @@ router.post(
       console.error("Error creating budget:", error);
       res.status(500).json({ error: "Failed to create budget" });
     }
-  }
+  },
 );
 
 /**
@@ -783,7 +891,7 @@ router.get(
       console.error("Error fetching budget details:", error);
       res.status(500).json({ error: "Failed to fetch budget details" });
     }
-  }
+  },
 );
 
 /**
@@ -833,7 +941,7 @@ router.get(
       console.error("Error fetching accounts:", error);
       res.status(500).json({ error: "Failed to fetch accounts" });
     }
-  }
+  },
 );
 
 /**
@@ -880,7 +988,7 @@ router.get(
         ([parent, items]) => ({
           parent,
           items,
-        })
+        }),
       );
 
       res.json({ categoryGroups });
@@ -888,7 +996,7 @@ router.get(
       console.error("Error fetching categories:", error);
       res.status(500).json({ error: "Failed to fetch categories" });
     }
-  }
+  },
 );
 
 /**
@@ -923,7 +1031,7 @@ router.patch(
       // Verify budget ownership
       const ownerCheck = await pool.query(
         `SELECT id FROM budgets WHERE id = $1 AND user_id = $2`,
-        [budgetId, userId]
+        [budgetId, userId],
       );
 
       if (ownerCheck.rows.length === 0) {
@@ -974,7 +1082,7 @@ router.patch(
 
           await pool.query(
             `INSERT INTO budget_accounts (budget_id, account_id) VALUES ${accountValues}`,
-            [budgetId, ...accountIds]
+            [budgetId, ...accountIds],
           );
         }
 
@@ -989,7 +1097,7 @@ router.patch(
             if (limit.amount && limit.amount > 0) {
               await pool.query(
                 `INSERT INTO budget_items (budget_id, category_id, limit_amount) VALUES ($1, $2, $3)`,
-                [budgetId, limit.categoryId, limit.amount]
+                [budgetId, limit.categoryId, limit.amount],
               );
             }
           }
@@ -1006,7 +1114,7 @@ router.patch(
       console.error("Error saving budget setup:", error);
       res.status(500).json({ error: "Failed to save budget setup" });
     }
-  }
+  },
 );
 
 /**
@@ -1030,7 +1138,7 @@ router.delete(
       // Verify budget belongs to user
       const ownerCheck = await pool.query(
         "SELECT id FROM budgets WHERE id = $1 AND user_id = $2",
-        [budgetId, userId]
+        [budgetId, userId],
       );
 
       if (ownerCheck.rows.length === 0) {
@@ -1046,7 +1154,7 @@ router.delete(
       console.error("Error deleting budget:", error);
       res.status(500).json({ error: "Failed to delete budget" });
     }
-  }
+  },
 );
 
 export default router;

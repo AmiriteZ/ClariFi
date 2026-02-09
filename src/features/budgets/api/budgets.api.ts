@@ -68,27 +68,30 @@ export interface BudgetDetail {
 }
 
 export async function getBudgets(
-  status: "active" | "completed" = "active"
+  status: "active" | "completed" = "active",
+  householdId?: string,
 ): Promise<{ budgets: BudgetSummary[] }> {
   const user = auth.currentUser;
   if (!user) throw new Error("Not authenticated");
   const token = await user.getIdToken();
 
-  const res = await fetch(
-    `http://localhost:5001/api/budgets?status=${status}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+  let url = `http://localhost:5001/api/budgets?status=${status}`;
+  if (householdId) {
+    url += `&household_id=${householdId}`;
+  }
+
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
   if (!res.ok) throw new Error("Failed to fetch budgets");
   return res.json();
 }
 
 export async function createBudget(
-  input: CreateBudgetInput
+  input: CreateBudgetInput,
 ): Promise<{ budget: BudgetSummary }> {
   const user = auth.currentUser;
   if (!user) throw new Error("Not authenticated");
@@ -126,7 +129,7 @@ export async function renewExpiredBudgets(): Promise<{ renewedCount: number }> {
 }
 
 export async function getBudgetDetail(
-  id: string
+  id: string,
 ): Promise<{ budget: BudgetDetail }> {
   const user = auth.currentUser;
   if (!user) throw new Error("Not authenticated");
@@ -144,7 +147,7 @@ export async function getBudgetDetail(
 }
 
 export async function getBudgetAccounts(
-  budgetId: string
+  budgetId: string,
 ): Promise<{ accounts: Account[] }> {
   const user = auth.currentUser;
   if (!user) throw new Error("Not authenticated");
@@ -156,7 +159,7 @@ export async function getBudgetAccounts(
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 
   const data = await res.json();
@@ -165,7 +168,7 @@ export async function getBudgetAccounts(
 }
 
 export async function getBudgetCategories(
-  budgetId: string
+  budgetId: string,
 ): Promise<{ categoryGroups: BudgetCategoryGroup[] }> {
   const user = auth.currentUser;
   if (!user) throw new Error("Not authenticated");
@@ -177,7 +180,7 @@ export async function getBudgetCategories(
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 
   const data = await res.json();
@@ -187,7 +190,7 @@ export async function getBudgetCategories(
 
 export async function saveBudgetSetup(
   budgetId: string,
-  setupData: BudgetSetupInput
+  setupData: BudgetSetupInput,
 ): Promise<{ success: boolean }> {
   const user = auth.currentUser;
   if (!user) throw new Error("Not authenticated");
@@ -202,7 +205,7 @@ export async function saveBudgetSetup(
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(setupData),
-    }
+    },
   );
 
   const data = await res.json();
@@ -285,7 +288,7 @@ export async function getBudgetView(budgetId: string): Promise<BudgetViewData> {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 
   const data = await res.json();

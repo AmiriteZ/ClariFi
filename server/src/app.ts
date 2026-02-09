@@ -10,6 +10,9 @@ import accountsRouter from "./routes/accounts";
 import institutionsRouter from "./routes/institutions";
 import mlRouter from "./routes/ml";
 import aiRouter from "./routes/ai";
+import transactionsRouter from "./routes/transactions";
+import categoriesRouter from "./routes/categories";
+import householdsRouter from "./routes/households";
 
 const app = express();
 
@@ -43,7 +46,11 @@ app.use("/api/goals", goalsRouter);
 app.use("/api/budgets", budgetsRouter);
 app.use("/api/accounts", accountsRouter);
 app.use("/api/institutions", institutionsRouter);
+app.use("/api/transactions", transactionsRouter);
+app.use("/api/categories", categoriesRouter);
 app.use("/api/ml", mlRouter);
+
 app.use("/api/ai", aiRouter);
+app.use("/api/households", householdsRouter);
 
 export default app;

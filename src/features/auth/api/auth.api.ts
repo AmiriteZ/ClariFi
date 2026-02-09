@@ -18,7 +18,7 @@ const API_BASE =
   import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ??
   "http://localhost:5001/api";
 
-type BackendUser = {
+export type BackendUser = {
   id: string;
   email: string;
   fname?: string | null;
@@ -27,25 +27,19 @@ type BackendUser = {
   lastName?: string | null;
 };
 
-type RawUserPayload = {
+export type RawUserPayload = {
   user?: BackendUser;
 } & Partial<BackendUser>;
 
-function normaliseUser(raw: RawUserPayload): User {
+export function normaliseUser(raw: RawUserPayload): User {
   // Support both { user: {...} } and plain {... }
   const candidate: BackendUser = (raw.user ?? raw) as BackendUser;
 
   const id = String(candidate.id);
   const email = candidate.email;
 
-  const first =
-    candidate.fname ??
-    candidate.firstName ??
-    "";
-  const last =
-    candidate.lname ??
-    candidate.lastName ??
-    "";
+  const first = candidate.fname ?? candidate.firstName ?? "";
+  const last = candidate.lname ?? candidate.lastName ?? "";
 
   const name = `${first} ${last}`.trim() || email;
 
@@ -56,13 +50,30 @@ function normaliseUser(raw: RawUserPayload): User {
   };
 }
 
+export async function fetchUserProfile(token: string): Promise<User> {
+  const res = await fetch(`${API_BASE}/users/me`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const message = await res.text();
+    throw new Error(message || "Failed to fetch user profile.");
+  }
+
+  const data = (await res.json()) as RawUserPayload;
+  return normaliseUser(data);
+}
+
 // SIGN UP
 export async function signupApi(
   firstName: string,
   lastName: string,
   dobIso: string, // "YYYY-MM-DD"
   email: string,
-  password: string
+  password: string,
 ): Promise<LoginResponse> {
   // 1) Create Firebase user (client SDK)
   const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -98,28 +109,14 @@ export async function signupApi(
 // LOGIN
 export async function loginApi(
   email: string,
-  password: string
+  password: string,
 ): Promise<LoginResponse> {
   // 1) Firebase login
   const cred = await signInWithEmailAndPassword(auth, email, password);
   const idToken = await cred.user.getIdToken();
 
   // 2) Fetch DB user profile
-  const res = await fetch(`${API_BASE}/users/me`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${idToken}`,
-    },
-  });
-
-  if (!res.ok) {
-    const message = await res.text();
-    throw new Error(message || "Failed to fetch user profile.");
-  }
-
-  const data = (await res.json()) as RawUserPayload;
-
-  const user = normaliseUser(data);
+  const user = await fetchUserProfile(idToken);
 
   return { token: idToken, user };
 }

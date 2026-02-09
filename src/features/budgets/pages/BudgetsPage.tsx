@@ -4,8 +4,10 @@ import { getBudgets, renewExpiredBudgets } from "../api/budgets.api";
 import type { BudgetSummary } from "../api/budgets.api";
 import BudgetCard from "../components/BudgetCard";
 import CreateBudgetModal from "../components/CreateBudgetModal";
+import { useHousehold } from "../../../store/household.context";
 
 export default function BudgetsPage() {
+  const { viewMode, activeHousehold } = useHousehold();
   const [budgets, setBudgets] = useState<BudgetSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -14,7 +16,7 @@ export default function BudgetsPage() {
 
   useEffect(() => {
     loadBudgets();
-  }, [activeTab]);
+  }, [activeTab, viewMode, activeHousehold]);
 
   async function loadBudgets() {
     try {
@@ -25,8 +27,10 @@ export default function BudgetsPage() {
         await renewExpiredBudgets();
       }
 
-      // Fetch budgets filtered by status
-      const data = await getBudgets(activeTab);
+      // Fetch budgets filtered by status and household
+      const householdId =
+        viewMode === "household" ? activeHousehold?.id : undefined;
+      const data = await getBudgets(activeTab, householdId);
       setBudgets(data.budgets);
     } catch (err) {
       console.error("Failed to load budgets", err);
@@ -41,7 +45,11 @@ export default function BudgetsPage() {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900">Budgets</h1>
+            <h1 className="text-2xl font-semibold text-slate-900">
+              {viewMode === "household" && activeHousehold
+                ? `${activeHousehold.name} Budgets`
+                : "Budgets"}
+            </h1>
             <p className="text-sm text-slate-500 mt-1">
               Manage your spending and savings
             </p>

@@ -7,18 +7,20 @@ import { auth } from "../../../lib/firebase";
 
 import { getDashboard, type DashboardResponse } from "../api/dashboard.api";
 import { renewExpiredBudgets } from "../../budgets/api/budgets.api";
+import { useHousehold } from "../../../store/household.context";
 import { useNavigate } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { viewMode, activeHousehold } = useHousehold();
 
   // 1) Track Firebase auth state
   const { user, token } = useAuthStore();
 
   // 2) Track dashboard data + loading + error
   const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(
-    null
+    null,
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,12 +50,20 @@ export default function DashboardPage() {
           // Don't block dashboard load if renewal fails
         });
 
-        const data = await getDashboard(freshToken);
+        let data: DashboardResponse;
+
+        if (viewMode === "household" && activeHousehold) {
+          // Pass household context to dashboard API
+          data = await getDashboard(freshToken, activeHousehold.id);
+        } else {
+          data = await getDashboard(freshToken);
+        }
+
         setDashboardData(data);
       } catch (err) {
         console.error(err);
         setError(
-          err instanceof Error ? err.message : "Failed to load dashboard"
+          err instanceof Error ? err.message : "Failed to load dashboard",
         );
       } finally {
         setLoading(false);
@@ -63,7 +73,7 @@ export default function DashboardPage() {
     if (user && token) {
       void load();
     }
-  }, [user, token]);
+  }, [user, token, viewMode, activeHousehold]);
 
   // Manual refresh function
   const handleRefresh = async () => {
@@ -85,12 +95,20 @@ export default function DashboardPage() {
         console.warn("Failed to renew budgets:", err);
       });
 
-      const data = await getDashboard(freshToken);
+      let data: DashboardResponse;
+
+      if (viewMode === "household" && activeHousehold) {
+        // Pass household context to dashboard API
+        data = await getDashboard(freshToken, activeHousehold.id);
+      } else {
+        data = await getDashboard(freshToken);
+      }
+
       setDashboardData(data);
     } catch (err) {
       console.error(err);
       setError(
-        err instanceof Error ? err.message : "Failed to refresh dashboard"
+        err instanceof Error ? err.message : "Failed to refresh dashboard",
       );
     } finally {
       setRefreshing(false);
@@ -141,7 +159,11 @@ export default function DashboardPage() {
       <div className="max-w-6xl mx-auto">
         {/* Header with refresh button */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-slate-900">
+            {viewMode === "household" && activeHousehold
+              ? `${activeHousehold.name} Dashboard`
+              : "Dashboard"}
+          </h1>
           <button
             onClick={handleRefresh}
             disabled={refreshing}
@@ -230,7 +252,7 @@ export default function DashboardPage() {
                               key={entry.category}
                               fill={`hsl(${index * 60}, 70%, 50%)`}
                             />
-                          )
+                          ),
                         )}
                       </Pie>
                       <Tooltip />
@@ -239,14 +261,16 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Legend / list */}
-                <ul className="space-y-2 text-sm font-medium text-slate-700">
+                <ul className="space-y-2 text-sm font-medium text-slate-700 max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100">
                   {dashboardData.spendingByCategory.map((item) => (
                     <li
                       key={item.category}
                       className="flex items-center justify-between gap-4"
                     >
-                      <span>{item.category}</span>
-                      <span className="font-semibold">
+                      <span className="truncate" title={item.category}>
+                        {item.category}
+                      </span>
+                      <span className="font-semibold whitespace-nowrap">
                         €{item.amount.toFixed(2)}
                       </span>
                     </li>

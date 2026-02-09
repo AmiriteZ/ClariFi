@@ -34,6 +34,7 @@ interface CreateGoalBody {
   currencyCode: string;
   targetDate?: string;
   categoryName?: string;
+  householdId?: string;
 }
 
 // Shape we *might* have on req.user
@@ -49,7 +50,7 @@ type MaybeAuthUser = {
  * Uses req.user.id if present; otherwise looks up by firebase_uid.
  */
 async function resolveUserId(
-  req: AuthenticatedRequest
+  req: AuthenticatedRequest,
 ): Promise<string | null> {
   const authUser = req.user as MaybeAuthUser | undefined;
 
@@ -77,7 +78,7 @@ async function resolveUserId(
       WHERE firebase_uid = $1
       LIMIT 1
     `,
-    [firebaseUid]
+    [firebaseUid],
   );
 
   if (result.rows.length === 0) {
@@ -107,6 +108,26 @@ router.get(
         return;
       }
 
+      const householdId = (req.query.householdId as string) || null;
+
+      let whereClause = "g.user_id = $1 AND g.household_id IS NULL";
+      const params: (string | number | null)[] = [userId];
+
+      if (householdId) {
+        // Verify membership
+        const memberCheck = await pool.query(
+          "SELECT 1 FROM household_members WHERE household_id = $1 AND user_id = $2",
+          [householdId, userId],
+        );
+        if (memberCheck.rows.length === 0) {
+          res.status(403).json({ error: "Access denied to this household" });
+          return;
+        }
+        whereClause = "g.household_id = $1";
+        params.length = 0; // Clear params
+        params.push(householdId);
+      }
+
       const goalsQuery = `
         SELECT
           g.id,
@@ -121,15 +142,12 @@ router.get(
         FROM goals g
         LEFT JOIN goal_contributions gc
           ON gc.goal_id = g.id
-        WHERE g.user_id = $1
-          AND g.household_id IS NULL
+        WHERE ${whereClause}
         GROUP BY g.id
         ORDER BY g.created_at ASC
       `;
 
-      const goalsResult = await pool.query<GoalSummaryRow>(goalsQuery, [
-        userId,
-      ]);
+      const goalsResult = await pool.query<GoalSummaryRow>(goalsQuery, params);
 
       const goals = goalsResult.rows.map((row) => {
         const targetAmount = Number(row.target_amount);
@@ -156,7 +174,7 @@ router.get(
       console.error("Error fetching goals:", error);
       res.status(500).json({ error: "Failed to fetch goals" });
     }
-  }
+  },
 );
 
 /**
@@ -208,11 +226,24 @@ router.post(
             AND type = 'expense'
           LIMIT 1
           `,
-          [categoryName]
+          [categoryName],
         );
 
         if (catResult.rows.length > 0) {
           categoryId = catResult.rows[0].id;
+        }
+      }
+
+      // 0. Handle Household Context
+      const householdId = req.body.householdId || null;
+      if (householdId) {
+        const memberCheck = await pool.query(
+          "SELECT 1 FROM household_members WHERE household_id = $1 AND user_id = $2",
+          [householdId, userId],
+        );
+        if (memberCheck.rows.length === 0) {
+          res.status(403).json({ error: "Not a member of this household" });
+          return;
         }
       }
 
@@ -226,12 +257,13 @@ router.post(
           target_date,
           category_id
         )
-        VALUES ($1, NULL, $2, $3, $4, $5, $6)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id, name, target_amount, currency_code, target_date, status, created_at
       `;
 
       const values = [
         userId, // ✅ user_id
+        householdId,
         name.trim(),
         targetAmount,
         currencyCode.toUpperCase(),
@@ -241,7 +273,7 @@ router.post(
 
       const insertResult = await pool.query<GoalSummaryRow>(
         insertQuery,
-        values
+        values,
       );
       const row = insertResult.rows[0];
 
@@ -262,7 +294,7 @@ router.post(
       console.error("Error creating goal:", error);
       res.status(500).json({ error: "Failed to create goal" });
     }
-  }
+  },
 );
 
 router.post(
@@ -288,7 +320,7 @@ router.post(
         WHERE user_id = $1
           AND household_id IS NULL
         `,
-        [userId]
+        [userId],
       );
 
       // 2) Set the requested goal as favourite (only if owned by this user)
@@ -310,7 +342,7 @@ router.post(
           is_favourite,
           0::numeric AS total_contributed
         `,
-        [goalId, userId]
+        [goalId, userId],
       );
 
       if (favResult.rows.length === 0) {
@@ -338,7 +370,7 @@ router.post(
       console.error("Error setting favourite goal:", error);
       res.status(500).json({ error: "Failed to set favourite goal" });
     }
-  }
+  },
 );
 
 router.get(
@@ -385,12 +417,17 @@ router.get(
         LEFT JOIN goal_contributions gc
           ON gc.goal_id = g.id
         WHERE g.id = $1
-          AND g.user_id = $2
-          AND g.household_id IS NULL
+          AND (
+            (g.user_id = $2 AND g.household_id IS NULL)
+            OR
+            g.household_id IN (
+              SELECT household_id FROM household_members WHERE user_id = $2
+            )
+          )
         GROUP BY g.id
         LIMIT 1
         `,
-        [goalId, userId]
+        [goalId, userId],
       );
 
       if (goalResult.rows.length === 0) {
@@ -436,7 +473,7 @@ router.get(
         WHERE goal_id = $1
         ORDER BY contributed_at DESC
         `,
-        [goalId]
+        [goalId],
       );
 
       const contributions = contribResult.rows.map((c) => ({
@@ -451,7 +488,7 @@ router.get(
       console.error("Error fetching goal detail:", error);
       res.status(500).json({ error: "Failed to fetch goal detail" });
     }
-  }
+  },
 );
 
 /**
@@ -486,7 +523,7 @@ router.patch(
       if (categoryName && categoryName.trim().length > 0) {
         const catResult = await pool.query<CategoryIdRow>(
           `SELECT id FROM categories WHERE name = $1 AND type = 'expense' LIMIT 1`,
-          [categoryName]
+          [categoryName],
         );
         if (catResult.rows.length > 0) {
           categoryId = catResult.rows[0].id;
@@ -561,7 +598,7 @@ router.patch(
       console.error("Error updating goal:", error);
       res.status(500).json({ error: "Failed to update goal" });
     }
-  }
+  },
 );
 
 /**
@@ -584,7 +621,7 @@ router.delete(
 
       const result = await pool.query(
         `DELETE FROM goals WHERE id = $1 AND user_id = $2 RETURNING id`,
-        [goalId, userId]
+        [goalId, userId],
       );
 
       if (result.rowCount === 0) {
@@ -597,7 +634,7 @@ router.delete(
       console.error("Error deleting goal:", error);
       res.status(500).json({ error: "Failed to delete goal" });
     }
-  }
+  },
 );
 
 /**
@@ -627,7 +664,7 @@ router.post(
       // Verify goal ownership first
       const goalCheck = await pool.query(
         `SELECT id FROM goals WHERE id = $1 AND user_id = $2`,
-        [goalId, userId]
+        [goalId, userId],
       );
 
       if (goalCheck.rows.length === 0) {
@@ -661,7 +698,7 @@ router.post(
       console.error("Error adding contribution:", error);
       res.status(500).json({ error: "Failed to add contribution" });
     }
-  }
+  },
 );
 
 /**
@@ -685,7 +722,7 @@ router.delete(
       // Verify goal ownership first
       const goalCheck = await pool.query(
         `SELECT id FROM goals WHERE id = $1 AND user_id = $2`,
-        [goalId, userId]
+        [goalId, userId],
       );
 
       if (goalCheck.rows.length === 0) {
@@ -695,7 +732,7 @@ router.delete(
 
       const result = await pool.query(
         `DELETE FROM goal_contributions WHERE id = $1 AND goal_id = $2 RETURNING id`,
-        [contributionId, goalId]
+        [contributionId, goalId],
       );
 
       if (result.rowCount === 0) {
@@ -708,7 +745,7 @@ router.delete(
       console.error("Error deleting contribution:", error);
       res.status(500).json({ error: "Failed to delete contribution" });
     }
-  }
+  },
 );
 
 export default router;

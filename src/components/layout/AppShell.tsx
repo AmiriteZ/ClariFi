@@ -1,11 +1,16 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/auth.store";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Users } from "lucide-react";
 import { resyncAllAccounts } from "../../features/accounts/api/bankConnections.api";
+
+import { useHousehold } from "../../store/household.context";
+// ... imports
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuthStore();
+  const { viewMode, activeHousehold, toggleView, userHouseholds } =
+    useHousehold();
   const navigate = useNavigate();
   const [isResyncing, setIsResyncing] = useState(false);
 
@@ -31,14 +36,51 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const isHouseholdMode = viewMode === "household" && activeHousehold;
+
   return (
-    <div className="min-h-screen grid grid-rows-[56px_1fr]">
-      <header className="flex items-center justify-between px-4 border-b bg-white">
-        <Link to="/dashboard" className="font-semibold">
-          {import.meta.env.VITE_APP_NAME || "ClariFi"}
-        </Link>
+    <div className="min-h-screen grid grid-rows-[56px_1fr] transition-colors">
+      <header className="flex items-center justify-between px-4 border-b bg-white border-slate-200">
+        <div className="flex items-center gap-6">
+          <Link
+            to="/dashboard"
+            className="font-semibold text-lg flex items-center gap-2 text-slate-900"
+          >
+            {import.meta.env.VITE_APP_NAME || "ClariFi"}
+          </Link>
+
+          {/* Context Switcher & Household Name */}
+          {userHouseholds.length > 0 && (
+            <div className="flex items-center gap-3">
+              <div className="flex bg-gray-100 p-1 rounded-lg">
+                <button
+                  onClick={() => viewMode === "household" && toggleView()}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${viewMode === "personal" ? "bg-white text-emerald-700 shadow-sm ring-1 ring-black/5" : "text-gray-500 hover:text-gray-900"}`}
+                >
+                  Personal
+                </button>
+                <button
+                  onClick={() => viewMode === "personal" && toggleView()}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${viewMode === "household" ? "bg-white text-emerald-700 shadow-sm ring-1 ring-black/5" : "text-gray-500 hover:text-gray-900"}`}
+                >
+                  Household
+                </button>
+              </div>
+
+              {isHouseholdMode && activeHousehold && (
+                <span className="flex items-center gap-2 text-sm font-medium text-slate-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">
+                  <span className="text-emerald-600">
+                    <Users className="w-4 h-4" />
+                  </span>
+                  {activeHousehold.name}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
         <div className="flex items-center gap-3 text-sm">
-          <span className="text-slate-600">{user?.name}</span>
+          <span className="text-slate-600 hidden sm:inline">{user?.name}</span>
           <button
             onClick={handleResync}
             disabled={isResyncing}
@@ -50,7 +92,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             />
             {isResyncing ? "Syncing..." : "Resync"}
           </button>
-          <button onClick={doLogout} className="rounded-lg border px-3 py-1">
+          <button
+            onClick={doLogout}
+            className="rounded-lg border px-3 py-1 hover:bg-slate-50"
+          >
             Logout
           </button>
         </div>
@@ -59,38 +104,52 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <main className="grid md:grid-cols-[220px_1fr]">
         <aside className="hidden md:block border-r p-4 bg-slate-50">
           <nav className="space-y-2 text-sm">
-            <Link to="/dashboard" className="block">
+            <Link
+              to="/dashboard"
+              className="block px-2 py-1.5 rounded-lg transition-colors hover:bg-slate-200 hover:text-emerald-700"
+            >
               Overview
             </Link>
 
-            {/* 🔥 AI ASSISTANT */}
+            {/* Household Manager Link */}
+            <Link
+              to="/households"
+              className="block mt-4 px-2 py-1.5 rounded-lg font-medium transition-colors text-slate-700 hover:text-emerald-600 hover:bg-slate-200"
+            >
+              Households
+            </Link>
+
+            <Link
+              to="/transactions"
+              className="block mt-4 px-2 py-1.5 rounded-lg font-medium transition-colors text-slate-700 hover:text-emerald-600 hover:bg-slate-200"
+            >
+              Transactions
+            </Link>
+
             <Link
               to="/assistant"
-              className="block mt-4 font-medium text-slate-700 hover:text-emerald-600"
+              className="block mt-4 px-2 py-1.5 rounded-lg font-medium transition-colors text-slate-700 hover:text-emerald-600 hover:bg-slate-200"
             >
               🤖 AI Assistant
             </Link>
 
-            {/* 🔥 NEW GOALS BUTTON */}
             <Link
               to="/goals"
-              className="block mt-4 font-medium text-slate-700 hover:text-emerald-600"
+              className="block mt-4 px-2 py-1.5 rounded-lg font-medium transition-colors text-slate-700 hover:text-emerald-600 hover:bg-slate-200"
             >
               Goals
             </Link>
 
-            {/* 🔥 NEW BUDGETS BUTTON */}
             <Link
               to="/budgets"
-              className="block mt-2 font-medium text-slate-700 hover:text-emerald-600"
+              className="block mt-2 px-2 py-1.5 rounded-lg font-medium transition-colors text-slate-700 hover:text-emerald-600 hover:bg-slate-200"
             >
               Budgets
             </Link>
 
-            {/* 🔥 NEW ACCOUNTS BUTTON */}
             <Link
               to="/accounts"
-              className="block mt-2 font-medium text-slate-700 hover:text-emerald-600"
+              className="block mt-2 px-2 py-1.5 rounded-lg font-medium transition-colors text-slate-700 hover:text-emerald-600 hover:bg-slate-200"
             >
               Accounts
             </Link>

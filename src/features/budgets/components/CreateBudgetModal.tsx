@@ -8,11 +8,14 @@ interface CreateBudgetModalProps {
   onClose: () => void;
 }
 
+import { useHousehold } from "../../../store/household.context";
+
 export default function CreateBudgetModal({
   isOpen,
   onClose,
 }: CreateBudgetModalProps) {
   const navigate = useNavigate();
+  const { viewMode, activeHousehold } = useHousehold();
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +30,11 @@ export default function CreateBudgetModal({
     setError(null);
 
     try {
-      const { budget } = await createBudget({ name });
+      const payload = {
+        name,
+        householdId: viewMode === "household" ? activeHousehold?.id : undefined,
+      };
+      const { budget } = await createBudget(payload);
       onClose();
       // Navigate to the setup page
       navigate(`/budgets/${budget.id}/setup`);

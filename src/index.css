@@ -189,3 +189,40 @@ input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+/* Custom Scrollbar Utilities */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9; /* thumb track */
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-track-slate-100::-webkit-scrollbar-track {
+  background-color: #f1f5f9 !important; /* slate-100 */
+  border-radius: 9999px;
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.scrollbar-thumb-slate-300::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1 !important; /* slate-300 */
+  border-radius: 9999px;
+  border: 2px solid #f1f5f9; /* Border matching track to create padding effect if needed, or remove if flat look desired */
+}
+
+/* Remove border from thumb if we want a simple flat look, adjusting here to match previous simple style but with important */
+.scrollbar-thumb-slate-300::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1 !important;
+  border-radius: 9999px;
+  border: transparent;
+}
+
+.scrollbar-thumb-slate-300::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8 !important; /* slate-400 */
+}

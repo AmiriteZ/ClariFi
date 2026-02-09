@@ -34,8 +34,16 @@ export type DashboardResponse = {
 
 const API_BASE_URL = "http://localhost:5001/api";
 
-export async function getDashboard(idToken: string): Promise<DashboardResponse> {
-  const res = await fetch(`${API_BASE_URL}/dashboard`, {
+export async function getDashboard(
+  idToken: string,
+  householdId?: string,
+): Promise<DashboardResponse> {
+  let url = `${API_BASE_URL}/dashboard`;
+  if (householdId) {
+    url += `?householdId=${householdId}`;
+  }
+
+  const res = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${idToken}`,

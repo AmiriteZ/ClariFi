@@ -1,12 +1,10 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import App from "../App";
-import LoginPage from "../features/auth/pages/LoginPage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import AppShell from "../components/layout/AppShell";
 import { useAuthStore } from "../store/auth.store";
 import PageTransition from "../components/common/PageTransition";
-import SignUpPage from "../features/auth/pages/SignUpPage";
 import WelcomePage from "../features/welcome/pages/WelcomePage";
 import GoalsPage from "../features/goals/pages/GoalsPage";
 import GoalDetailPage from "../features/goals/pages/GoalDetailPage";
@@ -15,6 +13,8 @@ import BudgetSetupPage from "../features/budgets/pages/BudgetSetupPage";
 import BudgetViewPage from "../features/budgets/pages/BudgetViewPage";
 import AccountsPage from "../features/accounts/pages/AccountsPage";
 import AssistantPage from "../features/assistant/pages/AssistantPage";
+import TransactionsPage from "../features/transactions/pages/TransactionsPage";
+import HouseholdsPage from "../features/households/pages/HouseholdsPage";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token, isInitialized } = useAuthStore();
@@ -37,8 +37,8 @@ export default function Router() {
     <Routes>
       <Route element={<App />}>
         <Route path="/start" element={<WelcomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/login" element={<Navigate to="/start" replace />} />
+        <Route path="/signup" element={<Navigate to="/start" replace />} />
         <Route
           path="/dashboard"
           element={
@@ -124,12 +124,36 @@ export default function Router() {
           }
         />
         <Route
+          path="/transactions"
+          element={
+            <ProtectedRoute>
+              <AppShell>
+                <PageTransition>
+                  <TransactionsPage />
+                </PageTransition>
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/assistant"
           element={
             <ProtectedRoute>
               <AppShell>
                 <PageTransition>
                   <AssistantPage />
+                </PageTransition>
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/households"
+          element={
+            <ProtectedRoute>
+              <AppShell>
+                <PageTransition>
+                  <HouseholdsPage />
                 </PageTransition>
               </AppShell>
             </ProtectedRoute>

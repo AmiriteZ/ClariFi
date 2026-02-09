@@ -30,7 +30,9 @@ interface GetGoalsResponse {
   goals: GoalSummary[];
 }
 
-export async function getGoals(): Promise<GetGoalsResponse> {
+export async function getGoals(
+  householdId?: string,
+): Promise<GetGoalsResponse> {
   const user = auth.currentUser;
   if (!user) {
     throw new Error("Not authenticated");
@@ -38,7 +40,12 @@ export async function getGoals(): Promise<GetGoalsResponse> {
 
   const token = await user.getIdToken();
 
-  const res = await fetch("http://localhost:5001/api/goals", {
+  let url = "http://localhost:5001/api/goals";
+  if (householdId) {
+    url += `?householdId=${householdId}`;
+  }
+
+  const res = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -52,7 +59,7 @@ export async function getGoals(): Promise<GetGoalsResponse> {
 }
 
 export async function setFavouriteGoal(
-  goalId: string
+  goalId: string,
 ): Promise<{ goal: GoalSummary }> {
   const user = auth.currentUser;
   if (!user) {
@@ -68,7 +75,7 @@ export async function setFavouriteGoal(
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 
   const data = await res.json();
@@ -86,6 +93,7 @@ export interface CreateGoalInput {
   currencyCode: string;
   targetDate?: string;
   categoryName?: string;
+  householdId?: string;
 }
 
 export async function createGoal(input: CreateGoalInput) {
@@ -116,7 +124,7 @@ export async function createGoal(input: CreateGoalInput) {
 }
 
 export async function getGoalDetail(
-  goalId: string
+  goalId: string,
 ): Promise<GoalDetailResponse> {
   const user = auth.currentUser;
   if (!user) {
@@ -148,7 +156,7 @@ export async function updateGoal(
     targetDate?: string | null;
     status?: string;
     currencyCode?: string;
-  }
+  },
 ): Promise<{ goal: GoalSummary }> {
   const user = auth.currentUser;
   if (!user) throw new Error("Not authenticated");
@@ -188,7 +196,7 @@ export async function deleteGoal(goalId: string): Promise<void> {
 
 export async function addContribution(
   goalId: string,
-  data: { amount: number; notes: string; date: string }
+  data: { amount: number; notes: string; date: string },
 ): Promise<{ contribution: GoalContribution }> {
   const user = auth.currentUser;
   if (!user) throw new Error("Not authenticated");
@@ -203,7 +211,7 @@ export async function addContribution(
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(data),
-    }
+    },
   );
 
   const resData = await res.json();
@@ -213,7 +221,7 @@ export async function addContribution(
 
 export async function deleteContribution(
   goalId: string,
-  contributionId: string
+  contributionId: string,
 ): Promise<void> {
   const user = auth.currentUser;
   if (!user) throw new Error("Not authenticated");
@@ -226,7 +234,7 @@ export async function deleteContribution(
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 
   if (!res.ok) {

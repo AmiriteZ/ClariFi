@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { getGoals, createGoal, setFavouriteGoal } from "../api/goals.api";
 import type { GoalSummary } from "../api/goals.api";
 import { useNavigate } from "react-router-dom";
+import { useHousehold } from "../../../store/household.context";
 
 // High-level goal categories – names must match rows in categories.name
 const GOAL_CATEGORIES = [
@@ -18,6 +19,7 @@ const GOAL_CATEGORIES = [
 
 export default function GoalsPage() {
   const navigate = useNavigate();
+  const { viewMode, activeHousehold } = useHousehold();
   const [goals, setGoals] = useState<GoalSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,13 +36,16 @@ export default function GoalsPage() {
 
   // Favourite star update state
   const [favouriteUpdatingId, setFavouriteUpdatingId] = useState<string | null>(
-    null
+    null,
   );
 
   useEffect(() => {
     async function load() {
       try {
-        const data = await getGoals();
+        setLoading(true);
+        const householdId =
+          viewMode === "household" ? activeHousehold?.id : undefined;
+        const data = await getGoals(householdId);
         setGoals(data.goals);
       } catch (err) {
         const message =
@@ -53,8 +58,8 @@ export default function GoalsPage() {
       }
     }
 
-    void load();
-  }, []);
+    load();
+  }, [viewMode, activeHousehold]);
 
   const handleViewMore = (goalId: string) => {
     navigate(`/goals/${goalId}`);
@@ -111,6 +116,7 @@ export default function GoalsPage() {
         currencyCode: newCurrencyCode.toUpperCase(),
         targetDate: newTargetDate || undefined,
         categoryName: newCategoryName,
+        householdId: viewMode === "household" ? activeHousehold?.id : undefined,
       };
 
       const result = await createGoal(payload);
@@ -142,7 +148,7 @@ export default function GoalsPage() {
         prev.map((g) => ({
           ...g,
           isFavourite: g.id === favGoal.id,
-        }))
+        })),
       );
     } catch (err) {
       const message =
@@ -159,7 +165,11 @@ export default function GoalsPage() {
     <div className="w-full h-full px-10 py-8">
       <div className="max-w-5xl mx-auto">
         {/* PAGE HEADER */}
-        <h2 className="text-2xl font-semibold text-slate-900 mb-1">Goals</h2>
+        <h2 className="text-2xl font-semibold text-slate-900 mb-1">
+          {viewMode === "household" && activeHousehold
+            ? `${activeHousehold.name} Goals`
+            : "Goals"}
+        </h2>
         <p className="text-sm text-slate-600 mb-6">
           Track your savings progress and financial targets.
         </p>

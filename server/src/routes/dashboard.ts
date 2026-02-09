@@ -5,8 +5,34 @@ import {
   type AuthenticatedRequest,
 } from "../middleware/verifyFirebaseToken";
 import { pool } from "../db";
+import { DateUtils } from "../utils/dateUtils";
 
 const router = Router();
+
+interface FlowRow {
+  month_income: string | null;
+  month_expenses: string | null;
+}
+
+interface CategoryRow {
+  category: string | null;
+  amount: string | null;
+}
+
+interface RecentRow {
+  posted_at: Date;
+  merchant_name: string | null;
+  category: string | null;
+  amount: string;
+  direction: string;
+}
+
+interface GoalRow {
+  id: string;
+  name: string;
+  target_amount: string;
+  current_amount: string | null;
+}
 
 router.get(
   "/dashboard",
@@ -22,7 +48,7 @@ router.get(
       // 1) Look up our internal user
       const userResult = await pool.query<{ id: string }>(
         "SELECT id FROM users WHERE firebase_uid = $1",
-        [firebaseUid]
+        [firebaseUid],
       );
 
       const dbUser = userResult.rows[0];
@@ -35,11 +61,41 @@ router.get(
 
       const userId = dbUser.id;
 
+      const householdId = (req.query.householdId as string) || null;
+      let targetUserIds = [userId];
+
+      if (householdId) {
+        // Verify membership
+        const memberCheck = await pool.query(
+          "SELECT 1 FROM household_members WHERE household_id = $1 AND user_id = $2",
+          [householdId, userId],
+        );
+
+        if (memberCheck.rows.length === 0) {
+          return res
+            .status(403)
+            .json({ error: "Access denied to this household" });
+        }
+
+        // Fetch all members of the household
+        const membersQuery = await pool.query(
+          "SELECT user_id FROM household_members WHERE household_id = $1",
+          [householdId],
+        );
+
+        targetUserIds = membersQuery.rows.map((r) => r.user_id);
+      }
+
       // We support both dev and prod external_account_id formats:
-      //   - prod: external_account_id = userId
-      //   - dev:  external_account_id = 'tool-account-' || userId
+      // prod: external_account_id = userId
+      // dev:  external_account_id = 'tool-account-' || userId
+      // UPDATED: Now filters by ANY of the targetUserIds
       const accountFilterSQL = `
-        (a.external_account_id = $1 OR a.external_account_id = 'tool-account-' || $1)
+        (
+          a.external_account_id = ANY($1)
+          OR 
+          a.external_account_id IN (SELECT 'tool-account-' || u_id FROM unnest($1::text[]) AS u_id)
+        )
       `;
 
       // -------------------------------------------------------------------
@@ -54,18 +110,10 @@ router.get(
         FROM accounts a
         WHERE ${accountFilterSQL}
       `,
-        [userId]
+        [targetUserIds],
       );
 
       const totalBalance = Number(balanceResult.rows[0]?.total_balance ?? 0);
-
-      // -------------------------------------------------------------------
-      // 3) MONTH INCOME / EXPENSES (from transactions)
-      // -------------------------------------------------------------------
-      type FlowRow = {
-        month_income: string | null;
-        month_expenses: string | null;
-      };
 
       const flowResult = await pool.query<FlowRow>(
         `
@@ -74,7 +122,7 @@ router.get(
             SUM(
               CASE
                 WHEN t.direction = 'credit'
-                  AND date_trunc('month', t.posted_at) = date_trunc('month', now())
+                  AND date_trunc('month', t.posted_at) = date_trunc('month', $2::timestamp)
                 THEN t.amount ELSE 0
               END
             ),
@@ -84,7 +132,7 @@ router.get(
             SUM(
               CASE
                 WHEN t.direction = 'debit'
-                  AND date_trunc('month', t.posted_at) = date_trunc('month', now())
+                  AND date_trunc('month', t.posted_at) = date_trunc('month', $2::timestamp)
                 THEN t.amount ELSE 0
               END
             ),
@@ -94,19 +142,11 @@ router.get(
         JOIN accounts a ON t.account_id = a.id
         WHERE ${accountFilterSQL}
       `,
-        [userId]
+        [targetUserIds, DateUtils.getCurrentDate()],
       );
 
       const monthIncome = Number(flowResult.rows[0]?.month_income ?? 0);
       const monthExpenses = Number(flowResult.rows[0]?.month_expenses ?? 0);
-
-      // -------------------------------------------------------------------
-      // 4) SPENDING BY CATEGORY (this month, debits only)
-      // -------------------------------------------------------------------
-      type CategoryRow = {
-        category: string | null;
-        amount: string | null;
-      };
 
       const categoryResult = await pool.query<CategoryRow>(
         `
@@ -118,28 +158,17 @@ router.get(
         LEFT JOIN categories c ON t.category_id = c.id
         WHERE ${accountFilterSQL}
           AND t.direction = 'debit'
-          AND date_trunc('month', t.posted_at) = date_trunc('month', now())
+          AND date_trunc('month', t.posted_at) = date_trunc('month', $2::timestamp)
         GROUP BY c.name
         ORDER BY amount DESC
       `,
-        [userId]
+        [targetUserIds, DateUtils.getCurrentDate()],
       );
 
       const spendingByCategory = categoryResult.rows.map((row) => ({
         category: row.category ?? "Uncategorised",
         amount: Number(row.amount ?? 0),
       }));
-
-      // -------------------------------------------------------------------
-      // 5) RECENT TRANSACTIONS (last 5 for this user)
-      // -------------------------------------------------------------------
-      type RecentRow = {
-        posted_at: Date;
-        merchant_name: string | null;
-        category: string | null;
-        amount: string;
-        direction: string;
-      };
 
       const recentResult = await pool.query<RecentRow>(
         `
@@ -156,8 +185,10 @@ router.get(
         ORDER BY t.posted_at DESC
         LIMIT 5
       `,
-        [userId]
+        [targetUserIds],
       );
+
+      // ... existing mapping code ...
 
       const recentTransactions = recentResult.rows.map((row, index) => {
         const base = Number(row.amount);
@@ -172,69 +203,53 @@ router.get(
         };
       });
 
-      // -------------------------------------------------------------------
-      // 6) MAIN GOAL (personal, for this user)
-      //     1) Prefer favourite goal (is_favourite = TRUE)
-      //     2) Otherwise pick earliest active goal for this user
-      // -------------------------------------------------------------------
-      type GoalRow = {
-        id: string;
-        name: string;
-        target_amount: string;
-        current_amount: string | null;
-      };
-
-      // 6a) Try favourite goal first
-      const favouriteGoalResult = await pool.query<GoalRow>(
-        `
-        SELECT
-          g.id,
-          g.name,
-          g.target_amount,
-          COALESCE(SUM(gc.amount), 0) AS current_amount
-        FROM goals g
-        LEFT JOIN goal_contributions gc
-          ON gc.goal_id = g.id
-        WHERE g.user_id = $1
-          AND g.household_id IS NULL
-          AND g.status = 'active'
-          AND g.is_favourite = TRUE
-        GROUP BY g.id, g.name, g.target_amount
-        ORDER BY g.created_at ASC
-        LIMIT 1
-      `,
-        [userId]
-      );
-
+      // 6. Main Goal Logic (Household vs Personal)
       let selectedGoalRow: GoalRow | null = null;
+      let goalQuery = "";
+      let goalParams: any[] = [];
 
-      if (favouriteGoalResult.rows.length > 0) {
-        selectedGoalRow = favouriteGoalResult.rows[0];
-      } else {
-        // 6b) Fallback: earliest active personal goal
-        const fallbackGoalResult = await pool.query<GoalRow>(
-          `
+      if (householdId) {
+        // Household Goal Strategy: Earliest active household goal (we don't track favourite household goals yet per se, or maybe we do?)
+        // Let's pick earliest active household goal
+        goalQuery = `
           SELECT
             g.id,
             g.name,
             g.target_amount,
             COALESCE(SUM(gc.amount), 0) AS current_amount
           FROM goals g
-          LEFT JOIN goal_contributions gc
-            ON gc.goal_id = g.id
-          WHERE g.user_id = $1
-            AND g.household_id IS NULL
+          LEFT JOIN goal_contributions gc ON gc.goal_id = g.id
+          WHERE g.household_id = $1
             AND g.status = 'active'
           GROUP BY g.id, g.name, g.target_amount
           ORDER BY g.created_at ASC
           LIMIT 1
-        `,
-          [userId]
-        );
+         `;
+        goalParams = [householdId];
+      } else {
+        // Personal Goal Strategy: Favourite > Earliest Active
+        goalQuery = `
+          SELECT
+            g.id,
+            g.name,
+            g.target_amount,
+            COALESCE(SUM(gc.amount), 0) AS current_amount
+          FROM goals g
+          LEFT JOIN goal_contributions gc ON gc.goal_id = g.id
+          WHERE g.user_id = $1
+            AND g.household_id IS NULL
+            AND g.status = 'active'
+          GROUP BY g.id, g.name, g.target_amount
+          ORDER BY g.is_favourite DESC, g.created_at ASC
+          LIMIT 1
+         `;
+        goalParams = [userId];
+      }
 
-        if (fallbackGoalResult.rows.length > 0) {
-          selectedGoalRow = fallbackGoalResult.rows[0];
-        }
+      const goalResult = await pool.query<GoalRow>(goalQuery, goalParams);
+
+      if (goalResult.rows.length > 0) {
+        selectedGoalRow = goalResult.rows[0];
       }
 
       let mainGoal: {
@@ -273,9 +288,9 @@ router.get(
         const goalProgressPct =
           (mainGoal.currentAmount / mainGoal.targetAmount) * 100;
         insights.push(
-          `You’re ${goalProgressPct.toFixed(
-            1
-          )}% of the way towards "${mainGoal.name}".`
+          `You’re ${goalProgressPct.toFixed(1)}% of the way towards "${
+            mainGoal.name
+          }".`,
         );
       }
 
@@ -296,11 +311,9 @@ router.get(
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("Error in /api/dashboard:", error);
-      return res
-        .status(500)
-        .json({ error: "Failed to load dashboard data" });
+      return res.status(500).json({ error: "Failed to load dashboard data" });
     }
-  }
+  },
 );
 
 export default router;
