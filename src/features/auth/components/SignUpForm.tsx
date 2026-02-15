@@ -1,8 +1,9 @@
 // client/src/features/auth/components/SignUpForm.tsx
 import React, { useState } from "react";
-import { signupApi } from "../api/auth.api";
+import { signupApi, loginWithGoogle } from "../api/auth.api";
 import { useAuthStore } from "../../../store/auth.store";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import { FcGoogle } from "react-icons/fc";
 import { getPasswordStrength } from "../../../utils/passwordStrength";
 import { FirebaseError } from "firebase/app";
 
@@ -268,6 +269,40 @@ export default function SignUpForm({
           className="w-full rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 mt-2 shadow-md disabled:opacity-60 transition-colors"
         >
           {loading ? "Creating account..." : "Sign up"}
+        </button>
+
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-200" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-slate-500">
+              Or continue with
+            </span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              setLoading(true);
+              const res = await loginWithGoogle();
+              doLogin({ user: res.user, token: res.token });
+              onSuccess();
+            } catch (e) {
+              if (e instanceof Error)
+                setError(e.message || "Google login failed");
+              else setError("Google login failed");
+            } finally {
+              setLoading(false);
+            }
+          }}
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold py-2.5 transition-colors"
+        >
+          <FcGoogle size={20} />
+          Google
         </button>
       </form>
 

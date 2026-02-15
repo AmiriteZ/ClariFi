@@ -13,6 +13,7 @@ export interface Transaction {
   accountName: string;
   institutionName: string;
   status: string;
+  isHiddenFromHousehold?: boolean;
 }
 
 export interface Pagination {
@@ -40,7 +41,7 @@ export interface TransactionFilters {
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
 export async function getTransactions(
-  filters: TransactionFilters = {}
+  filters: TransactionFilters = {},
 ): Promise<GetTransactionsResponse> {
   const user = auth.currentUser;
   if (!user) {
@@ -72,10 +73,100 @@ export async function getTransactions(
       "Transactions fetch failed:",
       response.status,
       response.statusText,
-      errorText
+      errorText,
     );
     throw new Error(
-      `Failed to fetch transactions: ${response.status} ${response.statusText}`
+      `Failed to fetch transactions: ${response.status} ${response.statusText}`,
+    );
+  }
+
+  return response.json();
+}
+
+export interface CreateTransactionDto {
+  account_id: string;
+  date: string; // ISO date string YYYY-MM-DD
+  amount: number;
+  description: string;
+  direction: "debit" | "credit";
+  category_id?: string;
+  merchant_name?: string;
+  currency_code?: string;
+  is_hidden_from_household?: boolean;
+}
+
+export async function createTransaction(
+  data: CreateTransactionDto,
+): Promise<Transaction> {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
+  const token = await user.getIdToken();
+
+  const response = await fetch(`${API_URL}/transactions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to create transaction: ${response.status} ${response.statusText}`,
+    );
+  }
+
+  return response.json();
+}
+
+export async function updateTransaction(
+  id: string,
+  updates: Partial<CreateTransactionDto>,
+): Promise<Transaction> {
+  const user = auth.currentUser;
+  if (!user) throw new Error("User not authenticated");
+  const token = await user.getIdToken();
+
+  const response = await fetch(`${API_URL}/transactions/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(updates),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to update transaction: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+export async function bulkUpdateTransactionPrivacy(
+  transactionIds: string[],
+  isHidden: boolean,
+): Promise<{ updatedCount: number }> {
+  const user = auth.currentUser;
+  if (!user) throw new Error("User not authenticated");
+  const token = await user.getIdToken();
+
+  const response = await fetch(`${API_URL}/transactions/bulk-privacy`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ transactionIds, isHidden }),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to bulk update transactions: ${response.statusText}`,
     );
   }
 

@@ -15,6 +15,7 @@ import AccountsPage from "../features/accounts/pages/AccountsPage";
 import AssistantPage from "../features/assistant/pages/AssistantPage";
 import TransactionsPage from "../features/transactions/pages/TransactionsPage";
 import HouseholdsPage from "../features/households/pages/HouseholdsPage";
+import AccountPage from "../features/account/pages/AccountPage";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token, isInitialized } = useAuthStore();
@@ -154,6 +155,18 @@ export default function Router() {
               <AppShell>
                 <PageTransition>
                   <HouseholdsPage />
+                </PageTransition>
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/account"
+          element={
+            <ProtectedRoute>
+              <AppShell>
+                <PageTransition>
+                  <AccountPage />
                 </PageTransition>
               </AppShell>
             </ProtectedRoute>

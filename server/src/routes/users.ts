@@ -5,6 +5,7 @@ import {
   verifyFirebaseToken,
   AuthenticatedRequest,
 } from "../middleware/verifyFirebaseToken";
+import cloudinary from "../config/cloudinary";
 
 const router = express.Router();
 
@@ -23,6 +24,7 @@ type DbUserRow = {
   lname: string;
   dob: string;
   created_at: string;
+  photo_url: string | null;
 };
 
 type ApiUser = {
@@ -33,6 +35,7 @@ type ApiUser = {
   lastName: string;
   dob: string;
   createdAt: string;
+  photoUrl: string | null;
 };
 
 function normalizeDob(raw: string | undefined): string | null {
@@ -77,6 +80,7 @@ function mapUser(row: DbUserRow): ApiUser {
     lastName: row.lname,
     dob: row.dob,
     createdAt: row.created_at,
+    photoUrl: row.photo_url || null,
   };
 }
 
@@ -119,7 +123,7 @@ router.post(
             fname = EXCLUDED.fname,
             lname = EXCLUDED.lname,
             dob   = EXCLUDED.dob
-        RETURNING id, firebase_uid, email, fname, lname, dob, created_at;
+        RETURNING id, firebase_uid, email, fname, lname, dob, created_at, photo_url;
       `;
 
       const result = await pool.query<DbUserRow>(query, [
@@ -138,10 +142,9 @@ router.post(
       console.error("Error creating user profile:", message);
       return res.status(500).json({ error: message });
     }
-  }
+  },
 );
 
-// GET /api/users/me
 // GET /api/users/me
 router.get(
   "/me",
@@ -155,17 +158,17 @@ router.get(
       const { uid } = req.user;
 
       const result = await pool.query(
-        `SELECT id, firebase_uid, email, fname, lname, dob, created_at
+        `SELECT id, firebase_uid, email, fname, lname, dob, created_at, photo_url
          FROM users
          WHERE firebase_uid = $1`,
-        [uid]
+        [uid],
       );
 
       if (result.rowCount === 0) {
         return res.status(404).json({ error: "User profile not found" });
       }
 
-      const user = result.rows[0];
+      const user = mapUser(result.rows[0]);
       return res.json({ user });
     } catch (err) {
       const message =
@@ -173,7 +176,82 @@ router.get(
       console.error("Error fetching user profile:", message);
       return res.status(500).json({ error: message });
     }
-  }
+  },
+);
+
+/**
+ * PATCH /api/users/me
+ * Update user profile (name, photo)
+ */
+router.patch(
+  "/me",
+  verifyFirebaseToken,
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.user) {
+        res.status(401).json({ error: "Unauthenticated" });
+        return;
+      }
+
+      const { firstName, lastName, photoBase64 } = req.body;
+      const { uid } = req.user;
+
+      // 1. Get current user
+      const userRes = await pool.query(
+        "SELECT * FROM users WHERE firebase_uid = $1",
+        [uid],
+      );
+
+      if (userRes.rows.length === 0) {
+        res.status(404).json({ error: "User not found" });
+        return;
+      }
+
+      let photoUrl = userRes.rows[0].photo_url;
+      const currentFirstName = userRes.rows[0].fname;
+      const currentLastName = userRes.rows[0].lname;
+
+      // 2. Upload to Cloudinary if photoBase64 is provided
+      if (photoBase64) {
+        try {
+          const uploadRes = await cloudinary.uploader.upload(photoBase64, {
+            folder: "clarifi_users",
+            public_id: uid, // Use firebase UID to overwrite existing
+            overwrite: true,
+            transformation: [
+              { width: 500, height: 500, crop: "fill", gravity: "face" },
+            ],
+          });
+          photoUrl = uploadRes.secure_url;
+        } catch (uploadError) {
+          console.error("Cloudinary upload failed:", uploadError);
+          res.status(500).json({ error: "Failed to upload profile picture" });
+          return;
+        }
+      }
+
+      // 3. Update Database
+      const updateQuery = `
+        UPDATE users
+        SET fname = $1, lname = $2, photo_url = $3
+        WHERE firebase_uid = $4
+        RETURNING id, firebase_uid, email, fname, lname, dob, created_at, photo_url
+      `;
+
+      const updatedUserRes = await pool.query<DbUserRow>(updateQuery, [
+        firstName || currentFirstName,
+        lastName || currentLastName,
+        photoUrl,
+        uid,
+      ]);
+
+      const updatedUser = mapUser(updatedUserRes.rows[0]);
+      res.json({ user: updatedUser });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ error: "Failed to update profile" });
+    }
+  },
 );
 
 export default router;

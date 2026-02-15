@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { getTransactions, type Transaction } from "../api/transactions.api";
+import {
+  getTransactions,
+  type Transaction,
+  bulkUpdateTransactionPrivacy,
+} from "../api/transactions.api";
 import { getAccounts, type Account } from "../../accounts/api/accounts.api";
 import {
   getCategories,
@@ -13,13 +17,19 @@ import {
   ChevronRight,
   CheckSquare,
   Square,
+  Plus,
+  EyeOff,
 } from "lucide-react";
+import AddTransactionModal from "../components/AddTransactionModal";
+import { useHousehold } from "../../../store/household.context";
 
 export default function TransactionsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const { viewMode } = useHousehold();
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20,
@@ -30,14 +40,14 @@ export default function TransactionsPage() {
   // Filter States
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [startDate, setStartDate] = useState(
-    searchParams.get("startDate") || ""
+    searchParams.get("startDate") || "",
   );
   const [endDate, setEndDate] = useState(searchParams.get("endDate") || "");
   const [accountId, setAccountId] = useState(
-    searchParams.get("accountId") || "all"
+    searchParams.get("accountId") || "all",
   );
   const [categoryId, setCategoryId] = useState(
-    searchParams.get("categoryId") || "all"
+    searchParams.get("categoryId") || "all",
   );
 
   // Data for filters
@@ -77,7 +87,7 @@ export default function TransactionsPage() {
       setPagination(data.pagination);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to load transactions"
+        err instanceof Error ? err.message : "Failed to load transactions",
       );
     } finally {
       setLoading(false);
@@ -130,8 +140,31 @@ export default function TransactionsPage() {
     }).format(Math.abs(amount));
   };
 
+  const handleBulkPrivacy = async (isHidden: boolean) => {
+    if (selectedIds.size === 0) return;
+
+    try {
+      setLoading(true);
+      await bulkUpdateTransactionPrivacy(Array.from(selectedIds), isHidden);
+      await fetchTransactions();
+      setSelectedIds(new Set());
+    } catch (err) {
+      console.error("Failed to update privacy:", err);
+      setError("Failed to update transactions. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="w-full h-full px-10 py-8 overflow-y-auto">
+      <AddTransactionModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={fetchTransactions}
+        accounts={accounts}
+        categories={categories}
+      />
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -144,7 +177,13 @@ export default function TransactionsPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            {/* Future: Add Export Button? */}
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              Add Transaction
+            </button>
           </div>
         </div>
 
@@ -250,6 +289,39 @@ export default function TransactionsPage() {
           </div>
         </div>
 
+        {/* Bulk Actions */}
+        {selectedIds.size > 0 && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-3">
+              <span className="font-medium text-emerald-900">
+                {selectedIds.size} selected
+              </span>
+              <div className="h-4 w-px bg-emerald-200" />
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="text-sm text-emerald-700 hover:text-emerald-800 font-medium"
+              >
+                Clear selection
+              </button>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => handleBulkPrivacy(true)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-emerald-200 text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-100 transition-colors shadow-sm"
+              >
+                <EyeOff className="w-4 h-4" />
+                Hide from household
+              </button>
+              <button
+                onClick={() => handleBulkPrivacy(false)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
+              >
+                Mark as visible
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Transactions List */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           {loading ? (
@@ -285,64 +357,72 @@ export default function TransactionsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {transactions.map((tx) => {
-                    const isSelected = selectedIds.has(tx.id);
-                    return (
-                      <tr
-                        key={tx.id}
-                        className={`hover:bg-slate-50 transition-colors ${
-                          isSelected ? "bg-emerald-50/50" : ""
-                        }`}
-                      >
-                        <td className="px-6 py-4">
-                          <button onClick={() => toggleSelection(tx.id)}>
-                            {isSelected ? (
-                              <CheckSquare className="w-4 h-4 text-emerald-600" />
-                            ) : (
-                              <Square className="w-4 h-4 text-slate-300" />
-                            )}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4 text-slate-500 whitespace-nowrap">
-                          {new Date(tx.date).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="font-medium text-slate-900">
-                            {tx.merchant}
-                          </div>
-                          {tx.description !== tx.merchant && (
-                            <div className="text-xs text-slate-500 truncate max-w-[200px]">
-                              {tx.description}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-slate-500">
-                          {tx.accountName}
-                        </td>
-                        <td className="px-6 py-4">
-                          {tx.categoryName ? (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
-                              {tx.categoryName}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-400">
-                              Uncategorized
-                            </span>
-                          )}
-                        </td>
-                        <td
-                          className={`px-6 py-4 text-right font-medium ${
-                            tx.direction === "credit"
-                              ? "text-emerald-600"
-                              : "text-slate-900"
+                  {transactions
+                    .filter(
+                      (tx) =>
+                        viewMode === "personal" || !tx.isHiddenFromHousehold,
+                    )
+                    .map((tx) => {
+                      const isSelected = selectedIds.has(tx.id);
+                      return (
+                        <tr
+                          key={tx.id}
+                          className={`hover:bg-slate-50 transition-colors ${
+                            isSelected ? "bg-emerald-50/50" : ""
                           }`}
                         >
-                          {tx.direction === "credit" ? "+" : "-"}{" "}
-                          {formatCurrency(tx.amount, tx.currencyCode)}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          <td className="px-6 py-4">
+                            <button onClick={() => toggleSelection(tx.id)}>
+                              {isSelected ? (
+                                <CheckSquare className="w-4 h-4 text-emerald-600" />
+                              ) : (
+                                <Square className="w-4 h-4 text-slate-300" />
+                              )}
+                            </button>
+                          </td>
+                          <td className="px-6 py-4 text-slate-500 whitespace-nowrap">
+                            {new Date(tx.date).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="font-medium text-slate-900 flex items-center gap-2">
+                              {tx.merchant}
+                              {tx.isHiddenFromHousehold && (
+                                <EyeOff className="w-3 h-3 text-slate-400" />
+                              )}
+                            </div>
+                            {tx.description !== tx.merchant && (
+                              <div className="text-xs text-slate-500 truncate max-w-[200px]">
+                                {tx.description}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 text-slate-500">
+                            {tx.accountName}
+                          </td>
+                          <td className="px-6 py-4">
+                            {tx.categoryName ? (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                                {tx.categoryName}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-400">
+                                Uncategorized
+                              </span>
+                            )}
+                          </td>
+                          <td
+                            className={`px-6 py-4 text-right font-medium ${
+                              tx.direction === "credit"
+                                ? "text-emerald-600"
+                                : "text-slate-900"
+                            }`}
+                          >
+                            {tx.direction === "credit" ? "+" : "-"}{" "}
+                            {formatCurrency(tx.amount, tx.currencyCode)}
+                          </td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
             </div>

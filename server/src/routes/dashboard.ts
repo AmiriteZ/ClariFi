@@ -98,6 +98,11 @@ router.get(
         )
       `;
 
+      // Filter out hidden transactions if we are in household mode
+      const transactionPrivacySQL = householdId
+        ? "AND t.is_hidden_from_household = false"
+        : "";
+
       // -------------------------------------------------------------------
       // 2) TOTAL BALANCE (from accounts.available_balance)
       // -------------------------------------------------------------------
@@ -141,6 +146,7 @@ router.get(
         FROM transactions t
         JOIN accounts a ON t.account_id = a.id
         WHERE ${accountFilterSQL}
+        ${transactionPrivacySQL}
       `,
         [targetUserIds, DateUtils.getCurrentDate()],
       );
@@ -157,6 +163,7 @@ router.get(
         JOIN accounts a ON t.account_id = a.id
         LEFT JOIN categories c ON t.category_id = c.id
         WHERE ${accountFilterSQL}
+          ${transactionPrivacySQL}
           AND t.direction = 'debit'
           AND date_trunc('month', t.posted_at) = date_trunc('month', $2::timestamp)
         GROUP BY c.name
@@ -182,6 +189,7 @@ router.get(
         JOIN accounts a ON t.account_id = a.id
         LEFT JOIN categories c ON t.category_id = c.id
         WHERE ${accountFilterSQL}
+        ${transactionPrivacySQL}
         ORDER BY t.posted_at DESC
         LIMIT 5
       `,
@@ -206,7 +214,7 @@ router.get(
       // 6. Main Goal Logic (Household vs Personal)
       let selectedGoalRow: GoalRow | null = null;
       let goalQuery = "";
-      let goalParams: any[] = [];
+      let goalParams: string[] = [];
 
       if (householdId) {
         // Household Goal Strategy: Earliest active household goal (we don't track favourite household goals yet per se, or maybe we do?)
@@ -309,7 +317,6 @@ router.get(
         insights,
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error("Error in /api/dashboard:", error);
       return res.status(500).json({ error: "Failed to load dashboard data" });
     }

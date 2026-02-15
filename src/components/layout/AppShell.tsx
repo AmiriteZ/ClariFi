@@ -80,7 +80,25 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="flex items-center gap-3 text-sm">
-          <span className="text-slate-600 hidden sm:inline">{user?.name}</span>
+          <Link
+            to="/account"
+            className="flex items-center gap-2 hover:bg-slate-100 p-1.5 rounded-lg transition-colors"
+          >
+            <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 border border-slate-300 flex items-center justify-center">
+              {user?.photoUrl ? (
+                <img
+                  src={user.photoUrl}
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Users className="w-4 h-4 text-slate-500" />
+              )}
+            </div>
+            <span className="text-slate-700 font-medium text-sm hidden sm:inline">
+              {user?.name}
+            </span>
+          </Link>
           <button
             onClick={handleResync}
             disabled={isResyncing}

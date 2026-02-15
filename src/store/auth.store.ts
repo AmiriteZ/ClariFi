@@ -6,6 +6,7 @@ export type User = {
   id: string; // UUID
   name: string;
   email: string;
+  photoUrl?: string;
 };
 
 type AuthState = {
@@ -34,6 +35,6 @@ export const useAuthStore = create<AuthState>()(
         token: state.token,
         // Exclude isInitialized - it should always start as false on page load
       }),
-    }
-  )
+    },
+  ),
 );

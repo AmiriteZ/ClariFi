@@ -17,7 +17,7 @@ import householdsRouter from "./routes/households";
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 
 // Debug route to test DB connection
 app.get("/api/debug/db", async (req: Request, res: Response) => {
