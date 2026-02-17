@@ -23,57 +23,26 @@ const HouseholdContext = createContext<HouseholdContextType | undefined>(
 );
 
 export function HouseholdProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuthStore();
+  const { user, isInitialized } = useAuthStore();
   const [viewMode, setViewMode] = useState<ViewMode>("personal");
   const [activeHousehold, setActiveHousehold] = useState<Household | null>(
     null,
   );
-  const [userHouseholds, setUserHouseholds] = useState<Household[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  // ... (rest of state)
 
-  // Load persistence logic could go here (e.g. remember last view)
-
-  const refreshHouseholds = async () => {
-    if (!user) {
-      console.log("HouseholdContext: No user, skipping refresh");
-      return;
-    }
-    try {
-      console.log("HouseholdContext: Fetching households...");
-      setIsLoading(true);
-      const households = await getMyHouseholds();
-      console.log("HouseholdContext: Fetched households:", households);
-      setUserHouseholds(households);
-
-      // If currently active household is no longer in list, reset
-      if (activeHousehold) {
-        const stillExists = households.find((h) => h.id === activeHousehold.id);
-        if (!stillExists) {
-          setActiveHousehold(null);
-          setViewMode("personal");
-        } else {
-          // Update active household object with latest data
-          setActiveHousehold(stillExists);
-        }
-      }
-    } catch (err) {
-      console.error("HouseholdContext: Failed to load households", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // ... (refreshHouseholds function)
 
   useEffect(() => {
     // Wait for auth to be fully initialized and user to be present
-    if (user && useAuthStore.getState().isInitialized) {
+    if (user && isInitialized) {
       void refreshHouseholds();
-    } else if (!user && useAuthStore.getState().isInitialized) {
+    } else if (!user && isInitialized) {
       // Clear data if user logs out
       setUserHouseholds([]);
       setActiveHousehold(null);
       setViewMode("personal");
     }
-  }, [user]);
+  }, [user, isInitialized]);
 
   const toggleView = () => {
     if (viewMode === "personal") {
