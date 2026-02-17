@@ -68,15 +68,12 @@ export async function setFavouriteGoal(
 
   const token = await user.getIdToken();
 
-  const res = await fetch(
-    `http://localhost:5001/api/goals/${goalId}/favourite`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+  const res = await fetch(`${API_BASE}/goals/${goalId}/favourite`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
     },
-  );
+  });
 
   const data = await res.json();
 
@@ -104,7 +101,7 @@ export async function createGoal(input: CreateGoalInput) {
 
   const token = await user.getIdToken();
 
-  const res = await fetch("http://localhost:5001/api/goals", {
+  const res = await fetch(`${API_BASE}/goals`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -133,7 +130,7 @@ export async function getGoalDetail(
 
   const token = await user.getIdToken();
 
-  const res = await fetch(`http://localhost:5001/api/goals/${goalId}`, {
+  const res = await fetch(`${API_BASE}/goals/${goalId}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -162,7 +159,7 @@ export async function updateGoal(
   if (!user) throw new Error("Not authenticated");
   const token = await user.getIdToken();
 
-  const res = await fetch(`http://localhost:5001/api/goals/${goalId}`, {
+  const res = await fetch(`${API_BASE}/goals/${goalId}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -202,17 +199,14 @@ export async function addContribution(
   if (!user) throw new Error("Not authenticated");
   const token = await user.getIdToken();
 
-  const res = await fetch(
-    `http://localhost:5001/api/goals/${goalId}/contributions`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
+  const res = await fetch(`${API_BASE}/goals/${goalId}/contributions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
-  );
+    body: JSON.stringify(data),
+  });
 
   const resData = await res.json();
   if (!res.ok) throw new Error(resData.error || "Failed to add contribution");
@@ -228,7 +222,7 @@ export async function deleteContribution(
   const token = await user.getIdToken();
 
   const res = await fetch(
-    `http://localhost:5001/api/goals/${goalId}/contributions/${contributionId}`,
+    `${API_BASE}/goals/${goalId}/contributions/${contributionId}`,
     {
       method: "DELETE",
       headers: {

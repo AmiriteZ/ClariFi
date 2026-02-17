@@ -26,14 +26,16 @@ interface ManualConnectionResponse {
   };
 }
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
+
 export async function createManualConnection(
-  data: ManualAccountInput
+  data: ManualAccountInput,
 ): Promise<ManualConnectionResponse> {
   const user = auth.currentUser;
   if (!user) throw new Error("Not authenticated");
   const token = await user.getIdToken();
 
-  const res = await fetch("http://localhost:5001/api/accounts/manual", {
+  const res = await fetch(`${API_BASE}/accounts/manual`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -49,13 +51,13 @@ export async function createManualConnection(
 }
 
 export async function initiateYapilyConnection(
-  institutionId: number
+  institutionId: number,
 ): Promise<BankConnection> {
   const user = auth.currentUser;
   if (!user) throw new Error("Not authenticated");
   const token = await user.getIdToken();
 
-  const res = await fetch("http://localhost:5001/api/accounts/connect", {
+  const res = await fetch(`${API_BASE}/accounts/connect`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -71,23 +73,20 @@ export async function initiateYapilyConnection(
 
 export async function syncAccounts(
   connectionId: string,
-  consentToken: string
+  consentToken: string,
 ): Promise<{ ok: boolean; accountCount: number }> {
   const user = auth.currentUser;
   if (!user) throw new Error("Not authenticated");
   const token = await user.getIdToken();
 
-  const res = await fetch(
-    `http://localhost:5001/api/accounts/sync/${connectionId}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ consentToken }),
-    }
-  );
+  const res = await fetch(`${API_BASE}/accounts/sync/${connectionId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ consentToken }),
+  });
 
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Failed to sync accounts");
@@ -104,7 +103,7 @@ export async function resyncAllAccounts(): Promise<{
   if (!user) throw new Error("Not authenticated");
   const token = await user.getIdToken();
 
-  const res = await fetch("http://localhost:5001/api/accounts/resync", {
+  const res = await fetch(`${API_BASE}/accounts/resync`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

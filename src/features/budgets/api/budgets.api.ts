@@ -97,7 +97,7 @@ export async function createBudget(
   if (!user) throw new Error("Not authenticated");
   const token = await user.getIdToken();
 
-  const res = await fetch("http://localhost:5001/api/budgets", {
+  const res = await fetch(`${API_BASE}/budgets`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -116,7 +116,7 @@ export async function renewExpiredBudgets(): Promise<{ renewedCount: number }> {
   if (!user) throw new Error("Not authenticated");
   const token = await user.getIdToken();
 
-  const res = await fetch("http://localhost:5001/api/budgets/renew-expired", {
+  const res = await fetch(`${API_BASE}/budgets/renew-expired`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -135,7 +135,7 @@ export async function getBudgetDetail(
   if (!user) throw new Error("Not authenticated");
   const token = await user.getIdToken();
 
-  const res = await fetch(`http://localhost:5001/api/budgets/${id}`, {
+  const res = await fetch(`${API_BASE}/budgets/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -153,14 +153,11 @@ export async function getBudgetAccounts(
   if (!user) throw new Error("Not authenticated");
   const token = await user.getIdToken();
 
-  const res = await fetch(
-    `http://localhost:5001/api/budgets/${budgetId}/accounts`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+  const res = await fetch(`${API_BASE}/budgets/${budgetId}/accounts`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
     },
-  );
+  });
 
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Failed to fetch accounts");
@@ -174,14 +171,11 @@ export async function getBudgetCategories(
   if (!user) throw new Error("Not authenticated");
   const token = await user.getIdToken();
 
-  const res = await fetch(
-    `http://localhost:5001/api/budgets/${budgetId}/categories`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+  const res = await fetch(`${API_BASE}/budgets/${budgetId}/categories`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
     },
-  );
+  });
 
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Failed to fetch categories");
@@ -196,17 +190,14 @@ export async function saveBudgetSetup(
   if (!user) throw new Error("Not authenticated");
   const token = await user.getIdToken();
 
-  const res = await fetch(
-    `http://localhost:5001/api/budgets/${budgetId}/setup`,
-    {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(setupData),
+  const res = await fetch(`${API_BASE}/budgets/${budgetId}/setup`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
-  );
+    body: JSON.stringify(setupData),
+  });
 
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Failed to save budget setup");
@@ -282,14 +273,11 @@ export async function getBudgetView(budgetId: string): Promise<BudgetViewData> {
   if (!user) throw new Error("Not authenticated");
   const token = await user.getIdToken();
 
-  const res = await fetch(
-    `http://localhost:5001/api/budgets/${budgetId}/view`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+  const res = await fetch(`${API_BASE}/budgets/${budgetId}/view`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
     },
-  );
+  });
 
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Failed to fetch budget view");

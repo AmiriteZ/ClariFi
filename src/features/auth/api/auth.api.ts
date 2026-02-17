@@ -16,8 +16,7 @@ export type LoginResponse = {
 };
 
 const API_BASE =
-  import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ??
-  "http://localhost:5001/api";
+  import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, "") || "/api";
 
 export type BackendUser = {
   id: string;

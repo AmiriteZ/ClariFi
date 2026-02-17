@@ -7,12 +7,14 @@ export interface Institution {
   provider_code: string;
 }
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
+
 export async function getInstitutions(): Promise<Institution[]> {
   const user = auth.currentUser;
   if (!user) throw new Error("Not authenticated");
   const token = await user.getIdToken();
 
-  const res = await fetch("http://localhost:5001/api/institutions", {
+  const res = await fetch(`${API_BASE}/institutions`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

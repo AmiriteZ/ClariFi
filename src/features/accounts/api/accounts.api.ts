@@ -32,7 +32,7 @@ export async function deleteAccount(accountId: string): Promise<void> {
   if (!user) throw new Error("Not authenticated");
   const token = await user.getIdToken();
 
-  const res = await fetch(`http://localhost:5001/api/accounts/${accountId}`, {
+  const res = await fetch(`${API_BASE}/accounts/${accountId}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`,

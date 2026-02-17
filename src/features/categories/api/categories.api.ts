@@ -12,7 +12,7 @@ export interface GetCategoriesResponse {
   categories: Category[];
 }
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 export async function getCategories(): Promise<GetCategoriesResponse> {
   const user = auth.currentUser;
@@ -34,10 +34,10 @@ export async function getCategories(): Promise<GetCategoriesResponse> {
       "Categories fetch failed:",
       response.status,
       response.statusText,
-      errorText
+      errorText,
     );
     throw new Error(
-      `Failed to fetch categories: ${response.status} ${response.statusText}`
+      `Failed to fetch categories: ${response.status} ${response.statusText}`,
     );
   }
 

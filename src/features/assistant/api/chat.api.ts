@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
+const API_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -17,7 +17,7 @@ export interface ChatResponse {
 export async function sendChatMessage(
   message: string,
   conversationHistory: ChatMessage[],
-  token: string
+  token: string,
 ): Promise<ChatResponse> {
   const res = await fetch(`${API_URL}/api/ai/chat`, {
     method: "POST",
