@@ -25,6 +25,8 @@ export default function HouseholdsPage() {
     refreshHouseholds,
     setActiveHousehold,
     activeHousehold,
+    viewMode,
+    toggleView,
   } = useHousehold();
   const { user } = useAuthStore();
 
@@ -138,6 +140,36 @@ export default function HouseholdsPage() {
           </button>
         </div>
       </div>
+
+      {/* Mobile Context Switcher */}
+      {userHouseholds.length > 0 && (
+        <div className="md:hidden bg-card p-4 rounded-xl border border-border flex flex-col gap-2">
+          <h3 className="text-sm font-medium text-muted-foreground">
+            Current View
+          </h3>
+          <div className="flex bg-muted p-1 rounded-lg">
+            <button
+              onClick={() => viewMode === "household" && toggleView()}
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${viewMode === "personal" ? "bg-background text-primary shadow-sm ring-1 ring-black/5" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              Personal
+            </button>
+            <button
+              onClick={() => viewMode === "personal" && toggleView()}
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${viewMode === "household" ? "bg-background text-primary shadow-sm ring-1 ring-black/5" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              Household
+            </button>
+          </div>
+          {viewMode === "household" && activeHousehold && (
+            <div className="flex items-center gap-2 text-sm text-primary bg-primary/10 px-3 py-2 rounded-md mt-1">
+              <Users className="w-4 h-4" />
+              Viewing:{" "}
+              <span className="font-semibold">{activeHousehold.name}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Messages */}
       {error && (

@@ -52,7 +52,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
           {/* Context Switcher & Household Name */}
           {userHouseholds.length > 0 && (
-            <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-3">
               <div className="flex bg-gray-100 p-1 rounded-lg">
                 <button
                   onClick={() => viewMode === "household" && toggleView()}
