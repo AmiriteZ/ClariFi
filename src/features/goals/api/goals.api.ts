@@ -30,6 +30,8 @@ interface GetGoalsResponse {
   goals: GoalSummary[];
 }
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
+
 export async function getGoals(
   householdId?: string,
 ): Promise<GetGoalsResponse> {
@@ -40,7 +42,7 @@ export async function getGoals(
 
   const token = await user.getIdToken();
 
-  let url = "http://localhost:5001/api/goals";
+  let url = `${API_BASE}/goals`;
   if (householdId) {
     url += `?householdId=${householdId}`;
   }

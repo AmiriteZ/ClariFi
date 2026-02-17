@@ -67,6 +67,8 @@ export interface BudgetDetail {
   categoryLimits: CategoryLimit[];
 }
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
+
 export async function getBudgets(
   status: "active" | "completed" = "active",
   householdId?: string,
@@ -75,7 +77,7 @@ export async function getBudgets(
   if (!user) throw new Error("Not authenticated");
   const token = await user.getIdToken();
 
-  let url = `http://localhost:5001/api/budgets?status=${status}`;
+  let url = `${API_BASE}/budgets?status=${status}`;
   if (householdId) {
     url += `&household_id=${householdId}`;
   }
