@@ -25,6 +25,7 @@ export interface HouseholdMember {
   role: "owner" | "member";
   status: "active" | "pending_approval" | "invited";
   joined_at: string;
+  photoUrl?: string | null;
 }
 
 async function getHeaders() {

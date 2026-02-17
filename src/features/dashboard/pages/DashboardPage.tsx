@@ -26,6 +26,7 @@ import {
   CardDescription,
 } from "../../../components/ui/Card";
 import { cn } from "../../../lib/utils";
+import CashFlowChart from "../../../components/charts/CashFlowChart";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -37,6 +38,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeChart, setActiveChart] = useState<"spending" | "cashflow">(
+    "cashflow",
+  );
 
   const loadData = useCallback(
     async (isRefresh = false) => {
@@ -243,104 +247,151 @@ export default function DashboardPage() {
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
-        {/* Spending Chart (4 cols) */}
-        <Card className="lg:col-span-4 shadow-sm hover:shadow-md transition-shadow min-h-[400px] flex flex-col">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PieChartIcon className="w-5 h-5 text-brand-500" />
-              Spending by Category
-            </CardTitle>
-            <CardDescription>
-              Breakdown of your expenses this month
-            </CardDescription>
+        {/* Main Chart Area (Spending or Cast Flow) */}
+        <Card className="lg:col-span-4 shadow-sm hover:shadow-md transition-shadow min-h-[400px] flex flex-col overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                {activeChart === "spending" ? (
+                  <>
+                    <PieChartIcon className="w-5 h-5 text-brand-500" />
+                    Spending by Category
+                  </>
+                ) : (
+                  <>
+                    <TrendingUp className="w-5 h-5 text-brand-500" />
+                    Cash Flow Analysis
+                  </>
+                )}
+              </CardTitle>
+              <CardDescription>
+                {activeChart === "spending"
+                  ? "Breakdown of your expenses this month"
+                  : "Income vs Expenses trends over time"}
+              </CardDescription>
+            </div>
+
+            {/* Chart Switcher */}
+            <div className="flex bg-neutral-100 dark:bg-neutral-800 p-1 rounded-lg border border-neutral-200 dark:border-neutral-700">
+              <button
+                onClick={() => setActiveChart("cashflow")}
+                className={cn(
+                  "px-2 py-1 text-[10px] sm:px-3 sm:py-1.5 sm:text-xs font-medium rounded-md transition-all",
+                  activeChart === "cashflow"
+                    ? "bg-white dark:bg-black text-foreground shadow-sm border border-neutral-200 dark:border-neutral-700"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Cash Flow
+              </button>
+              <button
+                onClick={() => setActiveChart("spending")}
+                className={cn(
+                  "px-2 py-1 text-[10px] sm:px-3 sm:py-1.5 sm:text-xs font-medium rounded-md transition-all",
+                  activeChart === "spending"
+                    ? "bg-white dark:bg-black text-foreground shadow-sm border border-neutral-200 dark:border-neutral-700"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Spending
+              </button>
+            </div>
           </CardHeader>
-          <CardContent className="pl-2 flex-1 flex flex-col">
-            <div className="flex-1 flex flex-col items-center justify-center p-4">
-              {dashboardData.spendingByCategory.length > 0 ? (
-                <>
-                  <div className="flex-1 w-full relative min-h-[250px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={dashboardData.spendingByCategory}
-                          dataKey="amount"
-                          nameKey="category"
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={90}
-                          outerRadius={120}
-                          paddingAngle={4}
-                        >
-                          {dashboardData.spendingByCategory.map((_, index) => (
-                            <Cell
-                              key={`cell-${index}`}
-                              fill={COLORS[index % COLORS.length]}
-                              strokeWidth={0}
-                            />
-                          ))}
-                        </Pie>
-                        <Tooltip
-                          formatter={(value: number) => [
-                            `€${value.toFixed(2)}`,
-                            "Amount",
-                          ]}
-                          contentStyle={{
-                            borderRadius: "8px",
-                            border: "none",
-                            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                          }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    {/* Center Text */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="text-center">
-                        <p className="text-sm text-neutral-500">Total</p>
-                        <p className="text-3xl font-bold text-neutral-900 dark:text-white">
-                          €
-                          {dashboardData.spendingByCategory
-                            .reduce((a, b) => a + b.amount, 0)
-                            .toFixed(0)}
-                        </p>
+
+          <CardContent className="p-0 flex-1 flex flex-col min-h-[300px]">
+            {activeChart === "cashflow" ? (
+              <CashFlowChart />
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center p-4">
+                {dashboardData.spendingByCategory.length > 0 ? (
+                  <>
+                    <div className="flex-1 w-full relative min-h-[250px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={dashboardData.spendingByCategory}
+                            dataKey="amount"
+                            nameKey="category"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={90}
+                            outerRadius={120}
+                            paddingAngle={4}
+                          >
+                            {dashboardData.spendingByCategory.map(
+                              (_, index) => (
+                                <Cell
+                                  key={`cell-${index}`}
+                                  fill={COLORS[index % COLORS.length]}
+                                  strokeWidth={0}
+                                />
+                              ),
+                            )}
+                          </Pie>
+                          <Tooltip
+                            formatter={(value: number) => [
+                              `€${value.toFixed(2)}`,
+                              "Amount",
+                            ]}
+                            contentStyle={{
+                              borderRadius: "8px",
+                              border: "none",
+                              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                            }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      {/* Center Text */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="text-center">
+                          <p className="text-sm text-neutral-500">Total</p>
+                          <p className="text-3xl font-bold text-neutral-900 dark:text-white">
+                            €
+                            {dashboardData.spendingByCategory
+                              .reduce((a, b) => a + b.amount, 0)
+                              .toFixed(0)}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="w-full mt-auto pt-4 border-t border-neutral-100 dark:border-neutral-800">
-                    <ul className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-                      {dashboardData.spendingByCategory.map((item, index) => (
-                        <li
-                          key={index}
-                          className="flex items-center justify-between text-sm p-1.5 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
-                        >
-                          <div className="flex items-center gap-2 overflow-hidden">
-                            <div
-                              className="w-2.5 h-2.5 rounded-full shrink-0"
-                              style={{
-                                backgroundColor: COLORS[index % COLORS.length],
-                              }}
-                            />
-                            <span
-                              className="text-neutral-600 dark:text-neutral-400 truncate text-xs"
-                              title={item.category}
-                            >
-                              {item.category}
+                    <div className="w-full mt-auto pt-4 border-t border-neutral-100 dark:border-neutral-800">
+                      <ul className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                        {dashboardData.spendingByCategory.map((item, index) => (
+                          <li
+                            key={index}
+                            className="flex items-center justify-between text-sm p-1.5 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
+                          >
+                            <div className="flex items-center gap-2 overflow-hidden">
+                              <div
+                                className="w-2.5 h-2.5 rounded-full shrink-0"
+                                style={{
+                                  backgroundColor:
+                                    COLORS[index % COLORS.length],
+                                }}
+                              />
+                              <span
+                                className="text-neutral-600 dark:text-neutral-400 truncate text-xs"
+                                title={item.category}
+                              >
+                                {item.category}
+                              </span>
+                            </div>
+                            <span className="font-semibold text-neutral-900 dark:text-white shrink-0 ml-1.5 text-xs">
+                              €{item.amount.toFixed(0)}
                             </span>
-                          </div>
-                          <span className="font-semibold text-neutral-900 dark:text-white shrink-0 ml-1.5 text-xs">
-                            €{item.amount.toFixed(0)}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-neutral-400 min-h-[300px]">
+                    <PieChartIcon className="w-16 h-16 mb-2 opacity-50" />
+                    <p>No spending data yet</p>
                   </div>
-                </>
-              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-neutral-400 min-h-[300px]">
-                  <PieChartIcon className="w-16 h-16 mb-2 opacity-50" />
-                  <p>No spending data yet</p>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 

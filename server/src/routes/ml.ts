@@ -18,7 +18,7 @@ router.use(verifyFirebaseToken);
  * Helper: resolve the DB user.id for the current request.
  */
 async function resolveUserId(
-  req: AuthenticatedRequest
+  req: AuthenticatedRequest,
 ): Promise<string | null> {
   const authUser = req.user;
   if (!authUser) return null;
@@ -28,7 +28,7 @@ async function resolveUserId(
 
   const result = await pool.query(
     `SELECT id FROM users WHERE firebase_uid = $1 LIMIT 1`,
-    [firebaseUid]
+    [firebaseUid],
   );
 
   if (result.rows.length === 0) return null;
@@ -59,7 +59,7 @@ router.get(
          WHERE bc.user_id = $1
            AND t.posted_at >= NOW() - INTERVAL '90 days'
          ORDER BY t.posted_at DESC`,
-        [userId]
+        [userId],
       );
       const transactions = txQuery.rows;
 
@@ -72,17 +72,39 @@ router.get(
       const recurring = Analyzer.detectRecurring(transactions);
       const spendingPatterns = Analyzer.analyzeSpending(
         transactions,
-        categories
+        categories,
       );
       const cashFlow = Analyzer.analyzeCashFlow(transactions);
 
       // 4. Run Forecaster
-      // Calculate average daily spend (simple heuristic)
-      const totalSpent = transactions
-        .filter((t) => Number(t.amount) < 0)
-        .reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
-      const days = 90;
-      const avgDailySpend = totalSpent / days;
+      // Calculate daily spending stats (mean & stdDev)
+      const dailyTotals = new Map<string, number>();
+      const today = new Date();
+      // Initialize last 90 days with 0 to ensure we account for no-spend days
+      for (let i = 0; i < 90; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        dailyTotals.set(d.toISOString().split("T")[0], 0);
+      }
+
+      transactions.forEach((t) => {
+        if (Number(t.amount) < 0) {
+          const date = new Date(t.posted_at).toISOString().split("T")[0];
+          // Only count if it falls within our generated window (it should, given the query)
+          if (dailyTotals.has(date)) {
+            dailyTotals.set(
+              date,
+              (dailyTotals.get(date) || 0) + Math.abs(Number(t.amount)),
+            );
+          }
+        }
+      });
+
+      const dailyValues = Array.from(dailyTotals.values());
+      const mean = dailyValues.reduce((a, b) => a + b, 0) / 90;
+      const variance =
+        dailyValues.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / 89; // Sample variance (N-1)
+      const stdDev = Math.sqrt(variance);
 
       // Get current balance from accounts (sum of all)
       const accountsRes = await pool.query(
@@ -90,15 +112,15 @@ router.get(
          FROM accounts a 
          JOIN bank_connections bc ON a.bank_connection_id = bc.id
          WHERE bc.user_id = $1`,
-        [userId]
+        [userId],
       );
       const currentBalance = Number(accountsRes.rows[0]?.total || 0);
 
       const forecast = Forecaster.projectBalance(
         currentBalance,
         recurring,
-        avgDailySpend,
-        30
+        { mean, stdDev },
+        30,
       );
 
       // 5. Generate Insights
@@ -135,7 +157,7 @@ router.get(
       console.error("Error generating ML snapshot:", error);
       res.status(500).json({ error: "Failed to generate snapshot" });
     }
-  }
+  },
 );
 
 /**
@@ -155,7 +177,7 @@ router.get(
       // Fetch budget
       const budgetRes = await pool.query(
         "SELECT * FROM budgets WHERE id = $1 AND user_id = $2",
-        [budgetId, userId]
+        [budgetId, userId],
       );
       if (budgetRes.rows.length === 0) {
         res.status(404).json({ error: "Budget not found" });
@@ -172,7 +194,7 @@ router.get(
          JOIN bank_connections bc ON a.bank_connection_id = bc.id
          WHERE bc.user_id = $1
            AND t.posted_at >= $2 AND t.posted_at <= $3`,
-        [userId, budget.period_start, budget.period_end]
+        [userId, budget.period_start, budget.period_end],
       );
 
       const insights = Insights.getBudgetInsights(budget, txRes.rows);
@@ -181,7 +203,7 @@ router.get(
       console.error("Error generating budget insights:", error);
       res.status(500).json({ error: "Failed to generate insights" });
     }
-  }
+  },
 );
 
 /**
@@ -212,7 +234,7 @@ router.post(
          JOIN bank_connections bc ON a.bank_connection_id = bc.id
          WHERE bc.user_id = $1
            AND t.posted_at >= NOW() - INTERVAL '30 days'`,
-        [userId]
+        [userId],
       );
 
       const cashFlow = Analyzer.analyzeCashFlow(txQuery.rows);
@@ -228,14 +250,14 @@ router.post(
 
       const suggestions = Insights.generateSuggestions(
         insights as any[],
-        "User"
+        "User",
       );
       res.json({ suggestions });
     } catch (error) {
       console.error("Error generating suggestions:", error);
       res.status(500).json({ error: "Failed to generate suggestions" });
     }
-  }
+  },
 );
 
 export default router;

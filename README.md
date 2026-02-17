@@ -56,7 +56,8 @@ Whether you're a student managing a tight budget, a professional planning for th
 ### 👥 Household Management
 
 - **Shared Finances**: Create households to manage finances with family or roommates
-- **Member Roles**: Assign different permission levels to household members
+- **easy Joining**: Join households instantly using a unique 6-character invite code
+- **Member Profiles**: Customized profiles with photos and roles (Admin/Member)
 - **Collaborative Budgets**: Share budgets and goals across household members
 - **Combined View**: See aggregated financial data for the entire household
 - **Individual Privacy**: Maintain personal accounts alongside shared ones
@@ -69,6 +70,22 @@ Whether you're a student managing a tight budget, a professional planning for th
 - **Monthly Comparisons**: Compare spending across different time periods
 - **Custom Reports**: Generate reports for specific date ranges and categories
 - **Financial Health Score**: Overall assessment of financial wellness
+
+### 🧠 Advanced Machine Learning
+
+- **Anomaly Detection**: Z-Score analysis flags unusual spending behavior (> 2.0 Sigma)
+- **Smart Trends**: Exponential Moving Averages (EMA) track spending shifts in real-time
+- **Probabilistic Forecasting**: Projects future balances with Optimistic, Expected, and Pessimistic scenarios based on spending volatility
+- **Fuzzy Matching**: Normalizes merchant names (e.g., "Starbucks #123" -> "Starbucks") for accurate recurring transaction detection
+- **Constraint Solver**: Intelligently distributes budget surplus to goals based on priority (High/Medium/Low)
+
+### 🎨 Modern UI/UX
+
+- **Premium Design**: Glassmorphism aesthetics with a refined color palette
+- **Dark Mode**: Fully supported system-wide dark theme
+- **Responsive Layouts**: Optimized for Mobile, Tablet, and Desktop
+- **Interactive Charts**: Dynamic cash flow and spending visualization
+- **Accessibility**: Improved contrast and screen reader support
 
 ### 🔐 Security & Privacy
 
@@ -84,9 +101,11 @@ Whether you're a student managing a tight budget, a professional planning for th
 
 - **React 18** with TypeScript
 - **Vite** for fast development and building
-- **TailwindCSS** for styling
+- **TailwindCSS v4** for styling
+- **Framer Motion** & **GSAP** for advanced animations
 - **Recharts** for data visualization
-- **React Router** for navigation
+- **Zustand** for state management
+- **Lucide React** for icons
 
 ### Backend
 

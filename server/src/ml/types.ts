@@ -73,4 +73,5 @@ export interface Goal {
   target_amount: number | string;
   current_amount?: number | string;
   target_date?: string | null;
+  priority?: "high" | "medium" | "low"; // Added for ML constraint solver
 }

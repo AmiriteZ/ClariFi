@@ -32,6 +32,17 @@ export type DashboardResponse = {
   insights: string[];
 };
 
+export type CashFlowPoint = {
+  date: string; // YYYY-MM-DD
+  dayName: string; // Mon, Tue
+  income: number;
+  expenses: number;
+};
+
+export type CashFlowResponse = {
+  data: CashFlowPoint[];
+};
+
 const API_BASE_URL = "http://localhost:5001/api";
 
 export async function getDashboard(
@@ -52,6 +63,30 @@ export async function getDashboard(
 
   if (!res.ok) {
     throw new Error(`Dashboard API error ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function getCashFlow(
+  idToken: string,
+  range: "this_week" | "last_week" | "this_month",
+  householdId?: string,
+): Promise<CashFlowResponse> {
+  let url = `${API_BASE_URL}/dashboard/cashflow?range=${range}`;
+  if (householdId) {
+    url += `&householdId=${householdId}`;
+  }
+
+  const res = await fetch(url, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${idToken}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Cashflow API error ${res.status}`);
   }
 
   return res.json();

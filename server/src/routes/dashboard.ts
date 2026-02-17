@@ -323,4 +323,170 @@ router.get(
   },
 );
 
+router.get(
+  "/dashboard/cashflow",
+  verifyFirebaseToken,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const firebaseUid = req.user?.uid;
+      if (!firebaseUid) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      // 1) Look up our internal user
+      const userResult = await pool.query<{ id: string }>(
+        "SELECT id FROM users WHERE firebase_uid = $1",
+        [firebaseUid],
+      );
+      const dbUser = userResult.rows[0];
+      if (!dbUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const userId = dbUser.id;
+      const householdId = (req.query.householdId as string) || null;
+      const range = (req.query.range as string) || "week"; // 'week' | 'month'
+
+      let targetUserIds = [userId];
+
+      if (householdId) {
+        // Verify membership
+        const memberCheck = await pool.query(
+          "SELECT 1 FROM household_members WHERE household_id = $1 AND user_id = $2",
+          [householdId, userId],
+        );
+        if (memberCheck.rows.length === 0) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+        // Fetch all members
+        const membersQuery = await pool.query(
+          "SELECT user_id FROM household_members WHERE household_id = $1",
+          [householdId],
+        );
+        targetUserIds = membersQuery.rows.map((r) => r.user_id);
+      }
+
+      const accountFilterSQL = `
+        (
+          a.external_account_id = ANY($1)
+          OR 
+          a.external_account_id IN (SELECT 'tool-account-' || u_id FROM unnest($1::text[]) AS u_id)
+        )
+      `;
+
+      const transactionPrivacySQL = householdId
+        ? "AND t.is_hidden_from_household = false"
+        : "";
+
+      // Determine date range
+      // week = last 7 days? or start of week?
+      // let's do last 7 days vs last 30 days for simplicity, or we can do "this week" (Mon-Sun)
+      // User said "this week/last week/ this month".
+      // Let's implement "this_week" (default), "last_week", "this_month".
+      const startDate = new Date();
+      let endDate = new Date(); // now
+
+      if (range === "this_week") {
+        // Start of current week (Monday)
+        const day = startDate.getDay();
+        const diff = startDate.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+        startDate.setDate(diff);
+        startDate.setHours(0, 0, 0, 0);
+      } else if (range === "last_week") {
+        // Start of last week
+        const day = startDate.getDay();
+        const diff = startDate.getDate() - day + (day === 0 ? -6 : 1) - 7;
+        startDate.setDate(diff);
+        startDate.setHours(0, 0, 0, 0);
+
+        // End of last week
+        endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 6);
+        endDate.setHours(23, 59, 59, 999);
+      } else if (range === "this_month") {
+        startDate.setDate(1);
+        startDate.setHours(0, 0, 0, 0);
+      } else {
+        // Default: last 7 days if unknown, or just handle 'week' as 'this_week' fallback
+        // Let's fallback to 'this_week' logic
+        const day = startDate.getDay();
+        const diff = startDate.getDate() - day + (day === 0 ? -6 : 1);
+        startDate.setDate(diff);
+        startDate.setHours(0, 0, 0, 0);
+      }
+
+      // Query daily aggregates
+      // We want to fill gaps too, but let's just get data first.
+      const query = `
+        SELECT
+          DATE(t.posted_at) as day,
+          SUM(CASE WHEN t.direction = 'credit' THEN t.amount ELSE 0 END) as income,
+          SUM(CASE WHEN t.direction = 'debit' THEN t.amount ELSE 0 END) as expenses
+        FROM transactions t
+        JOIN accounts a ON t.account_id = a.id
+        WHERE ${accountFilterSQL}
+          ${transactionPrivacySQL}
+          AND t.posted_at >= $2 AND t.posted_at <= $3
+        GROUP BY DATE(t.posted_at)
+        ORDER BY DATE(t.posted_at) ASC
+      `;
+
+      const result = await pool.query(query, [
+        targetUserIds,
+        startDate,
+        endDate,
+      ]);
+
+      // Fill in empty dates for chart continuity
+      const filledData = [];
+      const current = new Date(startDate);
+      const end = new Date(endDate);
+      // safety cap
+      if (end > new Date()) end.setTime(new Date().getTime()); // don't go into future? well "this month" might technically go to 31st.
+      // actually for "this week" we show up to today usually.
+      // But for chart x-axis consistency it might be nice to show the whole week?
+      // Let's show up to "end" (which is end of week/month) or today, whichever is later?
+      // Actually standard is usually to show the whole period defined.
+
+      // If 'this_month', end is today? Or end of month?
+      // Let's cap at today for 'this_xxx' ranges to avoid empty future space?
+      // Or show empty space so they know where they are in the month?
+      // "Cash Flow" usually implies historical.
+      // Let's stick to the requested ranges.
+      // BUT if we are in "this_month", and today is 15th, do we show 16th-31st as 0?
+      // Yes, for a defined x-axis it's often better.
+
+      // Loop:
+      // We need to ensure we cover the requested range fully.
+      // Re-normalize end date for loop
+      const loopEnd = new Date(endDate); // e.g. Sunday or End of Month
+
+      while (current <= loopEnd) {
+        const dateStr = current.toISOString().split("T")[0]; // YYYY-MM-DD
+        // Find in result
+        // pg returns date as Date object usually or string depending on driver.
+        // let's compare formatted strings.
+        const row = result.rows.find((r) => {
+          const d = new Date(r.day);
+          return d.toISOString().split("T")[0] === dateStr;
+        });
+
+        filledData.push({
+          date: dateStr,
+          dayName: current.toLocaleDateString("en-US", { weekday: "short" }), // Mon, Tue
+          income: Number(row?.income || 0),
+          expenses: Number(row?.expenses || 0),
+        });
+
+        current.setDate(current.getDate() + 1);
+      }
+
+      return res.json({ data: filledData });
+    } catch (error) {
+      console.error("Error in /api/dashboard/cashflow:", error);
+      return res.status(500).json({ error: "Failed to load cashflow data" });
+    }
+  },
+);
+
 export default router;

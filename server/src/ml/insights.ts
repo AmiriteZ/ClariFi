@@ -17,7 +17,7 @@ export class Insights {
     // Calculate total spent in this budget's categories
     const totalSpent = spending.reduce(
       (sum, t) => sum + Math.abs(Number(t.amount)),
-      0
+      0,
     );
 
     const percentage =
@@ -82,7 +82,7 @@ export class Insights {
           message: `To reach ${
             goal.name
           } by ${targetDate.toLocaleDateString()}, save €${neededPerMonth.toFixed(
-            0
+            0,
           )}/month.`,
           relatedId: goal.id,
         });
@@ -97,13 +97,13 @@ export class Insights {
    */
   static generateSuggestions(
     insights: Insight[],
-    userName: string
+    userName: string,
   ): ConversationSuggestion[] {
     const suggestions: ConversationSuggestion[] = [];
 
     // 1. Critical warnings first
     const warnings = insights.filter(
-      (i) => i.severity === "warning" || i.severity === "critical"
+      (i) => i.severity === "warning" || i.severity === "critical",
     );
     if (warnings.length > 0) {
       suggestions.push({
@@ -115,7 +115,7 @@ export class Insights {
 
     // 2. Positive reinforcement
     const achievements = insights.filter((i) =>
-      i.message.includes("Congratulations")
+      i.message.includes("Congratulations"),
     );
     if (achievements.length > 0) {
       suggestions.push({
@@ -135,5 +135,54 @@ export class Insights {
     }
 
     return suggestions;
+  }
+
+  /**
+   * Multi-Goal Constraint Solver
+   * Distributes surplus based on priority
+   */
+  static distributeSurplus(
+    surplus: number,
+    goals: Goal[],
+  ): Map<string, number> {
+    const allocation = new Map<string, number>();
+    let remaining = Math.max(0, surplus);
+
+    if (remaining === 0) return allocation;
+
+    // Sort by priority (high > medium > low > undefined)
+    const priorityMap = { high: 3, medium: 2, low: 1 };
+
+    // Sort goals by priority desc, then by % complete (lower first - catch up)
+    const sortedGoals = [...goals].sort((a, b) => {
+      const pA = priorityMap[a.priority || "low"];
+      const pB = priorityMap[b.priority || "low"];
+      if (pA !== pB) return pB - pA;
+
+      const pctA = Number(a.current_amount || 0) / Number(a.target_amount) || 0;
+      const pctB = Number(b.current_amount || 0) / Number(b.target_amount) || 0;
+      return pctA - pctB;
+    });
+
+    // Strategy: Fill high priority first
+    // For now, doing a greedy allocation to highest priority
+    for (const goal of sortedGoals) {
+      if (remaining <= 0) break;
+
+      const target = Number(goal.target_amount);
+      const current = Number(goal.current_amount || 0);
+      const needed = Math.max(0, target - current);
+
+      if (needed > 0) {
+        const allocate = Math.min(remaining, needed);
+        allocation.set(goal.id, allocate);
+        remaining -= allocate;
+      }
+    }
+
+    // If any surplus left (all goals full), maybe dump into the last one or a savings buffer
+    // For now, we just return the allocation for goals.
+
+    return allocation;
   }
 }

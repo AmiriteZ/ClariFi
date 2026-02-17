@@ -215,7 +215,14 @@ router.get(
         [id],
       );
       const membersRes = await pool.query(
-        `SELECT u.id, u.display_name, u.email, hm.role, hm.status, hm.joined_at
+        `SELECT 
+           u.id, 
+           CONCAT(u.fname, ' ', u.lname) as display_name, 
+           u.email, 
+           hm.role, 
+           hm.status, 
+           hm.joined_at,
+           u.photo_url as "photoUrl"
          FROM household_members hm
          JOIN users u ON hm.user_id = u.id
          WHERE hm.household_id = $1
@@ -385,7 +392,7 @@ router.get(
         `SELECT 
            t.posted_at, t.merchant_name, t.amount, t.direction, c.name as category,
            a.external_account_id,
-           u.display_name as owner_name,
+           CONCAT(u.fname, ' ', u.lname) as owner_name,
            u.id as owner_id
          FROM transactions t
          JOIN accounts a ON a.id = t.account_id

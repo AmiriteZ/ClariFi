@@ -10,6 +10,34 @@ const daysBetween = (d1: Date, d2: Date) => {
   return Math.abs((d1.getTime() - d2.getTime()) / (1000 * 60 * 60 * 24));
 };
 
+// Helper: Calculate Standard Deviation
+const calculateStdDev = (values: number[], mean: number): number => {
+  if (values.length < 2) return 0;
+  const variance =
+    values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
+    (values.length - 1);
+  return Math.sqrt(variance);
+};
+
+// Helper: Exponential Moving Average
+const calculateEMA = (
+  current: number,
+  previous: number,
+  alpha: number = 0.3,
+): number => {
+  return current * alpha + previous * (1 - alpha);
+};
+
+// Helper: Normalize Merchant Name (Fuzzy Matching)
+const normalizeMerchantName = (name: string): string => {
+  return name
+    .toLowerCase()
+    .replace(/[0-9#]/g, "") // Remove numbers and hash
+    .replace(/\s+(store|branch|inc|llc|ltd)\b/g, "") // Remove common suffixes
+    .replace(/\s+/g, " ") // Collapse whitespace
+    .trim();
+};
+
 export class Analyzer {
   /**
    * Detect recurring transactions (bills, subscriptions, income)
@@ -21,7 +49,9 @@ export class Analyzer {
 
     // Group by merchant
     transactions.forEach((tx) => {
-      const key = tx.merchant_name || tx.description;
+      const rawName = tx.merchant_name || tx.description;
+      const key = normalizeMerchantName(rawName);
+
       if (!merchantGroups.has(key)) {
         merchantGroups.set(key, []);
       }
@@ -34,7 +64,7 @@ export class Analyzer {
       // Sort by date desc
       txs.sort(
         (a, b) =>
-          new Date(b.posted_at).getTime() - new Date(a.posted_at).getTime()
+          new Date(b.posted_at).getTime() - new Date(a.posted_at).getTime(),
       );
 
       const amounts = txs.map((t) => Number(t.amount));
@@ -42,7 +72,7 @@ export class Analyzer {
 
       // Check if amounts are similar (within 10% variance)
       const isStableAmount = amounts.every(
-        (a) => Math.abs(a - avgAmount) / Math.abs(avgAmount) < 0.1
+        (a) => Math.abs(a - avgAmount) / Math.abs(avgAmount) < 0.1,
       );
 
       // Check intervals
@@ -104,7 +134,7 @@ export class Analyzer {
           ];
 
           const isBill = billCategories.some((keyword) =>
-            categoryName.includes(keyword)
+            categoryName.includes(keyword),
           );
 
           // Only mark as recurring bill if it's actually a bill category
@@ -139,7 +169,7 @@ export class Analyzer {
    */
   static analyzeSpending(
     transactions: Transaction[],
-    categories: Map<number, string>
+    categories: Map<number, string>,
   ): SpendingPattern[] {
     const patterns: SpendingPattern[] = [];
     const categoryGroups = new Map<number, Transaction[]>();
@@ -160,44 +190,135 @@ export class Analyzer {
 
       const totalSpent = expenses.reduce(
         (sum, t) => sum + Math.abs(Number(t.amount)),
-        0
+        0,
       );
 
       // Calculate monthly average (assuming 3 months of data for simplicity, or based on date range)
-      // For now, let's just average over the detected range
       const dates = expenses.map((t) => new Date(t.posted_at).getTime());
       const minDate = new Date(Math.min(...dates));
       const maxDate = new Date(Math.max(...dates));
       const monthsDiff = Math.max(
         1,
-        (maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24 * 30)
+        (maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24 * 30),
       );
 
       const avgMonthly = totalSpent / monthsDiff;
 
-      // Calculate trend (compare last month to average)
-      const lastMonthStart = new Date();
-      lastMonthStart.setMonth(lastMonthStart.getMonth() - 1);
+      // Calculate Trend using EMA
+      // We process months sequentially
+      const monthlyTotals = new Map<string, number>();
+      expenses.forEach((t) => {
+        const d = new Date(t.posted_at);
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        monthlyTotals.set(
+          key,
+          (monthlyTotals.get(key) || 0) + Math.abs(Number(t.amount)),
+        );
+      });
 
-      const lastMonthSpent = expenses
-        .filter((t) => new Date(t.posted_at) >= lastMonthStart)
-        .reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
+      // Sort months
+      const sortedMonths = Array.from(monthlyTotals.keys()).sort();
+      let emailVal = 0;
+      if (sortedMonths.length > 0) {
+        emailVal = monthlyTotals.get(sortedMonths[0]) || 0;
+        for (let i = 1; i < sortedMonths.length; i++) {
+          emailVal = calculateEMA(
+            monthlyTotals.get(sortedMonths[i]) || 0,
+            emailVal,
+          );
+        }
+      }
 
+      // Determine trend based on EMA vs Average
       let trend: "increasing" | "decreasing" | "stable" = "stable";
-      if (lastMonthSpent > avgMonthly * 1.1) trend = "increasing";
-      else if (lastMonthSpent < avgMonthly * 0.9) trend = "decreasing";
+      if (emailVal > avgMonthly * 1.1) trend = "increasing";
+      else if (emailVal < avgMonthly * 0.9) trend = "decreasing";
+
+      // Calculate Volatility (Std Dev of monthly totals / Average)
+      const monthlyValues = Array.from(monthlyTotals.values());
+      const stdDev = calculateStdDev(monthlyValues, avgMonthly);
+      const volatility = avgMonthly > 0 ? stdDev / avgMonthly : 0;
 
       patterns.push({
         categoryId: catId,
         categoryName: categories.get(catId) || "Unknown",
         averageMonthlySpend: avgMonthly,
         trend,
-        volatility: 0.5, // Placeholder for now
-        lastMonthSpend: lastMonthSpent,
+        volatility: Math.min(volatility, 1), // Cap at 1
+        lastMonthSpend:
+          monthlyTotals.get(sortedMonths[sortedMonths.length - 1]) || 0,
       });
     });
 
     return patterns;
+  }
+
+  /**
+   * Detect anomalies using Z-Score
+   */
+  static detectAnomalies(
+    transactions: Transaction[],
+    categories: Map<number, string>,
+  ): import("./types").Insight[] {
+    const insights: import("./types").Insight[] = [];
+    const categoryGroups = new Map<number, Transaction[]>();
+
+    // 1. Group by category
+    transactions.forEach((tx) => {
+      if (!tx.category_id) return;
+      if (!categoryGroups.has(tx.category_id)) {
+        categoryGroups.set(tx.category_id, []);
+      }
+      categoryGroups.get(tx.category_id)?.push(tx);
+    });
+
+    // 2. Analyze each category
+    categoryGroups.forEach((txs, catId) => {
+      // Filter for expenses in last 90 days
+      const now = new Date();
+      const ninetyDaysAgo = new Date();
+      ninetyDaysAgo.setDate(now.getDate() - 90);
+
+      const recentExpenses = txs.filter(
+        (t) => Number(t.amount) < 0 && new Date(t.posted_at) >= ninetyDaysAgo,
+      );
+
+      if (recentExpenses.length < 5) return; // Need min sample size
+
+      const values = recentExpenses.map((t) => Math.abs(Number(t.amount)));
+      const mean = values.reduce((a, b) => a + b, 0) / values.length;
+      const stdDev = calculateStdDev(values, mean);
+
+      if (stdDev === 0) return;
+
+      // Check strictly recent transactions (e.g. last 7 days) for anomalies
+      const recentWindow = new Date();
+      recentWindow.setDate(now.getDate() - 7);
+
+      recentExpenses.forEach((tx) => {
+        if (new Date(tx.posted_at) < recentWindow) return;
+
+        const amount = Math.abs(Number(tx.amount));
+        const zScore = (amount - mean) / stdDev;
+
+        if (zScore > 2.0) {
+          const categoryName = categories.get(catId) || "Unknown";
+          insights.push({
+            type: "spending",
+            severity: "warning",
+            message: `Unusual spending detected in ${categoryName}`,
+            actionable: `Transaction of €${amount.toFixed(
+              2,
+            )} at ${tx.merchant_name || "Merchant"} is significantly higher than your average (€${mean.toFixed(
+              2,
+            )}).`,
+            relatedId: tx.id,
+          });
+        }
+      });
+    });
+
+    return insights;
   }
 
   /**
@@ -209,7 +330,7 @@ export class Analyzer {
     threeMonthsAgo.setMonth(now.getMonth() - 3);
 
     const recentTxs = transactions.filter(
-      (t) => new Date(t.posted_at) >= threeMonthsAgo
+      (t) => new Date(t.posted_at) >= threeMonthsAgo,
     );
 
     const income = recentTxs

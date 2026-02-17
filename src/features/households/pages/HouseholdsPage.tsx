@@ -348,10 +348,18 @@ export default function HouseholdsPage() {
                               className="flex justify-between items-center bg-card p-3 rounded-lg border border-border"
                             >
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
-                                  {(m.display_name || "?")
-                                    .charAt(0)
-                                    .toUpperCase()}
+                                <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/10 text-primary flex items-center justify-center font-bold text-sm border border-border">
+                                  {m.photoUrl ? (
+                                    <img
+                                      src={m.photoUrl}
+                                      alt={m.display_name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    (m.display_name || "?")
+                                      .charAt(0)
+                                      .toUpperCase()
+                                  )}
                                 </div>
                                 <div>
                                   <p className="text-sm font-medium text-foreground">
