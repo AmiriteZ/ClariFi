@@ -27,7 +27,7 @@ export default function AddAccountModal({
     setStep("syncing");
 
     try {
-      await syncAccounts(connId);
+      await syncAccounts(connId, "");
       onAccountAdded();
       handleClose();
     } catch (err) {
