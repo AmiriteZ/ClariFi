@@ -64,9 +64,11 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    if (user) {
-      refreshHouseholds();
-    } else {
+    // Wait for auth to be fully initialized and user to be present
+    if (user && useAuthStore.getState().isInitialized) {
+      void refreshHouseholds();
+    } else if (!user && useAuthStore.getState().isInitialized) {
+      // Clear data if user logs out
       setUserHouseholds([]);
       setActiveHousehold(null);
       setViewMode("personal");
