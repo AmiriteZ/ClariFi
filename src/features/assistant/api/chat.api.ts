@@ -19,7 +19,7 @@ export async function sendChatMessage(
   conversationHistory: ChatMessage[],
   token: string,
 ): Promise<ChatResponse> {
-  const res = await fetch(`${API_URL}/api/ai/chat`, {
+  const res = await fetch(`${API_URL}/ai/chat`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
