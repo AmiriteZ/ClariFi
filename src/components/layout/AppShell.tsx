@@ -12,13 +12,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const { viewMode, activeHousehold, toggleView, userHouseholds } =
     useHousehold();
 
-  console.log("AppShell Debug:", {
-    user: !!user,
-    households: userHouseholds.length,
-    viewMode,
-    activeHousehold,
-  });
-
   const navigate = useNavigate();
   const [isResyncing, setIsResyncing] = useState(false);
 
