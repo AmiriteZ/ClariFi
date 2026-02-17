@@ -41,16 +41,16 @@ export default function BudgetsPage() {
   }
 
   return (
-    <div className="w-full h-full px-10 py-8 overflow-y-auto">
-      <div className="max-w-7xl mx-auto">
+    <div className="w-full h-full px-4 py-6 md:px-10 md:py-8 overflow-y-auto">
+      <div className="max-w-7xl mx-auto space-y-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900">
+            <h1 className="text-2xl font-semibold text-foreground">
               {viewMode === "household" && activeHousehold
                 ? `${activeHousehold.name} Budgets`
                 : "Budgets"}
             </h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Manage your spending and savings
             </p>
           </div>
@@ -64,14 +64,14 @@ export default function BudgetsPage() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="mb-6 border-b border-slate-200">
+        <div className="mb-6 border-b border-border">
           <nav className="-mb-px flex space-x-8">
             <button
               onClick={() => setActiveTab("active")}
               className={`whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors ${
                 activeTab === "active"
                   ? "border-emerald-600 text-emerald-600"
-                  : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
+                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
               }`}
             >
               Active Budgets
@@ -81,7 +81,7 @@ export default function BudgetsPage() {
               className={`whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors ${
                 activeTab === "completed"
                   ? "border-emerald-600 text-emerald-600"
-                  : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
+                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
               }`}
             >
               Completed Budgets
@@ -100,21 +100,21 @@ export default function BudgetsPage() {
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-48 animate-pulse rounded-2xl bg-slate-100"
+                className="h-48 animate-pulse rounded-2xl bg-muted"
               />
             ))}
           </div>
         ) : budgets.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50/50 py-20 text-center">
-            <div className="mb-4 rounded-full bg-white p-4 shadow-sm">
+          <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-border bg-muted/50 py-20 text-center">
+            <div className="mb-4 rounded-full bg-card p-4 shadow-sm">
               <Plus className="h-8 w-8 text-emerald-600" />
             </div>
-            <h3 className="text-lg font-medium text-slate-900">
+            <h3 className="text-lg font-medium text-foreground">
               {activeTab === "active"
                 ? "No active budgets"
                 : "No completed budgets"}
             </h3>
-            <p className="mt-1 max-w-sm text-sm text-slate-500">
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
               {activeTab === "active"
                 ? "Create your first budget to start tracking your expenses and saving goals."
                 : "Completed budgets will appear here once their period ends."}
@@ -129,7 +129,7 @@ export default function BudgetsPage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             {budgets.map((budget) => (
               <BudgetCard key={budget.id} budget={budget} />
             ))}

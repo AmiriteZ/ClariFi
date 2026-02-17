@@ -2,7 +2,7 @@ import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import App from "../App";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
-import AppShell from "../components/layout/AppShell";
+import Layout from "../components/layout/Layout";
 import { useAuthStore } from "../store/auth.store";
 import PageTransition from "../components/common/PageTransition";
 import WelcomePage from "../features/welcome/pages/WelcomePage";
@@ -16,6 +16,7 @@ import AssistantPage from "../features/assistant/pages/AssistantPage";
 import TransactionsPage from "../features/transactions/pages/TransactionsPage";
 import HouseholdsPage from "../features/households/pages/HouseholdsPage";
 import AccountPage from "../features/account/pages/AccountPage";
+import SettingsPage from "../features/settings/pages/SettingsPage";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token, isInitialized } = useAuthStore();
@@ -44,11 +45,11 @@ export default function Router() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <AppShell>
+              <Layout>
                 <PageTransition>
                   <DashboardPage />
                 </PageTransition>
-              </AppShell>
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -56,11 +57,11 @@ export default function Router() {
           path="/goals"
           element={
             <ProtectedRoute>
-              <AppShell>
+              <Layout>
                 <PageTransition>
                   <GoalsPage />
                 </PageTransition>
-              </AppShell>
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -68,11 +69,11 @@ export default function Router() {
           path="/goals/:goalId"
           element={
             <ProtectedRoute>
-              <AppShell>
+              <Layout>
                 <PageTransition>
                   <GoalDetailPage />
                 </PageTransition>
-              </AppShell>
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -80,11 +81,11 @@ export default function Router() {
           path="/budgets"
           element={
             <ProtectedRoute>
-              <AppShell>
+              <Layout>
                 <PageTransition>
                   <BudgetsPage />
                 </PageTransition>
-              </AppShell>
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -92,11 +93,11 @@ export default function Router() {
           path="/budgets/:budgetId/view"
           element={
             <ProtectedRoute>
-              <AppShell>
+              <Layout>
                 <PageTransition>
                   <BudgetViewPage />
                 </PageTransition>
-              </AppShell>
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -104,11 +105,11 @@ export default function Router() {
           path="/budgets/:budgetId/setup"
           element={
             <ProtectedRoute>
-              <AppShell>
+              <Layout>
                 <PageTransition>
                   <BudgetSetupPage />
                 </PageTransition>
-              </AppShell>
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -116,11 +117,11 @@ export default function Router() {
           path="/accounts"
           element={
             <ProtectedRoute>
-              <AppShell>
+              <Layout>
                 <PageTransition>
                   <AccountsPage />
                 </PageTransition>
-              </AppShell>
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -128,11 +129,11 @@ export default function Router() {
           path="/transactions"
           element={
             <ProtectedRoute>
-              <AppShell>
+              <Layout>
                 <PageTransition>
                   <TransactionsPage />
                 </PageTransition>
-              </AppShell>
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -140,11 +141,11 @@ export default function Router() {
           path="/assistant"
           element={
             <ProtectedRoute>
-              <AppShell>
+              <Layout>
                 <PageTransition>
                   <AssistantPage />
                 </PageTransition>
-              </AppShell>
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -152,11 +153,11 @@ export default function Router() {
           path="/households"
           element={
             <ProtectedRoute>
-              <AppShell>
+              <Layout>
                 <PageTransition>
                   <HouseholdsPage />
                 </PageTransition>
-              </AppShell>
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -164,11 +165,23 @@ export default function Router() {
           path="/account"
           element={
             <ProtectedRoute>
-              <AppShell>
+              <Layout>
                 <PageTransition>
                   <AccountPage />
                 </PageTransition>
-              </AppShell>
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <PageTransition>
+                  <SettingsPage />
+                </PageTransition>
+              </Layout>
             </ProtectedRoute>
           }
         />

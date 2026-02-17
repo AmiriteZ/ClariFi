@@ -84,7 +84,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             to="/account"
             className="flex items-center gap-2 hover:bg-slate-100 p-1.5 rounded-lg transition-colors"
           >
-            <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 border border-slate-300 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-md overflow-hidden bg-slate-200 border border-slate-300 flex items-center justify-center">
               {user?.photoUrl ? (
                 <img
                   src={user.photoUrl}

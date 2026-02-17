@@ -43,7 +43,7 @@ export default function BudgetViewPage() {
     if (!budgetId) return;
 
     const confirmed = window.confirm(
-      "Are you sure you want to delete this budget? This action cannot be undone."
+      "Are you sure you want to delete this budget? This action cannot be undone.",
     );
 
     if (confirmed) {
@@ -85,13 +85,13 @@ export default function BudgetViewPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "over":
-        return "text-red-600 bg-red-50";
+        return "text-destructive bg-destructive/10";
       case "near":
-        return "text-yellow-600 bg-yellow-50";
+        return "text-yellow-600 dark:text-yellow-400 bg-yellow-500/10";
       case "hit":
-        return "text-blue-600 bg-blue-50";
+        return "text-blue-600 dark:text-blue-400 bg-blue-500/10";
       default:
-        return "text-emerald-600 bg-emerald-50";
+        return "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10";
     }
   };
 
@@ -132,7 +132,7 @@ export default function BudgetViewPage() {
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-slate-500">Loading budget details...</p>
+        <p className="text-muted-foreground">Loading budget details...</p>
       </div>
     );
   }
@@ -156,14 +156,14 @@ export default function BudgetViewPage() {
     : data.transactions;
 
   return (
-    <div className="w-full h-full px-10 py-8 overflow-y-auto">
+    <div className="w-full h-full px-4 py-6 md:px-10 md:py-8 overflow-y-auto">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate("/budgets")}
-              className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900"
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Budgets
@@ -172,7 +172,7 @@ export default function BudgetViewPage() {
           <div className="flex gap-2">
             <button
               onClick={() => navigate(`/budgets/${budgetId}/setup`)}
-              className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              className="p-2 text-muted-foreground hover:bg-muted rounded-lg transition-colors"
               title="Edit Budget"
             >
               <Edit2 className="w-5 h-5" />
@@ -189,10 +189,10 @@ export default function BudgetViewPage() {
 
         {/* Budget Title & Period */}
         <div>
-          <h1 className="text-3xl font-semibold text-slate-900">
+          <h1 className="text-2xl md:text-3xl font-semibold text-foreground">
             {data.budget.name}
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {data.budget.periodType.charAt(0).toUpperCase() +
               data.budget.periodType.slice(1)}{" "}
             Budget • {formatDate(data.budget.periodStart)} -{" "}
@@ -202,20 +202,26 @@ export default function BudgetViewPage() {
 
         {/* Summary KPIs */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-medium text-slate-600">Total Budgeted</p>
-            <p className="text-2xl font-semibold text-slate-900 mt-2">
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <p className="text-sm font-medium text-muted-foreground">
+              Total Budgeted
+            </p>
+            <p className="text-2xl font-semibold text-foreground mt-2">
               {formatCurrency(data.summary.totalBudgeted)}
             </p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-medium text-slate-600">Total Spent</p>
-            <p className="text-2xl font-semibold text-slate-900 mt-2">
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <p className="text-sm font-medium text-muted-foreground">
+              Total Spent
+            </p>
+            <p className="text-2xl font-semibold text-foreground mt-2">
               {formatCurrency(data.summary.totalSpent)}
             </p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-medium text-slate-600">Remaining</p>
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <p className="text-sm font-medium text-muted-foreground">
+              Remaining
+            </p>
             <p
               className={`text-2xl font-semibold mt-2 ${
                 data.summary.totalRemaining >= 0
@@ -226,19 +232,19 @@ export default function BudgetViewPage() {
               {formatCurrency(data.summary.totalRemaining)}
             </p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-medium text-slate-600">Used</p>
-            <p className="text-2xl font-semibold text-slate-900 mt-2">
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <p className="text-sm font-medium text-muted-foreground">Used</p>
+            <p className="text-2xl font-semibold text-foreground mt-2">
               {data.summary.percentageUsed.toFixed(1)}%
             </p>
-            <div className="mt-3 h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+            <div className="mt-3 h-2 w-full bg-muted rounded-full overflow-hidden">
               <div
                 className={`h-full transition-all ${
                   data.summary.percentageUsed > 100
-                    ? "bg-red-500"
+                    ? "bg-destructive"
                     : data.summary.percentageUsed > 85
-                    ? "bg-yellow-500"
-                    : "bg-green-500"
+                      ? "bg-yellow-500"
+                      : "bg-emerald-500"
                 }`}
                 style={{
                   width: `${Math.min(data.summary.percentageUsed, 100)}%`,
@@ -249,13 +255,13 @@ export default function BudgetViewPage() {
         </div>
 
         {/* Budget Health */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">
+              <h2 className="text-lg font-semibold text-foreground">
                 Budget Health
               </h2>
-              <p className="text-sm text-slate-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {data.summary.periodElapsed.toFixed(0)}% of period elapsed
               </p>
             </div>
@@ -266,8 +272,8 @@ export default function BudgetViewPage() {
                   data.analytics.healthStatus === "danger"
                     ? "text-red-600"
                     : data.analytics.healthStatus === "warning"
-                    ? "text-yellow-600"
-                    : "text-green-600"
+                      ? "text-yellow-600"
+                      : "text-green-600"
                 }`}
               >
                 {data.analytics.healthStatus.charAt(0).toUpperCase() +
@@ -277,16 +283,16 @@ export default function BudgetViewPage() {
           </div>
 
           {data.analytics.projectedOverage > 0 && (
-            <div className="mt-4 rounded-xl bg-red-50 p-4">
-              <p className="text-sm font-medium text-red-900">
+            <div className="mt-4 rounded-xl bg-destructive/10 p-4">
+              <p className="text-sm font-medium text-destructive">
                 Projected Overspend
               </p>
-              <p className="text-xs text-red-700 mt-1">
+              <p className="text-xs text-destructive/80 mt-1">
                 At current spending rate, you may exceed budget by{" "}
                 <span className="font-semibold">
                   {formatCurrency(
                     data.analytics.projectedOverage,
-                    data.budget.currencyCode
+                    data.budget.currencyCode,
                   )}
                 </span>
               </p>
@@ -294,11 +300,11 @@ export default function BudgetViewPage() {
           )}
 
           {data.analytics.overBudgetCategories.length > 0 && (
-            <div className="mt-3 rounded-xl bg-yellow-50 p-4">
-              <p className="text-sm font-medium text-yellow-900">
+            <div className="mt-3 rounded-xl bg-yellow-500/10 p-4">
+              <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
                 Over Budget Categories
               </p>
-              <p className="text-xs text-yellow-700 mt-1">
+              <p className="text-xs text-yellow-600/80 dark:text-yellow-400/80 mt-1">
                 {data.analytics.overBudgetCategories.join(", ")}
               </p>
             </div>
@@ -306,8 +312,8 @@ export default function BudgetViewPage() {
         </div>
 
         {/* Category Breakdown */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-foreground mb-4">
             Category Breakdown
           </h2>
           <div className="space-y-3">
@@ -315,47 +321,47 @@ export default function BudgetViewPage() {
               <div
                 key={category.categoryId}
                 onClick={() => setSelectedCategory(category.categoryId)}
-                className="p-4 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition"
+                className="p-4 rounded-xl border border-border hover:bg-muted/50 cursor-pointer transition"
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
                     <div
                       className={`p-2 rounded-lg ${getStatusColor(
-                        category.status
+                        category.status,
                       )}`}
                     >
                       {getStatusIcon(category.status)}
                     </div>
                     <div>
-                      <h3 className="font-medium text-slate-900">
+                      <h3 className="font-medium text-foreground">
                         {category.categoryName}
                       </h3>
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-muted-foreground">
                         {category.transactionCount} transactions
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium text-slate-900">
+                    <p className="font-medium text-foreground">
                       {formatCurrency(category.spent)}
                     </p>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-muted-foreground">
                       of {formatCurrency(category.budgeted)}
                     </p>
                   </div>
                 </div>
 
-                <div className="relative h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div className="relative h-2 bg-muted rounded-full overflow-hidden">
                   <div
                     className={`absolute top-0 left-0 h-full transition-all duration-500 ${getProgressColor(
-                      category.status
+                      category.status,
                     )}`}
                     style={{
                       width: `${Math.min(category.percentageUsed, 100)}%`,
                     }}
                   />
                 </div>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {category.percentageUsed.toFixed(1)}% used
                 </p>
               </div>
@@ -364,9 +370,9 @@ export default function BudgetViewPage() {
         </div>
 
         {/* Transactions */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-slate-900">
+            <h2 className="text-lg font-semibold text-foreground">
               {selectedCategory ? "Filtered Transactions" : "All Transactions"}
             </h2>
             {selectedCategory && (
@@ -380,20 +386,20 @@ export default function BudgetViewPage() {
           </div>
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {filteredTransactions.length === 0 ? (
-              <p className="text-sm text-slate-500 text-center py-8">
+              <p className="text-sm text-muted-foreground text-center py-8">
                 No transactions found
               </p>
             ) : (
               filteredTransactions.map((tx) => (
                 <div
                   key={tx.id}
-                  className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition"
+                  className="flex items-center justify-between p-3 rounded-xl bg-muted/50 hover:bg-muted transition"
                 >
                   <div>
-                    <p className="text-sm font-medium text-slate-900">
+                    <p className="text-sm font-medium text-foreground">
                       {tx.merchant}
                     </p>
-                    <p className="text-xs text-slate-600">
+                    <p className="text-xs text-muted-foreground">
                       {formatDate(tx.date)} •{" "}
                       {tx.categoryName || "Uncategorized"} • {tx.accountName}
                     </p>
@@ -401,7 +407,7 @@ export default function BudgetViewPage() {
                   <p className="text-sm font-semibold text-red-600">
                     {formatCurrency(
                       Math.abs(tx.amount),
-                      data.budget.currencyCode
+                      data.budget.currencyCode,
                     )}
                   </p>
                 </div>
@@ -410,13 +416,12 @@ export default function BudgetViewPage() {
           </div>
         </div>
 
-        {/* Unassigned Transactions */}
         {data.unassigned.length > 0 && (
-          <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-yellow-900 mb-4">
+          <div className="rounded-2xl border border-yellow-200/50 bg-yellow-500/10 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-yellow-700 dark:text-yellow-400 mb-4">
               Unassigned Transactions ({data.unassigned.length})
             </h2>
-            <p className="text-sm text-yellow-700 mb-4">
+            <p className="text-sm text-yellow-600 dark:text-yellow-500/80 mb-4">
               These transactions don't have a category assigned. Categorize them
               to improve budget accuracy.
             </p>
@@ -424,20 +429,20 @@ export default function BudgetViewPage() {
               {data.unassigned.slice(0, 10).map((tx) => (
                 <div
                   key={tx.id}
-                  className="flex items-center justify-between p-3 rounded-xl bg-white"
+                  className="flex items-center justify-between p-3 rounded-xl bg-card border border-border"
                 >
                   <div>
-                    <p className="text-sm font-medium text-slate-900">
+                    <p className="text-sm font-medium text-foreground">
                       {tx.merchant}
                     </p>
-                    <p className="text-xs text-slate-600">
+                    <p className="text-xs text-muted-foreground">
                       {formatDate(tx.date)} • {tx.accountName}
                     </p>
                   </div>
-                  <p className="text-sm font-semibold text-slate-900">
+                  <p className="text-sm font-semibold text-foreground">
                     {formatCurrency(
                       Math.abs(tx.amount),
-                      data.budget.currencyCode
+                      data.budget.currencyCode,
                     )}
                   </p>
                 </div>
@@ -448,18 +453,18 @@ export default function BudgetViewPage() {
 
         {/* Historical Performance */}
         {data.history.length > 0 && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
               Historical Performance
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {data.history.map((hist) => (
                 <div
                   key={hist.budgetId}
-                  className="p-4 rounded-xl border border-slate-200 bg-white"
+                  className="p-4 rounded-xl border border-border bg-card"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-600">
+                    <span className="text-sm font-medium text-muted-foreground">
                       {new Date(hist.periodStart).toLocaleDateString("en-GB", {
                         month: "short",
                         year: "2-digit",
@@ -467,28 +472,28 @@ export default function BudgetViewPage() {
                     </span>
                     <div
                       className={`p-1 rounded-full ${getStatusColor(
-                        hist.status
+                        hist.status,
                       )}`}
                     >
                       {getStatusIcon(hist.status)}
                     </div>
                   </div>
                   <div className="mb-2">
-                    <span className="text-2xl font-bold text-slate-900">
+                    <span className="text-2xl font-bold text-foreground">
                       {Math.round(hist.percentageUsed)}%
                     </span>
                   </div>
-                  <div className="relative h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="relative h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
                       className={`absolute top-0 left-0 h-full ${getProgressColor(
-                        hist.status
+                        hist.status,
                       )}`}
                       style={{
                         width: `${Math.min(hist.percentageUsed, 100)}%`,
                       }}
                     />
                   </div>
-                  <div className="mt-2 text-xs text-slate-500 flex justify-between">
+                  <div className="mt-2 text-xs text-muted-foreground flex justify-between">
                     <span>{formatCurrency(hist.totalSpent)}</span>
                     <span>{formatCurrency(hist.totalBudgeted)}</span>
                   </div>

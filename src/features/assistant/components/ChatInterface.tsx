@@ -44,11 +44,11 @@ export default function ChatInterface({
   ];
 
   return (
-    <div className="flex flex-col h-full bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl">
+    <div className="flex flex-col h-full bg-card/90 backdrop-blur-sm rounded-none md:rounded-2xl shadow-none md:shadow-sm">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-slate-200">
-        <h2 className="text-xl font-bold text-slate-900">ClariFi Assistant</h2>
-        <p className="text-sm text-slate-500">
+      <div className="px-6 py-4 border-b border-border">
+        <h2 className="text-xl font-bold text-foreground">ClariFi Assistant</h2>
+        <p className="text-sm text-muted-foreground">
           Your personal financial advisor
         </p>
       </div>
@@ -58,7 +58,7 @@ export default function ChatInterface({
         {messages.length === 0 && !isTyping ? (
           <div className="text-center py-8">
             <div className="text-4xl mb-4">👋</div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               Hi there! How can I help with your finances today?
             </h3>
             <div className="flex flex-wrap gap-2 justify-center mt-4">
@@ -66,7 +66,7 @@ export default function ChatInterface({
                 <button
                   key={i}
                   onClick={() => onSendMessage(suggestion)}
-                  className="px-4 py-2 text-sm bg-emerald-50 text-emerald-700 rounded-full hover:bg-emerald-100 transition-colors"
+                  className="px-4 py-2 text-sm bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-colors"
                   disabled={isLoading}
                 >
                   {suggestion}
@@ -85,8 +85,8 @@ export default function ChatInterface({
               <div
                 className={`max-w-[80%] px-4 py-3 rounded-2xl ${
                   msg.role === "user"
-                    ? "bg-emerald-600 text-white"
-                    : "bg-slate-100 text-slate-900"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground"
                 }`}
               >
                 <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
@@ -98,10 +98,10 @@ export default function ChatInterface({
         {/* Typing animation */}
         {isTyping && typingMessage && (
           <div className="flex justify-start">
-            <div className="max-w-[80%] px-4 py-3 rounded-2xl bg-slate-100 text-slate-900">
+            <div className="max-w-[80%] px-4 py-3 rounded-2xl bg-muted text-foreground">
               <p className="text-sm whitespace-pre-wrap">
                 {typingMessage}
-                <span className="inline-block w-1 h-4 ml-1 bg-slate-900 animate-pulse"></span>
+                <span className="inline-block w-1 h-4 ml-1 bg-foreground animate-pulse"></span>
               </p>
             </div>
           </div>
@@ -109,8 +109,8 @@ export default function ChatInterface({
 
         {isLoading && !isTyping && (
           <div className="flex justify-start">
-            <div className="bg-slate-100 px-4 py-3 rounded-2xl">
-              <Loader2 className="w-5 h-5 animate-spin text-slate-500" />
+            <div className="bg-muted px-4 py-3 rounded-2xl">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             </div>
           </div>
         )}
@@ -121,7 +121,7 @@ export default function ChatInterface({
       {/* Input */}
       <form
         onSubmit={handleSubmit}
-        className="px-6 py-4 border-t border-slate-200"
+        className="px-6 py-4 border-t border-border bg-card"
       >
         <div className="flex gap-2">
           <input
@@ -130,12 +130,12 @@ export default function ChatInterface({
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask me anything about your finances..."
             disabled={isLoading}
-            className="flex-1 px-4 py-3 border border-slate-300 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-3 border border-input bg-background text-foreground rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-muted-foreground"
           />
           <button
             type="submit"
             disabled={!input.trim() || isLoading}
-            className="p-3 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-3 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send className="w-5 h-5" />
           </button>

@@ -157,7 +157,7 @@ export default function TransactionsPage() {
   };
 
   return (
-    <div className="w-full h-full px-10 py-8 overflow-y-auto">
+    <div className="w-full h-full px-4 py-6 md:px-10 md:py-8 overflow-y-auto">
       <AddTransactionModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
@@ -169,10 +169,10 @@ export default function TransactionsPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900">
+            <h1 className="text-2xl font-semibold text-foreground">
               Transactions
             </h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               View and manage all your banking transactions.
             </p>
           </div>
@@ -188,14 +188,14 @@ export default function TransactionsPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 flex-wrap">
+        <div className="bg-card p-4 rounded-xl border border-border shadow-sm flex flex-col md:flex-row gap-4 flex-wrap">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search transactions..."
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -206,9 +206,9 @@ export default function TransactionsPage() {
 
           {/* Account Filter */}
           <div className="relative min-w-[150px]">
-            <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <select
-              className="w-full pl-10 pr-8 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 appearance-none bg-white"
+              className="w-full pl-10 pr-8 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 appearance-none"
               value={accountId}
               onChange={(e) => {
                 setAccountId(e.target.value);
@@ -226,7 +226,7 @@ export default function TransactionsPage() {
 
           {/* Category Filter */}
           <div className="relative min-w-[150px]">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -244,7 +244,7 @@ export default function TransactionsPage() {
               </svg>
             </div>
             <select
-              className="w-full pl-10 pr-8 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 appearance-none bg-white"
+              className="w-full pl-10 pr-8 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 appearance-none"
               value={categoryId}
               onChange={(e) => {
                 setCategoryId(e.target.value);
@@ -266,7 +266,7 @@ export default function TransactionsPage() {
             <div className="relative">
               <input
                 type="date"
-                className="pl-3 pr-2 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                className="pl-3 pr-2 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 value={startDate}
                 onChange={(e) => {
                   setStartDate(e.target.value);
@@ -274,11 +274,11 @@ export default function TransactionsPage() {
                 }}
               />
             </div>
-            <span className="text-slate-400">-</span>
+            <span className="text-muted-foreground">-</span>
             <div className="relative">
               <input
                 type="date"
-                className="pl-3 pr-2 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                className="pl-3 pr-2 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 value={endDate}
                 onChange={(e) => {
                   setEndDate(e.target.value);
@@ -307,7 +307,7 @@ export default function TransactionsPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => handleBulkPrivacy(true)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-emerald-200 text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-100 transition-colors shadow-sm"
+                className="flex items-center gap-2 px-3 py-1.5 bg-card border border-emerald-200 text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-100 transition-colors shadow-sm"
               >
                 <EyeOff className="w-4 h-4" />
                 Hide from household
@@ -323,40 +323,50 @@ export default function TransactionsPage() {
         )}
 
         {/* Transactions List */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
           {loading ? (
-            <div className="p-12 text-center text-slate-500">
+            <div className="p-12 text-center text-muted-foreground">
               Loading transactions...
             </div>
           ) : error ? (
             <div className="p-12 text-center text-red-500">{error}</div>
           ) : transactions.length === 0 ? (
-            <div className="p-12 text-center text-slate-500">
+            <div className="p-12 text-center text-muted-foreground">
               No transactions found matching your filters.
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 text-slate-600 font-medium border-b border-slate-200">
+                <thead className="bg-muted text-muted-foreground font-medium border-b border-border">
                   <tr>
-                    <th className="px-6 py-3 w-10">
+                    <th className="px-3 py-2 md:px-4 md:py-3 xl:px-6 xl:py-3 w-10">
                       <button onClick={toggleAll} className="flex items-center">
                         {selectedIds.size === transactions.length &&
                         transactions.length > 0 ? (
                           <CheckSquare className="w-4 h-4 text-emerald-600" />
                         ) : (
-                          <Square className="w-4 h-4 text-slate-400" />
+                          <Square className="w-4 h-4 text-muted-foreground" />
                         )}
                       </button>
                     </th>
-                    <th className="px-6 py-3">Date</th>
-                    <th className="px-6 py-3">Description</th>
-                    <th className="px-6 py-3">Account</th>
-                    <th className="px-6 py-3">Category</th>
-                    <th className="px-6 py-3 text-right">Amount</th>
+                    <th className="px-3 py-2 md:px-4 md:py-3 xl:px-6 xl:py-3">
+                      Date
+                    </th>
+                    <th className="px-3 py-2 md:px-4 md:py-3 xl:px-6 xl:py-3">
+                      Description
+                    </th>
+                    <th className="px-3 py-2 md:px-4 md:py-3 xl:px-6 xl:py-3 hidden md:table-cell">
+                      Account
+                    </th>
+                    <th className="px-3 py-2 md:px-4 md:py-3 xl:px-6 xl:py-3 hidden md:table-cell">
+                      Category
+                    </th>
+                    <th className="px-3 py-2 md:px-4 md:py-3 xl:px-6 xl:py-3 text-right">
+                      Amount
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-border">
                   {transactions
                     .filter(
                       (tx) =>
@@ -367,54 +377,54 @@ export default function TransactionsPage() {
                       return (
                         <tr
                           key={tx.id}
-                          className={`hover:bg-slate-50 transition-colors ${
+                          className={`hover:bg-muted/50 transition-colors ${
                             isSelected ? "bg-emerald-50/50" : ""
                           }`}
                         >
-                          <td className="px-6 py-4">
+                          <td className="px-3 py-2 md:px-4 md:py-3 xl:px-6 xl:py-4">
                             <button onClick={() => toggleSelection(tx.id)}>
                               {isSelected ? (
                                 <CheckSquare className="w-4 h-4 text-emerald-600" />
                               ) : (
-                                <Square className="w-4 h-4 text-slate-300" />
+                                <Square className="w-4 h-4 text-muted-foreground" />
                               )}
                             </button>
                           </td>
-                          <td className="px-6 py-4 text-slate-500 whitespace-nowrap">
+                          <td className="px-3 py-2 md:px-4 md:py-3 xl:px-6 xl:py-4 text-muted-foreground whitespace-nowrap">
                             {new Date(tx.date).toLocaleDateString()}
                           </td>
-                          <td className="px-6 py-4">
-                            <div className="font-medium text-slate-900 flex items-center gap-2">
+                          <td className="px-3 py-2 md:px-4 md:py-3 xl:px-6 xl:py-4">
+                            <div className="font-medium text-foreground flex items-center gap-2">
                               {tx.merchant}
                               {tx.isHiddenFromHousehold && (
-                                <EyeOff className="w-3 h-3 text-slate-400" />
+                                <EyeOff className="w-3 h-3 text-muted-foreground" />
                               )}
                             </div>
                             {tx.description !== tx.merchant && (
-                              <div className="text-xs text-slate-500 truncate max-w-[200px]">
+                              <div className="text-xs text-muted-foreground truncate max-w-[200px] hidden md:block">
                                 {tx.description}
                               </div>
                             )}
                           </td>
-                          <td className="px-6 py-4 text-slate-500">
+                          <td className="px-3 py-2 md:px-4 md:py-3 xl:px-6 xl:py-4 text-muted-foreground hidden md:table-cell">
                             {tx.accountName}
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-3 py-2 md:px-4 md:py-3 xl:px-6 xl:py-4 hidden md:table-cell">
                             {tx.categoryName ? (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-foreground">
                                 {tx.categoryName}
                               </span>
                             ) : (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-400">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                                 Uncategorized
                               </span>
                             )}
                           </td>
                           <td
-                            className={`px-6 py-4 text-right font-medium ${
+                            className={`px-3 py-2 md:px-4 md:py-3 xl:px-6 xl:py-4 text-right font-medium ${
                               tx.direction === "credit"
                                 ? "text-emerald-600"
-                                : "text-slate-900"
+                                : "text-foreground"
                             }`}
                           >
                             {tx.direction === "credit" ? "+" : "-"}{" "}
@@ -431,8 +441,8 @@ export default function TransactionsPage() {
 
         {/* Pagination */}
         {pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-slate-200 pt-4">
-            <div className="text-sm text-slate-500">
+          <div className="flex items-center justify-between border-t border-border pt-4">
+            <div className="text-sm text-muted-foreground">
               Showing{" "}
               <span className="font-medium">
                 {(pagination.page - 1) * pagination.limit + 1}
@@ -452,7 +462,7 @@ export default function TransactionsPage() {
                   }))
                 }
                 disabled={pagination.page === 1}
-                className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 border border-border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed text-muted-foreground"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -464,7 +474,7 @@ export default function TransactionsPage() {
                   }))
                 }
                 disabled={pagination.page === pagination.totalPages}
-                className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 border border-border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed text-muted-foreground"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>

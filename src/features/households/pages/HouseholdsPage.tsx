@@ -107,11 +107,11 @@ export default function HouseholdsPage() {
     <div className="p-6 max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-            <Home className="w-8 h-8 text-brand-600" />
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+            <Home className="w-8 h-8 text-primary" />
             Households
           </h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-muted-foreground mt-1">
             Manage your shared financial spaces.
           </p>
         </div>
@@ -121,7 +121,7 @@ export default function HouseholdsPage() {
               setIsCreating(true);
               setIsJoining(false);
             }}
-            className="flex items-center gap-2 bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition"
+            className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition"
           >
             <Plus className="w-4 h-4" />
             Create New
@@ -131,7 +131,7 @@ export default function HouseholdsPage() {
               setIsJoining(true);
               setIsCreating(false);
             }}
-            className="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition"
+            className="flex items-center gap-2 bg-card border border-input text-foreground px-4 py-2 rounded-lg hover:bg-muted transition"
           >
             <Key className="w-4 h-4" />
             Join with Code
@@ -141,12 +141,12 @@ export default function HouseholdsPage() {
 
       {/* Messages */}
       {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-lg flex items-center gap-2">
+        <div className="bg-destructive/10 text-destructive p-3 rounded-lg flex items-center gap-2">
           <XCircle className="w-5 h-5" /> {error}
         </div>
       )}
       {success && (
-        <div className="bg-green-50 text-green-600 p-3 rounded-lg flex items-center gap-2">
+        <div className="bg-green-500/10 text-green-600 p-3 rounded-lg flex items-center gap-2">
           <CheckCircle className="w-5 h-5" /> {success}
         </div>
       )}
@@ -155,81 +155,85 @@ export default function HouseholdsPage() {
       {isCreating && (
         <form
           onSubmit={handleCreate}
-          className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex gap-4 items-end"
+          className="bg-card p-6 rounded-xl shadow-sm border border-border flex flex-col md:flex-row gap-4 md:items-end"
         >
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+          <div className="w-full md:flex-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Household Name
             </label>
             <input
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+              className="w-full border border-input bg-background rounded-lg p-2 focus:ring-2 focus:ring-primary focus:border-primary"
               placeholder="e.g. Our Family, The Smiths"
               required
             />
           </div>
-          <button
-            type="submit"
-            className="bg-brand-600 text-white px-6 py-2 rounded-lg hover:bg-brand-700"
-          >
-            Create
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsCreating(false)}
-            className="text-gray-500 px-4 py-2 hover:text-gray-700"
-          >
-            Cancel
-          </button>
+          <div className="flex gap-3 w-full md:w-auto">
+            <button
+              type="submit"
+              className="flex-1 md:flex-none bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 justify-center"
+            >
+              Create
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsCreating(false)}
+              className="flex-1 md:flex-none text-muted-foreground px-4 py-2 hover:text-foreground text-center"
+            >
+              Cancel
+            </button>
+          </div>
         </form>
       )}
 
       {isJoining && (
         <form
           onSubmit={handleJoin}
-          className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex gap-4 items-end"
+          className="bg-card p-6 rounded-xl shadow-sm border border-border flex flex-col md:flex-row gap-4 md:items-end"
         >
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+          <div className="w-full md:flex-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Invite Code (6 characters)
             </label>
             <input
               type="text"
               value={joinCode}
               onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-              className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 uppercase tracking-widest"
+              className="w-full border border-input bg-background rounded-lg p-2 focus:ring-2 focus:ring-primary focus:border-primary uppercase tracking-widest"
               placeholder="A1B2C3"
               maxLength={6}
               required
             />
           </div>
-          <button
-            type="submit"
-            className="bg-brand-600 text-white px-6 py-2 rounded-lg hover:bg-brand-700"
-          >
-            Join Request
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsJoining(false)}
-            className="text-gray-500 px-4 py-2 hover:text-gray-700"
-          >
-            Cancel
-          </button>
+          <div className="flex gap-3 w-full md:w-auto">
+            <button
+              type="submit"
+              className="flex-1 md:flex-none bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 justify-center"
+            >
+              Join Request
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsJoining(false)}
+              className="flex-1 md:flex-none text-muted-foreground px-4 py-2 hover:text-foreground text-center"
+            >
+              Cancel
+            </button>
+          </div>
         </form>
       )}
 
       {/* List */}
       <div className="grid gap-4">
         {userHouseholds.length === 0 && !isCreating && !isJoining && (
-          <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-200">
-            <Home className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 font-medium">
+          <div className="text-center py-12 bg-card rounded-xl border border-dashed border-border">
+            <Home className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground font-medium">
               You don't belong to any households yet.
             </p>
-            <p className="text-gray-400 text-sm">
+            <p className="text-muted-foreground/80 text-sm">
               Create one or join an existing one to get started.
             </p>
           </div>
@@ -238,7 +242,7 @@ export default function HouseholdsPage() {
         {userHouseholds.map((h) => (
           <div
             key={h.id}
-            className={`bg-white rounded-xl shadow-sm border transition-shadow ${selectedHouseholdId === h.id ? "border-brand-300 ring-2 ring-brand-50" : "border-gray-200 hover:border-brand-200"}`}
+            className={`bg-card rounded-xl shadow-sm border transition-shadow ${selectedHouseholdId === h.id ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/50"}`}
           >
             <div
               className="p-4 flex items-center justify-between cursor-pointer"
@@ -250,15 +254,15 @@ export default function HouseholdsPage() {
             >
               <div className="flex items-center gap-4">
                 <div
-                  className={`p-3 rounded-full ${h.status === "active" ? "bg-brand-50 text-brand-600" : "bg-amber-50 text-amber-600"}`}
+                  className={`p-3 rounded-full ${h.status === "active" ? "bg-primary/10 text-primary" : "bg-amber-50 text-amber-600"}`}
                 >
                   <Home className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="text-lg font-semibold text-foreground">
                     {h.name}
                   </h3>
-                  <div className="flex items-center gap-3 text-sm text-gray-500">
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Users className="w-3 h-3" /> {h.member_count} members
                     </span>
@@ -287,13 +291,13 @@ export default function HouseholdsPage() {
                       e.stopPropagation();
                       handleSelectActive(h);
                     }}
-                    className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg transition"
+                    className="text-sm bg-muted hover:bg-muted/80 text-foreground px-3 py-1.5 rounded-lg transition"
                   >
                     Select
                   </button>
                 )}
                 {activeHousehold?.id === h.id && (
-                  <span className="text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1.5 rounded-lg">
+                  <span className="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-lg">
                     Active
                   </span>
                 )}
@@ -302,10 +306,10 @@ export default function HouseholdsPage() {
 
             {/* EXPANDED DETAILS */}
             {selectedHouseholdId === h.id && (
-              <div className="border-t border-gray-100 p-4 bg-gray-50 rounded-b-xl animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="border-t border-border p-4 bg-muted/30 rounded-b-xl animate-in fade-in slide-in-from-top-2 duration-300">
                 {!detailData ? (
                   <div className="flex justify-center py-4">
-                    <span className="loading loading-spinner text-brand-600">
+                    <span className="loading loading-spinner text-primary">
                       Loading...
                     </span>
                   </div>
@@ -313,16 +317,16 @@ export default function HouseholdsPage() {
                   <div className="space-y-6">
                     {/* Invite Code Section for Owners */}
                     {detailData.currentUserRole === "owner" && (
-                      <div className="bg-white p-4 rounded-lg border border-gray-200">
-                        <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                          <Key className="w-4 h-4 text-gray-400" />
+                      <div className="bg-card p-4 rounded-lg border border-border">
+                        <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                          <Key className="w-4 h-4 text-muted-foreground" />
                           Invite Code
                         </h4>
                         <div className="flex items-center gap-3">
-                          <code className="bg-gray-100 text-gray-800 px-3 py-1.5 rounded text-lg font-mono tracking-widest border border-gray-200">
+                          <code className="bg-muted text-foreground px-3 py-1.5 rounded text-lg font-mono tracking-widest border border-border">
                             {detailData.invite_code}
                           </code>
-                          <span className="text-sm text-gray-500">
+                          <span className="text-sm text-muted-foreground">
                             Share this code with family members to let them
                             join.
                           </span>
@@ -332,8 +336,8 @@ export default function HouseholdsPage() {
 
                     {/* Members List */}
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                        <Users className="w-4 h-4 text-gray-400" />
+                      <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                        <Users className="w-4 h-4 text-muted-foreground" />
                         Members
                       </h4>
                       <div className="space-y-2">
@@ -341,20 +345,20 @@ export default function HouseholdsPage() {
                           detailData.members.map((m) => (
                             <div
                               key={m.id}
-                              className="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-200"
+                              className="flex justify-between items-center bg-card p-3 rounded-lg border border-border"
                             >
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-sm">
+                                <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
                                   {(m.display_name || "?")
                                     .charAt(0)
                                     .toUpperCase()}
                                 </div>
                                 <div>
-                                  <p className="text-sm font-medium text-gray-900">
+                                  <p className="text-sm font-medium text-foreground">
                                     {m.display_name || "Unknown Member"}{" "}
                                     {m.id === user?.id ? "(You)" : ""}
                                   </p>
-                                  <p className="text-xs text-gray-500">
+                                  <p className="text-xs text-muted-foreground">
                                     {m.email}
                                   </p>
                                 </div>
@@ -364,10 +368,10 @@ export default function HouseholdsPage() {
                                 <span
                                   className={`text-xs px-2 py-1 rounded-full ${
                                     m.status === "active"
-                                      ? "bg-green-100 text-green-700"
+                                      ? "bg-green-500/10 text-green-600"
                                       : m.status === "pending_approval"
                                         ? "bg-amber-100 text-amber-700"
-                                        : "bg-gray-100 text-gray-600"
+                                        : "bg-muted text-muted-foreground"
                                   }`}
                                 >
                                   {m.status
@@ -411,7 +415,7 @@ export default function HouseholdsPage() {
                                           onClick={() =>
                                             handleMemberAction(m.id, "kick")
                                           }
-                                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                                          className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded"
                                           title="Remove Member"
                                         >
                                           <LogOut className="w-4 h-4" />
@@ -423,7 +427,7 @@ export default function HouseholdsPage() {
                             </div>
                           ))
                         ) : (
-                          <p className="text-sm text-gray-500 italic">
+                          <p className="text-sm text-muted-foreground italic">
                             No members found.
                           </p>
                         )}

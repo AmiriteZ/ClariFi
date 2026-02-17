@@ -81,10 +81,10 @@ export default function AssistantPage() {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">
+          <h2 className="text-2xl font-bold text-foreground mb-2">
             Please Sign In
           </h2>
-          <p className="text-slate-600">
+          <p className="text-muted-foreground">
             You need to be signed in to use the AI assistant.
           </p>
         </div>
@@ -93,16 +93,16 @@ export default function AssistantPage() {
   }
 
   return (
-    <div className="w-full h-screen flex items-center justify-center p-6 bg-gradient-to-br from-emerald-50 to-blue-50">
+    <div className="w-full h-full flex items-center justify-center p-4 md:px-6 md:py-8">
       {/* Single merged container */}
-      <div className="w-full max-w-4xl h-[90vh] flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div className="w-full max-w-4xl h-[85vh] flex flex-col bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
         {/* 3D Avatar Section - Top */}
-        <div className="h-[400px] border-b border-slate-200 flex-shrink-0">
+        <div className="h-[250px] md:h-[400px] border-b border-border flex-shrink-0 bg-muted/20">
           <Avatar3D isTalking={isTalking} modelPath="/models/scene.gltf" />
         </div>
 
         {/* Chat Section - Bottom */}
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 bg-card">
           <ChatInterface
             messages={messages}
             isLoading={isLoading}

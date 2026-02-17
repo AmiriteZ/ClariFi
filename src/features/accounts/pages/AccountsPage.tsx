@@ -35,7 +35,7 @@ export default function AccountsPage() {
         window.history.replaceState(
           {},
           document.title,
-          window.location.pathname
+          window.location.pathname,
         );
 
         setSyncing(true);
@@ -80,11 +80,11 @@ export default function AccountsPage() {
 
   const handleDeleteAccount = async (
     accountId: string,
-    accountName: string
+    accountName: string,
   ) => {
     if (
       !confirm(
-        `Are you sure you want to delete "${accountName}"? This will also delete all associated transactions.`
+        `Are you sure you want to delete "${accountName}"? This will also delete all associated transactions.`,
       )
     ) {
       return;
@@ -125,19 +125,19 @@ export default function AccountsPage() {
   };
 
   return (
-    <div className="w-full h-full px-10 py-8 overflow-y-auto">
+    <div className="w-full h-full px-4 py-6 md:px-10 md:py-8 overflow-y-auto">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900">Accounts</h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <h1 className="text-2xl font-semibold text-foreground">Accounts</h1>
+            <p className="text-sm text-muted-foreground mt-1">
               Manage your linked bank accounts and connections.
             </p>
           </div>
           <button
             onClick={() => setShowAddAccountModal(true)}
-            className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-emerald-700"
+            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90"
           >
             <Plus className="w-4 h-4" />
             Add Account
@@ -146,11 +146,11 @@ export default function AccountsPage() {
 
         {/* Error State */}
         {error && (
-          <div className="rounded-xl bg-red-50 p-4 border border-red-100">
-            <p className="text-sm text-red-600">{error}</p>
+          <div className="rounded-xl bg-destructive/10 p-4 border border-destructive/20">
+            <p className="text-sm text-destructive">{error}</p>
             <button
               onClick={loadAccounts}
-              className="text-xs font-medium text-red-700 hover:underline mt-2"
+              className="text-xs font-medium text-destructive hover:underline mt-2"
             >
               Try Again
             </button>
@@ -160,8 +160,8 @@ export default function AccountsPage() {
         {/* Loading/Syncing State */}
         {(loading || syncing) && (
           <div className="flex flex-col items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
-            <p className="mt-3 text-sm text-slate-500">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            <p className="mt-3 text-sm text-muted-foreground">
               {syncing
                 ? "Syncing accounts from your bank..."
                 : "Loading accounts..."}
@@ -171,20 +171,20 @@ export default function AccountsPage() {
 
         {/* Empty State */}
         {!loading && !error && accounts.length === 0 && (
-          <div className="rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center">
-            <div className="mx-auto w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-              <Building2 className="w-6 h-6 text-slate-400" />
+          <div className="rounded-2xl border-2 border-dashed border-border p-12 text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
+              <Building2 className="w-6 h-6 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium text-slate-900">
+            <h3 className="text-lg font-medium text-foreground">
               No accounts linked
             </h3>
-            <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
+            <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
               Link your bank accounts to automatically track your transactions
               and balances.
             </p>
             <button
               onClick={() => setShowAddAccountModal(true)}
-              className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-emerald-600 hover:text-emerald-700"
+              className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80"
             >
               Link an account
             </button>
@@ -197,31 +197,31 @@ export default function AccountsPage() {
             {accounts.map((account) => (
               <div
                 key={account.id}
-                className="group relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:shadow-md"
+                className="group relative rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:shadow-md"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 group-hover:text-emerald-600 group-hover:bg-emerald-50 group-hover:border-emerald-100 transition-colors">
+                    <div className="h-12 w-12 rounded-xl bg-muted border border-border flex items-center justify-center text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 group-hover:border-primary/20 transition-colors">
                       {getAccountIcon(account.accountType)}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-slate-900">
+                      <h3 className="font-semibold text-foreground">
                         {account.name}
                       </h3>
-                      <p className="text-xs text-slate-500 flex items-center gap-1.5">
+                      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                         {account.institutionName} • {account.maskedRef}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
                     <div className="text-right">
-                      <p className="text-lg font-semibold text-slate-900">
+                      <p className="text-lg font-semibold text-foreground">
                         {formatCurrency(
                           account.currentBalance,
-                          account.currencyCode
+                          account.currencyCode,
                         )}
                       </p>
-                      <p className="text-xs text-slate-400 flex items-center justify-end gap-1 mt-1">
+                      <p className="text-xs text-muted-foreground flex items-center justify-end gap-1 mt-1">
                         <RefreshCw className="w-3 h-3" />
                         Synced {formatDate(account.lastSyncedAt)}
                       </p>
@@ -230,7 +230,7 @@ export default function AccountsPage() {
                       onClick={() =>
                         handleDeleteAccount(account.id, account.name)
                       }
-                      className="ml-4 p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      className="ml-4 p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
                       title="Delete account"
                     >
                       <Trash2 className="w-4 h-4" />

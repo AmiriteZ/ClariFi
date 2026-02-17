@@ -162,24 +162,28 @@ export default function GoalsPage() {
   };
 
   return (
-    <div className="w-full h-full px-10 py-8">
-      <div className="max-w-5xl mx-auto">
+    <div className="w-full h-full px-4 py-6 md:px-10 md:py-8 overflow-y-auto">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* PAGE HEADER */}
-        <h2 className="text-2xl font-semibold text-slate-900 mb-1">
+        <h2 className="text-2xl font-semibold text-foreground mb-1">
           {viewMode === "household" && activeHousehold
             ? `${activeHousehold.name} Goals`
             : "Goals"}
         </h2>
-        <p className="text-sm text-slate-600 mb-6">
+        <p className="text-sm text-muted-foreground mb-6">
           Track your savings progress and financial targets.
         </p>
 
-        {loading && <p className="text-sm text-slate-500">Loading goals…</p>}
+        {loading && (
+          <p className="text-sm text-muted-foreground">Loading goals…</p>
+        )}
 
-        {error && <p className="text-sm text-red-500 mb-3">Error: {error}</p>}
+        {error && (
+          <p className="text-sm text-destructive mb-3">Error: {error}</p>
+        )}
 
         {!loading && !error && goals.length === 0 && !isCreating && (
-          <p className="text-sm text-slate-500 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             You don’t have any goals yet. Click the button below to create one.
           </p>
         )}
@@ -189,7 +193,7 @@ export default function GoalsPage() {
           {goals.map((goal) => (
             <div
               key={goal.id}
-              className="rounded-2xl border border-slate-300 bg-slate-100 px-6 py-4 shadow-sm"
+              className="rounded-2xl border border-border bg-card px-6 py-4 shadow-sm"
             >
               {/* Header row: favourite star + name + View More */}
               <div className="flex items-center justify-between gap-3">
@@ -199,7 +203,7 @@ export default function GoalsPage() {
                     type="button"
                     onClick={() => handleToggleFavourite(goal.id)}
                     disabled={favouriteUpdatingId === goal.id}
-                    className="rounded-full p-1 hover:bg-slate-200"
+                    className="rounded-full p-1 hover:bg-muted"
                     aria-label={
                       goal.isFavourite ? "Unset main goal" : "Set as main goal"
                     }
@@ -208,33 +212,33 @@ export default function GoalsPage() {
                       className={
                         goal.isFavourite
                           ? "text-yellow-400 text-lg"
-                          : "text-slate-300 text-lg"
+                          : "text-muted-foreground/30 text-lg"
                       }
                     >
                       ★
                     </span>
                   </button>
 
-                  <h3 className="text-lg font-semibold text-slate-900">
+                  <h3 className="text-lg font-semibold text-foreground">
                     {goal.name}
                   </h3>
                 </div>
 
                 <button
                   onClick={() => handleViewMore(goal.id)}
-                  className="px-4 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-800 hover:bg-slate-200 transition"
+                  className="px-4 py-1.5 text-xs font-medium rounded-full border border-border text-foreground hover:bg-muted transition"
                 >
                   View More
                 </button>
               </div>
 
               {/* Amount contributed / target */}
-              <div className="text-sm text-slate-700 mt-1">
+              <div className="text-sm text-foreground mt-1">
                 {goal.totalContributed.toLocaleString("en-IE", {
                   style: "currency",
                   currency: goal.currencyCode,
                 })}{" "}
-                <span className="text-slate-500">/</span>{" "}
+                <span className="text-muted-foreground">/</span>{" "}
                 {goal.targetAmount.toLocaleString("en-IE", {
                   style: "currency",
                   currency: goal.currencyCode,
@@ -242,16 +246,16 @@ export default function GoalsPage() {
               </div>
 
               {/* Progress bar */}
-              <div className="mt-3 w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+              <div className="mt-3 w-full h-3 bg-muted rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-emerald-500"
+                  className="h-full bg-primary"
                   style={{
                     width: `${Math.min(goal.percentComplete, 100)}%`,
                   }}
                 />
               </div>
 
-              <p className="mt-1 text-xs text-slate-600">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {goal.percentComplete.toFixed(1)}% complete
               </p>
             </div>
@@ -263,28 +267,28 @@ export default function GoalsPage() {
               {isCreating ? (
                 <form
                   onSubmit={handleCreateGoal}
-                  className="rounded-2xl border border-slate-300 bg-white px-6 py-5 shadow-sm space-y-4"
+                  className="rounded-2xl border border-border bg-card px-6 py-5 shadow-sm space-y-4"
                 >
-                  <h3 className="text-sm font-semibold text-slate-900">
+                  <h3 className="text-sm font-semibold text-foreground">
                     Create New Goal
                   </h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">
+                      <label className="block text-xs font-medium text-foreground mb-1">
                         Goal name
                       </label>
                       <input
                         type="text"
                         value={newName}
                         onChange={(e) => setNewName(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                         placeholder="e.g. Emergency Fund"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">
+                      <label className="block text-xs font-medium text-foreground mb-1">
                         Target amount
                       </label>
                       <input
@@ -293,19 +297,19 @@ export default function GoalsPage() {
                         step="0.01"
                         value={newTargetAmount}
                         onChange={(e) => setNewTargetAmount(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                         placeholder="e.g. 2000"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">
+                      <label className="block text-xs font-medium text-foreground mb-1">
                         Currency
                       </label>
                       <select
                         value={newCurrencyCode}
                         onChange={(e) => setNewCurrencyCode(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                       >
                         <option value="EUR">EUR (€)</option>
                         <option value="GBP">GBP (£)</option>
@@ -314,25 +318,25 @@ export default function GoalsPage() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">
+                      <label className="block text-xs font-medium text-foreground mb-1">
                         Target date (optional)
                       </label>
                       <input
                         type="date"
                         value={newTargetDate}
                         onChange={(e) => setNewTargetDate(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">
+                      <label className="block text-xs font-medium text-foreground mb-1">
                         Category
                       </label>
                       <select
                         value={newCategoryName}
                         onChange={(e) => setNewCategoryName(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                       >
                         <option value="">Select a category</option>
                         {GOAL_CATEGORIES.map((cat) => (
@@ -345,21 +349,21 @@ export default function GoalsPage() {
                   </div>
 
                   {createError && (
-                    <p className="text-xs text-red-500">{createError}</p>
+                    <p className="text-xs text-destructive">{createError}</p>
                   )}
 
                   <div className="flex items-center justify-end gap-3 pt-2">
                     <button
                       type="button"
                       onClick={resetCreateForm}
-                      className="px-3 py-1.5 text-xs rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100"
+                      className="px-3 py-1.5 text-xs rounded-lg border border-input text-muted-foreground hover:bg-muted"
                       disabled={createLoading}
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-1.5 text-xs rounded-lg bg-emerald-500 text-white font-medium hover:bg-emerald-600 disabled:opacity-60"
+                      className="px-4 py-1.5 text-xs rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 disabled:opacity-60"
                       disabled={createLoading}
                     >
                       {createLoading ? "Creating…" : "Create Goal"}
@@ -370,7 +374,7 @@ export default function GoalsPage() {
                 <button
                   type="button"
                   onClick={handleAddGoalClick}
-                  className="rounded-2xl border-2 border-dashed border-slate-300 bg-white h-40 w-full flex items-center justify-center text-5xl text-slate-400 hover:text-emerald-500 hover:border-emerald-400 hover:bg-emerald-50 transition"
+                  className="rounded-2xl border-2 border-dashed border-border bg-card h-40 w-full flex items-center justify-center text-5xl text-muted-foreground hover:text-primary hover:border-primary hover:bg-primary/5 transition"
                 >
                   +
                 </button>

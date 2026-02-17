@@ -81,15 +81,15 @@ export default function AddTransactionModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between p-4 border-b border-slate-100">
-          <h2 className="text-lg font-semibold text-slate-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+      <div className="bg-card rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-border">
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h2 className="text-lg font-semibold text-foreground">
             Add Transaction
           </h2>
           <button
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+            className="p-1 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -97,20 +97,20 @@ export default function AddTransactionModal({
 
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           {error && (
-            <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg flex items-center gap-2">
+            <div className="p-3 text-sm text-destructive-foreground bg-destructive/10 rounded-lg flex items-center gap-2">
               <AlertCircle className="w-4 h-4" />
               {error}
             </div>
           )}
 
           {/* Type Toggle */}
-          <div className="flex p-1 bg-slate-100 rounded-lg">
+          <div className="flex p-1 bg-muted rounded-lg">
             <button
               type="button"
               className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${
                 formData.direction === "debit"
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
               onClick={() => setFormData({ ...formData, direction: "debit" })}
             >
@@ -120,8 +120,8 @@ export default function AddTransactionModal({
               type="button"
               className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${
                 formData.direction === "credit"
-                  ? "bg-white text-emerald-600 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                  ? "bg-background text-primary shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
               onClick={() => setFormData({ ...formData, direction: "credit" })}
             >
@@ -131,11 +131,11 @@ export default function AddTransactionModal({
 
           {/* Amount */}
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">
+            <label className="block text-xs font-medium text-muted-foreground mb-1">
               Amount
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                 €
               </span>
               <input
@@ -143,7 +143,7 @@ export default function AddTransactionModal({
                 step="0.01"
                 min="0.01"
                 placeholder="0.00"
-                className="w-full pl-8 pr-4 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                className="w-full pl-8 pr-4 py-2 rounded-lg border border-input bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 value={formData.amount}
                 onChange={(e) =>
                   setFormData({ ...formData, amount: e.target.value })
@@ -156,12 +156,12 @@ export default function AddTransactionModal({
           <div className="grid grid-cols-2 gap-4">
             {/* Date */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">
+              <label className="block text-xs font-medium text-muted-foreground mb-1">
                 Date
               </label>
               <input
                 type="date"
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 value={formData.date}
                 onChange={(e) =>
                   setFormData({ ...formData, date: e.target.value })
@@ -172,11 +172,11 @@ export default function AddTransactionModal({
 
             {/* Account */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">
+              <label className="block text-xs font-medium text-muted-foreground mb-1">
                 Account
               </label>
               <select
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white"
+                className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 value={formData.accountId}
                 onChange={(e) =>
                   setFormData({ ...formData, accountId: e.target.value })
@@ -195,13 +195,13 @@ export default function AddTransactionModal({
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">
+            <label className="block text-xs font-medium text-muted-foreground mb-1">
               Description
             </label>
             <input
               type="text"
               placeholder="e.g. Weekly Groceries"
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+              className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
@@ -212,11 +212,11 @@ export default function AddTransactionModal({
 
           {/* Category */}
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">
+            <label className="block text-xs font-medium text-muted-foreground mb-1">
               Category (Optional)
             </label>
             <select
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white"
+              className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               value={formData.categoryId}
               onChange={(e) =>
                 setFormData({ ...formData, categoryId: e.target.value })
@@ -236,7 +236,7 @@ export default function AddTransactionModal({
             <input
               type="checkbox"
               id="isHiddenFromHousehold"
-              className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+              className="w-4 h-4 rounded border-input text-primary focus:ring-primary bg-background"
               checked={formData.isHiddenFromHousehold}
               onChange={(e) =>
                 setFormData({
@@ -247,7 +247,7 @@ export default function AddTransactionModal({
             />
             <label
               htmlFor="isHiddenFromHousehold"
-              className="text-sm text-slate-600 select-none cursor-pointer"
+              className="text-sm text-foreground select-none cursor-pointer"
             >
               Hide from household
             </label>
@@ -257,14 +257,14 @@ export default function AddTransactionModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2 px-4 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+              className="flex-1 py-2 px-4 border border-input rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-2 px-4 bg-emerald-600 rounded-lg text-sm font-medium text-white hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 py-2 px-4 bg-primary rounded-lg text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 "Saving..."
