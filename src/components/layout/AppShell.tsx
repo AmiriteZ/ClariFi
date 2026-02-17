@@ -41,7 +41,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen grid grid-rows-[56px_1fr] transition-colors">
       <header className="flex items-center justify-between px-4 border-b bg-white border-slate-200">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2 md:gap-6">
           <Link
             to="/dashboard"
             className="font-semibold text-lg flex items-center gap-2 text-slate-900"
@@ -119,9 +119,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="grid md:grid-cols-[220px_1fr]">
-        <aside className="hidden md:block border-r p-4 bg-slate-50">
-          <nav className="space-y-2 text-sm">
+      <main className="grid md:grid-cols-[220px_1fr] pb-16 md:pb-0">
+        <aside className="hidden md:block border-r p-4 bg-slate-50 min-h-[calc(100vh-56px)]">
+          <nav className="space-y-2 text-sm sticky top-4">
             <Link
               to="/dashboard"
               className="block px-2 py-1.5 rounded-lg transition-colors hover:bg-slate-200 hover:text-emerald-700"
@@ -129,7 +129,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               Overview
             </Link>
 
-            {/* Household Manager Link */}
             <Link
               to="/households"
               className="block mt-4 px-2 py-1.5 rounded-lg font-medium transition-colors text-slate-700 hover:text-emerald-600 hover:bg-slate-200"
@@ -174,8 +173,40 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
         </aside>
 
-        <section>{children}</section>
+        <section className="p-4 overflow-x-hidden">{children}</section>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-2 z-50 flex justify-around items-center safe-area-bottom">
+        <Link
+          to="/dashboard"
+          className="flex flex-col items-center p-2 text-slate-600 hover:text-emerald-600"
+        >
+          <RefreshCw className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px]">Home</span>
+        </Link>
+        <Link
+          to="/transactions"
+          className="flex flex-col items-center p-2 text-slate-600 hover:text-emerald-600"
+        >
+          <span className="text-lg leading-none">€</span>
+          <span className="text-[10px]">Txns</span>
+        </Link>
+        <Link
+          to="/assistant"
+          className="flex flex-col items-center p-2 text-slate-600 hover:text-emerald-600"
+        >
+          <span className="text-lg leading-none">🤖</span>
+          <span className="text-[10px]">AI</span>
+        </Link>
+        <Link
+          to="/households"
+          className="flex flex-col items-center p-2 text-slate-600 hover:text-emerald-600"
+        >
+          <Users className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px]">House</span>
+        </Link>
+      </nav>
     </div>
   );
 }
