@@ -28,9 +28,40 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
   const [activeHousehold, setActiveHousehold] = useState<Household | null>(
     null,
   );
-  // ... (rest of state)
+  const [userHouseholds, setUserHouseholds] = useState<Household[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // ... (refreshHouseholds function)
+  // Load persistence logic could go here (e.g. remember last view)
+
+  const refreshHouseholds = async () => {
+    if (!user) {
+      console.log("HouseholdContext: No user, skipping refresh");
+      return;
+    }
+    try {
+      console.log("HouseholdContext: Fetching households...");
+      setIsLoading(true);
+      const households = await getMyHouseholds();
+      console.log("HouseholdContext: Fetched households:", households);
+      setUserHouseholds(households);
+
+      // If currently active household is no longer in list, reset
+      if (activeHousehold) {
+        const stillExists = households.find((h) => h.id === activeHousehold.id);
+        if (!stillExists) {
+          setActiveHousehold(null);
+          setViewMode("personal");
+        } else {
+          // Update active household object with latest data
+          setActiveHousehold(stillExists);
+        }
+      }
+    } catch (err) {
+      console.error("HouseholdContext: Failed to load households", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     // Wait for auth to be fully initialized and user to be present
