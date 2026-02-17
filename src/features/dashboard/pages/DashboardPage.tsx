@@ -329,9 +329,13 @@ export default function DashboardPage() {
                             )}
                           </Pie>
                           <Tooltip
-                            formatter={(value: number) => [
+                            formatter={(
+                              value: number,
+                              name: string,
+                              props: any,
+                            ) => [
                               `€${value.toFixed(2)}`,
-                              "Amount",
+                              props.payload.category,
                             ]}
                             contentStyle={{
                               borderRadius: "8px",
