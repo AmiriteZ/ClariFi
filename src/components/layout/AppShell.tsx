@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/auth.store";
-import { RefreshCw, Users } from "lucide-react";
+import { RefreshCw, Users, LogOut } from "lucide-react";
 import { resyncAllAccounts } from "../../features/accounts/api/bankConnections.api";
 
 import { useHousehold } from "../../store/household.context";
@@ -102,19 +102,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <button
             onClick={handleResync}
             disabled={isResyncing}
-            className="flex items-center gap-1.5 rounded-lg border px-3 py-1 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-1.5 rounded-lg border px-2 py-1 sm:px-3 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             title="Resync all accounts"
           >
             <RefreshCw
               className={`w-4 h-4 ${isResyncing ? "animate-spin" : ""}`}
             />
-            {isResyncing ? "Syncing..." : "Resync"}
+            <span className="hidden sm:inline">
+              {isResyncing ? "Syncing..." : "Resync"}
+            </span>
           </button>
           <button
             onClick={doLogout}
-            className="rounded-lg border px-3 py-1 hover:bg-slate-50"
+            className="rounded-lg border px-2 py-1 sm:px-3 hover:bg-slate-50 flex items-center gap-1.5"
+            title="Logout"
           >
-            Logout
+            <LogOut className="w-4 h-4" />
+            <span className="hidden sm:inline">Logout</span>
           </button>
         </div>
       </header>
