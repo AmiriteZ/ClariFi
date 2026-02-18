@@ -28,7 +28,7 @@ router.get(
       // Resolve user ID from DB
       const userQuery = await pool.query(
         "SELECT id FROM users WHERE firebase_uid = $1",
-        [authUser.uid]
+        [authUser.uid],
       );
 
       if (userQuery.rows.length === 0) {
@@ -73,7 +73,7 @@ router.get(
       console.error("Error fetching accounts:", error);
       res.status(500).json({ error: "Failed to fetch accounts" });
     }
-  }
+  },
 );
 
 /**
@@ -99,7 +99,7 @@ router.post(
       // Resolve user ID
       const userQuery = await pool.query(
         "SELECT id FROM users WHERE firebase_uid = $1",
-        [authUser.uid]
+        [authUser.uid],
       );
       if (userQuery.rows.length === 0) {
         res.status(401).json({ error: "User not found" });
@@ -110,7 +110,7 @@ router.post(
       // Get institution
       const instRes = await pool.query(
         "SELECT id, name, provider_code FROM institutions WHERE id = $1",
-        [institutionId]
+        [institutionId],
       );
       if (instRes.rowCount === 0) {
         res.status(400).json({ error: "Invalid institution" });
@@ -138,26 +138,22 @@ router.post(
               }/accounts?connected=true`,
             }),
             signal: controller.signal,
-          }
+          },
         );
         clearTimeout(timeoutId);
       } catch (fetchError) {
         clearTimeout(timeoutId);
         if (fetchError instanceof Error && fetchError.name === "AbortError") {
           console.error("Yapily API request timed out after 30 seconds");
-          res
-            .status(504)
-            .json({
-              error: "Connection to Yapily timed out. Please try again.",
-            });
+          res.status(504).json({
+            error: "Connection to Yapily timed out. Please try again.",
+          });
         } else {
           console.error("Error connecting to Yapily:", fetchError);
-          res
-            .status(500)
-            .json({
-              error:
-                "Failed to connect to banking service. Please try again later.",
-            });
+          res.status(500).json({
+            error:
+              "Failed to connect to banking service. Please try again later.",
+          });
         }
         return;
       }
@@ -179,7 +175,7 @@ router.post(
         `INSERT INTO bank_connections (user_id, institution_id, provider, external_id, status)
          VALUES ($1, $2, $3, $4, 'active')
          RETURNING id`,
-        [userId, institution.id, "yapily", consentId]
+        [userId, institution.id, "yapily", consentId],
       );
 
       res.json({
@@ -191,7 +187,7 @@ router.post(
       console.error("Error starting bank connection:", error);
       res.status(500).json({ error: "Failed to start bank connection" });
     }
-  }
+  },
 );
 
 /**
@@ -219,7 +215,7 @@ router.post(
       // Resolve user ID
       const userQuery = await pool.query(
         "SELECT id FROM users WHERE firebase_uid = $1",
-        [authUser.uid]
+        [authUser.uid],
       );
       if (userQuery.rows.length === 0) {
         res.status(401).json({ error: "User not found" });
@@ -230,7 +226,7 @@ router.post(
       // Get connection
       const connRes = await pool.query(
         "SELECT id, external_id, user_id FROM bank_connections WHERE id = $1",
-        [connectionId]
+        [connectionId],
       );
       if (connRes.rowCount === 0) {
         res.status(404).json({ error: "Connection not found" });
@@ -260,7 +256,7 @@ router.post(
         console.error(
           "Status:",
           yapilyResponse.status,
-          yapilyResponse.statusText
+          yapilyResponse.statusText,
         );
         console.error("Error response:", errorText);
         console.error("Request URL:", `${YAPILY_CONFIG.baseUrl}/accounts`);
@@ -300,7 +296,7 @@ router.post(
             ya.accountIdentifications?.[0]?.identification || null,
             ya.balance?.current?.amount || 0,
             ya.balance?.available?.amount || 0,
-          ]
+          ],
         );
       }
 
@@ -309,7 +305,7 @@ router.post(
       console.error("Error syncing accounts:", error);
       res.status(500).json({ error: "Failed to sync accounts" });
     }
-  }
+  },
 );
 
 /**
@@ -340,7 +336,7 @@ router.post(
       // Resolve user ID
       const userQuery = await pool.query(
         "SELECT id FROM users WHERE firebase_uid = $1",
-        [authUser.uid]
+        [authUser.uid],
       );
       if (userQuery.rows.length === 0) {
         res.status(401).json({ error: "User not found" });
@@ -348,12 +344,30 @@ router.post(
       }
       const userId = userQuery.rows[0].id;
 
+      // Ensure a "Manual Bank" institution exists
+      const manualInstEntry = await pool.query(
+        "SELECT id FROM institutions WHERE provider_code = 'manual_bank'",
+      );
+
+      let manualInstitutionId;
+      if (manualInstEntry.rows.length === 0) {
+        // Create it
+        const createInst = await pool.query(
+          `INSERT INTO institutions (name, country_code, provider_code)
+           VALUES ('Manual Bank', 'GB', 'manual_bank')
+           RETURNING id`,
+        );
+        manualInstitutionId = createInst.rows[0].id;
+      } else {
+        manualInstitutionId = manualInstEntry.rows[0].id;
+      }
+
       // Create manual bank connection
       const connRes = await pool.query(
         `INSERT INTO bank_connections (user_id, institution_id, provider, external_id, status)
-         VALUES ($1, NULL, 'manual', gen_random_uuid()::text, 'active')
+         VALUES ($1, $2, 'manual', gen_random_uuid()::text, 'active')
          RETURNING id`,
-        [userId]
+        [userId, manualInstitutionId],
       );
       const connectionId = connRes.rows[0].id;
 
@@ -375,7 +389,7 @@ router.post(
           maskedRef || null,
           balance,
           balance,
-        ]
+        ],
       );
 
       res.json({
@@ -392,7 +406,7 @@ router.post(
       console.error("Error creating manual account:", error);
       res.status(500).json({ error: "Failed to create manual account" });
     }
-  }
+  },
 );
 
 /**
@@ -412,7 +426,7 @@ router.post(
       // Resolve user ID
       const userQuery = await pool.query(
         "SELECT id FROM users WHERE firebase_uid = $1",
-        [authUser.uid]
+        [authUser.uid],
       );
       if (userQuery.rows.length === 0) {
         res.status(401).json({ error: "User not found" });
@@ -427,7 +441,7 @@ router.post(
          WHERE user_id = $1 
          AND provider = 'yapily' 
          AND status = 'active'`,
-        [userId]
+        [userId],
       );
 
       if (connectionsResult.rows.length === 0) {
@@ -446,7 +460,7 @@ router.post(
       for (const connection of connectionsResult.rows) {
         try {
           console.log(
-            `🔄 Resyncing connection ${connection.id} (${connection.external_id})`
+            `🔄 Resyncing connection ${connection.id} (${connection.external_id})`,
           );
 
           // First, fetch the consent details to get the fresh consentToken
@@ -456,17 +470,17 @@ router.post(
             {
               method: "GET",
               headers: yapilyAuthHeaders(),
-            }
+            },
           );
 
           if (!consentResponse.ok) {
             const errorText = await consentResponse.text();
             console.error(
               `❌ Failed to fetch consent for connection ${connection.id}:`,
-              errorText
+              errorText,
             );
             errors.push(
-              `Connection ${connection.id}: Failed to retrieve consent token (${consentResponse.statusText})`
+              `Connection ${connection.id}: Failed to retrieve consent token (${consentResponse.statusText})`,
             );
             continue;
           }
@@ -476,10 +490,10 @@ router.post(
 
           if (!consentToken) {
             console.error(
-              `❌ No consent token found for connection ${connection.id}`
+              `❌ No consent token found for connection ${connection.id}`,
             );
             errors.push(
-              `Connection ${connection.id}: No consent token returned from Yapily`
+              `Connection ${connection.id}: No consent token returned from Yapily`,
             );
             continue;
           }
@@ -493,17 +507,17 @@ router.post(
                 ...yapilyAuthHeaders(),
                 consent: consentToken,
               },
-            }
+            },
           );
 
           if (!yapilyResponse.ok) {
             const errorText = await yapilyResponse.text();
             console.error(
               `❌ Failed to resync connection ${connection.id}:`,
-              errorText
+              errorText,
             );
             errors.push(
-              `Connection ${connection.id}: ${yapilyResponse.statusText}`
+              `Connection ${connection.id}: ${yapilyResponse.statusText}`,
             );
             continue;
           }
@@ -527,7 +541,7 @@ router.post(
             const existingAccount = await pool.query(
               `SELECT id FROM accounts 
                WHERE bank_connection_id = $1 AND external_account_id = $2`,
-              [connection.id, externalAccountId]
+              [connection.id, externalAccountId],
             );
 
             if (existingAccount.rows.length > 0) {
@@ -550,7 +564,7 @@ router.post(
                   currentBalance,
                   availableBalance,
                   existingAccount.rows[0].id,
-                ]
+                ],
               );
             } else {
               // Insert new account
@@ -570,7 +584,7 @@ router.post(
                   maskedAccountRef,
                   currentBalance,
                   availableBalance,
-                ]
+                ],
               );
             }
 
@@ -581,7 +595,7 @@ router.post(
               // Try to trigger enrichment for the transactions
               // Note: This may not be available in sandbox environments
               console.log(
-                `Attempting to trigger enrichment for account ${externalAccountId}...`
+                `Attempting to trigger enrichment for account ${externalAccountId}...`,
               );
 
               try {
@@ -598,21 +612,21 @@ router.post(
                       countryCode: "GB",
                       categorisationType: "consumer",
                     }),
-                  }
+                  },
                 );
 
                 if (enrichmentResponse.ok) {
                   console.log(
-                    `✅ Enrichment triggered for account ${externalAccountId}`
+                    `✅ Enrichment triggered for account ${externalAccountId}`,
                   );
                 } else {
                   console.log(
-                    `ℹ️ Enrichment not available (${enrichmentResponse.status}). Transactions may already include enrichment data if categorisation scope is enabled.`
+                    `ℹ️ Enrichment not available (${enrichmentResponse.status}). Transactions may already include enrichment data if categorisation scope is enabled.`,
                   );
                 }
               } catch {
                 console.log(
-                  `ℹ️ Enrichment endpoint not available. Continuing with transaction fetch...`
+                  `ℹ️ Enrichment endpoint not available. Continuing with transaction fetch...`,
                 );
               }
 
@@ -625,7 +639,7 @@ router.post(
                     ...yapilyAuthHeaders(),
                     consent: consentToken,
                   },
-                }
+                },
               );
 
               if (transactionsResponse.ok) {
@@ -633,25 +647,25 @@ router.post(
                 const transactions = transactionsData.data || [];
 
                 console.log(
-                  `Fetched ${transactions.length} transactions for account ${externalAccountId}`
+                  `Fetched ${transactions.length} transactions for account ${externalAccountId}`,
                 );
 
                 // Log if enrichment data is present
                 const enrichedCount = transactions.filter(
-                  (tx: Record<string, unknown>) => tx.enrichment
+                  (tx: Record<string, unknown>) => tx.enrichment,
                 ).length;
                 console.log(
-                  `  ${enrichedCount}/${transactions.length} transactions have enrichment data`
+                  `  ${enrichedCount}/${transactions.length} transactions have enrichment data`,
                 );
 
                 // Debug: Log first enriched transaction structure
                 const firstEnriched = transactions.find(
-                  (tx: Record<string, unknown>) => tx.enrichment
+                  (tx: Record<string, unknown>) => tx.enrichment,
                 );
                 if (firstEnriched) {
                   console.log(
                     "📊 Sample enrichment data:",
-                    JSON.stringify(firstEnriched.enrichment, null, 2)
+                    JSON.stringify(firstEnriched.enrichment, null, 2),
                   );
                 }
 
@@ -681,11 +695,11 @@ router.post(
                     console.log("  - Has enrichment:", !!tx.enrichment);
                     console.log(
                       "  - Merchant path 1:",
-                      tx.enrichment?.merchant?.merchantName
+                      tx.enrichment?.merchant?.merchantName,
                     );
                     console.log(
                       "  - Merchant path 2:",
-                      tx.merchant?.merchantName
+                      tx.merchant?.merchantName,
                     );
                     console.log("  - Category:", categoryName);
                     console.log("  - Final merchant:", merchantName);
@@ -712,7 +726,7 @@ router.post(
                   if (categoryName) {
                     const categoryResult = await pool.query(
                       `SELECT id FROM categories WHERE name = $1`,
-                      [categoryName]
+                      [categoryName],
                     );
                     if (categoryResult.rows.length > 0) {
                       categoryId = categoryResult.rows[0].id;
@@ -733,11 +747,11 @@ router.post(
                         (
                           await pool.query(
                             `SELECT id FROM accounts WHERE bank_connection_id = $1 AND external_account_id = $2`,
-                            [connection.id, externalAccountId]
+                            [connection.id, externalAccountId],
                           )
                         ).rows[0].id,
                       externalTransactionId,
-                    ]
+                    ],
                   );
 
                   // Get the correct account ID (it might have been just inserted)
@@ -748,7 +762,7 @@ router.post(
                   if (!accountId) {
                     const newAccountParams = await pool.query(
                       `SELECT id FROM accounts WHERE bank_connection_id = $1 AND external_account_id = $2`,
-                      [connection.id, externalAccountId]
+                      [connection.id, externalAccountId],
                     );
                     accountId = newAccountParams.rows[0]?.id;
                   }
@@ -777,7 +791,7 @@ router.post(
                           status,
                           categoryId,
                           existingTx.rows[0].id,
-                        ]
+                        ],
                       );
                     } else {
                       await pool.query(
@@ -798,36 +812,36 @@ router.post(
                           merchantName,
                           status,
                           categoryId,
-                        ]
+                        ],
                       );
                     }
                   }
                 }
               } else {
                 console.error(
-                  `Failed to fetch transactions for account ${externalAccountId}: ${transactionsResponse.statusText}`
+                  `Failed to fetch transactions for account ${externalAccountId}: ${transactionsResponse.statusText}`,
                 );
               }
             } catch (txError) {
               console.error(
                 `Error fetching transactions for account ${externalAccountId}:`,
-                txError
+                txError,
               );
             }
           }
 
           console.log(
-            `✅ Resynced ${yapilyAccounts.length} accounts for connection ${connection.id}`
+            `✅ Resynced ${yapilyAccounts.length} accounts for connection ${connection.id}`,
           );
         } catch (error) {
           console.error(
             `❌ Error resyncing connection ${connection.id}:`,
-            error
+            error,
           );
           errors.push(
             `Connection ${connection.id}: ${
               error instanceof Error ? error.message : "Unknown error"
-            }`
+            }`,
           );
         }
       }
@@ -842,7 +856,7 @@ router.post(
       console.error("Error resyncing accounts:", error);
       res.status(500).json({ error: "Failed to resync accounts" });
     }
-  }
+  },
 );
 
 /**
@@ -862,7 +876,7 @@ router.delete(
       // Resolve user ID from DB
       const userQuery = await pool.query(
         "SELECT id FROM users WHERE firebase_uid = $1",
-        [authUser.uid]
+        [authUser.uid],
       );
 
       if (userQuery.rows.length === 0) {
@@ -879,7 +893,7 @@ router.delete(
          FROM accounts a
          JOIN bank_connections bc ON a.bank_connection_id = bc.id
          WHERE a.id = $1 AND bc.user_id = $2`,
-        [accountId, userId]
+        [accountId, userId],
       );
 
       if (accountCheck.rows.length === 0) {
@@ -904,7 +918,7 @@ router.delete(
       console.error("Error deleting account:", err);
       res.status(500).json({ error: "Failed to delete account" });
     }
-  }
+  },
 );
 
 export default router;
