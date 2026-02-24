@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useAuthStore } from "../../../store/auth.store";
-import { updateUser } from "../../auth/api/auth.api";
+import { updateUser, setOnboardingStatus } from "../../auth/api/auth.api";
 import { Button } from "../../../components/ui/Button";
 import {
   Card,
@@ -19,6 +19,8 @@ import {
   Save,
   Loader2,
   User as UserIcon,
+  HelpCircle,
+  RefreshCcw,
 } from "lucide-react";
 import { useTheme } from "../../../components/theme-provider";
 
@@ -28,12 +30,13 @@ export default function SettingsPage() {
 
   // Profile State
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const [firstName, setFirstName] = useState(user?.name.split(" ")[0] || "");
+  const [firstName, setFirstName] = useState(user?.name?.split(" ")[0] || "");
   const [lastName, setLastName] = useState(
-    user?.name.split(" ").slice(1).join(" ") || "",
+    user?.name?.split(" ").slice(1).join(" ") || "",
   );
   const [photoBase64, setPhotoBase64] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(
@@ -267,6 +270,60 @@ export default function SettingsPage() {
                   <Monitor className="w-4 h-4" />
                 </Button>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Onboarding Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <HelpCircle className="w-5 h-5" />
+              Onboarding
+            </CardTitle>
+            <CardDescription>
+              Need a refresher? Restart the interactive tour.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="font-medium">Interactive Guide</p>
+                <p className="text-sm text-neutral-500">
+                  Restart the tour of ClariFi's features
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  if (token && user) {
+                    try {
+                      setResetLoading(true);
+                      setError(null);
+                      setSuccess(null);
+                      await setOnboardingStatus(token, false);
+                      login({ user: { ...user, hasOnboarded: false }, token });
+                      // Success message might not be seen as we navigate away,
+                      // but it's good to have.
+                      setSuccess("Onboarding guide has been reset");
+                    } catch {
+                      setError("Failed to reset onboarding guide");
+                    } finally {
+                      setResetLoading(false);
+                    }
+                  }
+                }}
+                disabled={resetLoading}
+                className="gap-2"
+              >
+                {resetLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RefreshCcw className="w-4 h-4" />
+                )}
+                Restart Tour
+              </Button>
             </div>
           </CardContent>
         </Card>

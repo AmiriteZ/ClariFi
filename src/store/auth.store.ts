@@ -7,6 +7,7 @@ export type User = {
   name: string;
   email: string;
   photoUrl?: string;
+  hasOnboarded: boolean;
 };
 
 type AuthState = {

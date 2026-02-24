@@ -47,6 +47,7 @@ router.get(
       const accountId = req.query.accountId as string;
       const categoryId = req.query.categoryId as string;
       const search = req.query.search as string;
+      const onlyHidden = req.query.onlyHidden === "true";
 
       // Build query
       let queryText = `
@@ -121,6 +122,10 @@ router.get(
         queryParams.push(`%${search}%`);
       }
 
+      if (onlyHidden) {
+        queryText += ` AND t.is_hidden_from_household = true`;
+      }
+
       // Add ordering and pagination
       queryText += ` ORDER BY t.posted_at DESC LIMIT $${
         paramCount + 1
@@ -181,6 +186,10 @@ router.get(
           LOWER(t.description) LIKE LOWER($${countParamIdx}) OR 
           LOWER(t.merchant_name) LIKE LOWER($${countParamIdx})
         )`;
+      }
+
+      if (onlyHidden) {
+        countQueryText += ` AND t.is_hidden_from_household = true`;
       }
 
       const countResult = await pool.query(countQueryText, countParams);

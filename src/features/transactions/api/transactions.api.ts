@@ -36,6 +36,7 @@ export interface TransactionFilters {
   accountId?: string;
   categoryId?: string;
   search?: string;
+  onlyHidden?: boolean;
 }
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || "/api";
@@ -60,6 +61,7 @@ export async function getTransactions(
   if (filters.categoryId && filters.categoryId !== "all")
     queryParams.append("categoryId", filters.categoryId);
   if (filters.search) queryParams.append("search", filters.search);
+  if (filters.onlyHidden) queryParams.append("onlyHidden", "true");
 
   const response = await fetch(`${API_URL}/transactions?${queryParams}`, {
     headers: {

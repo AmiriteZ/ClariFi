@@ -49,6 +49,9 @@ export default function TransactionsPage() {
   const [categoryId, setCategoryId] = useState(
     searchParams.get("categoryId") || "all",
   );
+  const [showHiddenOnly, setShowHiddenOnly] = useState(
+    searchParams.get("onlyHidden") === "true",
+  );
 
   // Data for filters
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -82,6 +85,7 @@ export default function TransactionsPage() {
         endDate,
         accountId,
         categoryId,
+        onlyHidden: showHiddenOnly,
       });
       setTransactions(data.transactions);
       setPagination(data.pagination);
@@ -100,6 +104,7 @@ export default function TransactionsPage() {
     endDate,
     accountId,
     categoryId,
+    showHiddenOnly,
   ]);
 
   useEffect(() => {
@@ -111,6 +116,7 @@ export default function TransactionsPage() {
     if (endDate) params.set("endDate", endDate);
     if (accountId !== "all") params.set("accountId", accountId);
     if (categoryId !== "all") params.set("categoryId", categoryId);
+    if (showHiddenOnly) params.set("onlyHidden", "true");
     if (pagination.page > 1) params.set("page", pagination.page.toString());
     setSearchParams(params);
   }, [fetchTransactions, setSearchParams]);
@@ -287,6 +293,28 @@ export default function TransactionsPage() {
               />
             </div>
           </div>
+
+          {/* Hidden Only Filter (Personal mode only) */}
+          {viewMode === "personal" && (
+            <div className="flex items-center gap-2 px-2">
+              <input
+                type="checkbox"
+                id="hidden-only"
+                className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-input"
+                checked={showHiddenOnly}
+                onChange={(e) => {
+                  setShowHiddenOnly(e.target.checked);
+                  setPagination((p) => ({ ...p, page: 1 }));
+                }}
+              />
+              <label
+                htmlFor="hidden-only"
+                className="text-sm font-medium text-foreground cursor-pointer"
+              >
+                Hidden Only
+              </label>
+            </div>
+          )}
         </div>
 
         {/* Bulk Actions */}

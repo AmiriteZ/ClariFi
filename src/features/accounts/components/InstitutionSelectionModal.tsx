@@ -44,11 +44,23 @@ export default function InstitutionSelectionModal({
 
       if (result.consentUrl) {
         console.log("🔗 Got consent URL, redirecting to Yapily...");
+
+        // Security: Validate consent URL to prevent XSS via javascript: protocol
+        if (
+          !result.consentUrl.startsWith("https://") &&
+          !result.consentUrl.startsWith("http://")
+        ) {
+          console.error("❌ Invalid consent URL:", result.consentUrl);
+          setError("Invalid redirect URL from bank provider");
+          setConnecting(false);
+          return;
+        }
+
         // Store connection ID for syncing after redirect
         if (result.connectionId) {
           console.log(
             "💾 Storing connection ID in localStorage:",
-            result.connectionId
+            result.connectionId,
           );
           localStorage.setItem("pendingYapilyConnection", result.connectionId);
         }
@@ -63,7 +75,7 @@ export default function InstitutionSelectionModal({
     } catch (err) {
       console.error("❌ Connection failed:", err);
       setError(
-        err instanceof Error ? err.message : "Failed to connect to bank"
+        err instanceof Error ? err.message : "Failed to connect to bank",
       );
       setConnecting(false);
     }

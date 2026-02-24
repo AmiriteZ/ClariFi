@@ -334,23 +334,18 @@ router.get(
 
       // SQL filter for ANY of these users' accounts
       // Note: we might need a more complex query if we want to separate by user, but for now we aggregate.
-      const memberIdsSql = memberIds.map((uid) => `'${uid}'`).join(",");
-
-      // PROD/DEV account ID handling (tool-account- prefix)
-      // We need to match ANY of the member IDs
-      const accountFilterSQL = `
-        (
-           a.external_account_id IN (${memberIdsSql}) 
-           OR 
-           a.external_account_id IN ( ${memberIds.map((uid) => `'tool-account-${uid}'`).join(",")} )
-        )
-      `;
+      // We'll prepare the list of possible external IDs: [uid1, uid2, ..., tool-account-uid1, tool-account-uid2, ...]
+      const allPossibleExternalIds = [
+        ...memberIds,
+        ...memberIds.map((uid) => `tool-account-${uid}`),
+      ];
 
       // --- A) Total Household Balance ---
       const balanceResult = await pool.query(
         `SELECT COALESCE(SUM(available_balance), 0) as total_balance 
          FROM accounts a 
-         WHERE ${accountFilterSQL}`,
+         WHERE a.external_account_id = ANY($1)`,
+        [allPossibleExternalIds],
       );
       const totalBalance = Number(balanceResult.rows[0].total_balance);
 
@@ -361,8 +356,9 @@ router.get(
            COALESCE(SUM(CASE WHEN t.direction = 'debit' THEN t.amount ELSE 0 END), 0) as expenses
          FROM transactions t
          JOIN accounts a ON t.account_id = a.id
-         WHERE ${accountFilterSQL}
+         WHERE a.external_account_id = ANY($1)
            AND date_trunc('month', t.posted_at) = date_trunc('month', CURRENT_DATE)`,
+        [allPossibleExternalIds],
       ); // Using CURRENT_DATE directly for simplicity
       const monthIncome = Number(flowResult.rows[0].income);
       const monthExpenses = Number(flowResult.rows[0].expenses);
@@ -375,11 +371,12 @@ router.get(
          FROM transactions t
          JOIN accounts a ON t.account_id = a.id
          LEFT JOIN categories c ON t.category_id = c.id
-         WHERE ${accountFilterSQL}
+         WHERE a.external_account_id = ANY($1)
            AND t.direction = 'debit'
            AND date_trunc('month', t.posted_at) = date_trunc('month', CURRENT_DATE)
          GROUP BY c.name
          ORDER BY amount DESC`,
+        [allPossibleExternalIds],
       );
       const spendingByCategory = categoryResult.rows.map((r) => ({
         category: r.category,
@@ -400,9 +397,10 @@ router.get(
          -- Join users to identify who owns the account
          -- (Assuming simple mapping where external_account_id contains user_id)
          LEFT JOIN users u ON (a.external_account_id = u.id::text OR a.external_account_id = 'tool-account-' || u.id::text)
-         WHERE ${accountFilterSQL}
+         WHERE a.external_account_id = ANY($1)
          ORDER BY t.posted_at DESC
          LIMIT 10`,
+        [allPossibleExternalIds],
       );
 
       const recentTransactions = recentResult.rows.map((row, idx) => {

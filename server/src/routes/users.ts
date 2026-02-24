@@ -25,6 +25,7 @@ type DbUserRow = {
   dob: string;
   created_at: string;
   photo_url: string | null;
+  has_onboarded: boolean;
 };
 
 type ApiUser = {
@@ -36,6 +37,7 @@ type ApiUser = {
   dob: string;
   createdAt: string;
   photoUrl: string | null;
+  hasOnboarded: boolean;
 };
 
 function normalizeDob(raw: string | undefined): string | null {
@@ -81,6 +83,7 @@ function mapUser(row: DbUserRow): ApiUser {
     dob: row.dob,
     createdAt: row.created_at,
     photoUrl: row.photo_url || null,
+    hasOnboarded: row.has_onboarded || false,
   };
 }
 
@@ -123,7 +126,7 @@ router.post(
             fname = EXCLUDED.fname,
             lname = EXCLUDED.lname,
             dob   = EXCLUDED.dob
-        RETURNING id, firebase_uid, email, fname, lname, dob, created_at, photo_url;
+        RETURNING id, firebase_uid, email, fname, lname, dob, created_at, photo_url, has_onboarded;
       `;
 
       const result = await pool.query<DbUserRow>(query, [
@@ -158,7 +161,7 @@ router.get(
       const { uid } = req.user;
 
       const result = await pool.query(
-        `SELECT id, firebase_uid, email, fname, lname, dob, created_at, photo_url
+        `SELECT id, firebase_uid, email, fname, lname, dob, created_at, photo_url, has_onboarded
          FROM users
          WHERE firebase_uid = $1`,
         [uid],
@@ -235,7 +238,7 @@ router.patch(
         UPDATE users
         SET fname = $1, lname = $2, photo_url = $3
         WHERE firebase_uid = $4
-        RETURNING id, firebase_uid, email, fname, lname, dob, created_at, photo_url
+        RETURNING id, firebase_uid, email, fname, lname, dob, created_at, photo_url, has_onboarded
       `;
 
       const updatedUserRes = await pool.query<DbUserRow>(updateQuery, [
@@ -250,6 +253,34 @@ router.patch(
     } catch (error) {
       console.error("Error updating profile:", error);
       res.status(500).json({ error: "Failed to update profile" });
+    }
+  },
+);
+
+router.patch(
+  "/me/onboarded",
+  verifyFirebaseToken,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { uid } = req.user;
+      const { status } = req.body;
+      const hasOnboarded = status !== undefined ? status : true;
+
+      await pool.query(
+        "UPDATE users SET has_onboarded = $1 WHERE firebase_uid = $2",
+        [hasOnboarded, uid],
+      );
+
+      return res.json({ success: true });
+    } catch (err) {
+      console.error("Error updating onboarding status:", err);
+      return res
+        .status(500)
+        .json({ error: "Failed to update onboarding status" });
     }
   },
 );

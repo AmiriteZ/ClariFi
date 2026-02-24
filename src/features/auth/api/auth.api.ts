@@ -27,6 +27,8 @@ export type BackendUser = {
   lastName?: string | null;
   photo_url?: string | null;
   photoUrl?: string | null;
+  has_onboarded?: boolean;
+  hasOnboarded?: boolean;
 };
 
 export type RawUserPayload = {
@@ -45,12 +47,15 @@ export function normaliseUser(raw: RawUserPayload): User {
 
   const name = `${first} ${last}`.trim() || email;
   const photoUrl = candidate.photoUrl || candidate.photo_url || undefined;
+  const hasOnboarded =
+    candidate.hasOnboarded ?? candidate.has_onboarded ?? false;
 
   return {
     id,
     name,
     email,
     photoUrl,
+    hasOnboarded,
   };
 }
 
@@ -195,4 +200,24 @@ export async function loginWithGoogle(): Promise<LoginResponse> {
 // LOGOUT
 export async function logoutApi(): Promise<void> {
   await signOut(auth);
+}
+
+// UPDATE ONBOARDING STATUS
+export async function setOnboardingStatus(
+  token: string,
+  status: boolean,
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/users/me/onboarded`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  if (!res.ok) {
+    const message = await res.text();
+    throw new Error(message || "Failed to update onboarding status.");
+  }
 }

@@ -1,6 +1,6 @@
-// server/src/app.ts
 import express, { Request, Response } from "express";
 import cors from "cors";
+import helmet from "helmet";
 import { pool } from "./db";
 import dashboardRouter from "./routes/dashboard";
 import usersRouter from "./routes/users";
@@ -15,6 +15,8 @@ import categoriesRouter from "./routes/categories";
 import householdsRouter from "./routes/households";
 
 const app = express();
+
+app.use(helmet());
 
 app.use(
   cors({

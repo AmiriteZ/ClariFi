@@ -6,6 +6,7 @@ import { ScreenOrientationLock } from "./ScreenOrientationLock";
 import { useAuthStore } from "../../store/auth.store";
 import { useHousehold } from "../../store/household.context";
 import { resyncAllAccounts } from "../../features/accounts/api/bankConnections.api";
+import { OnboardingGuide } from "../common/OnboardingGuide";
 
 export default function Layout({ children }: { children?: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -30,6 +31,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex transition-colors duration-300">
+      <OnboardingGuide />
       <ScreenOrientationLock />
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -73,7 +75,10 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
           <div className="flex items-center gap-4">
             {/* Household Context Switcher */}
             {viewMode && (
-              <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 p-1 rounded-lg">
+              <div
+                id="mode-toggle"
+                className="flex items-center bg-neutral-100 dark:bg-neutral-800 p-1 rounded-lg"
+              >
                 <button
                   onClick={() => viewMode === "household" && toggleView()}
                   className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
@@ -106,6 +111,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
 
           <div className="flex items-center gap-4">
             <button
+              id="resync-button"
               onClick={handleResync}
               disabled={isResyncing}
               className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors disabled:opacity-50"
