@@ -33,6 +33,7 @@ export default function App() {
               id: user.uid,
               name: user.displayName || "User",
               email: user.email || "",
+              hasOnboarded: false,
             },
             token,
           });
