@@ -240,7 +240,7 @@ export function OnboardingGuide() {
             transform: targetRect ? "none" : "translate(-50%, -50%)",
           }}
           className={cn(
-            "absolute p-5 sm:p-6 rounded-2xl bg-white dark:bg-neutral-900 shadow-2xl border border-neutral-200 dark:border-neutral-800 w-[calc(100%-32px)] sm:w-full max-w-sm pointer-events-auto z-50 transition-all duration-300",
+            "absolute p-5 sm:p-6 rounded-2xl bg-white dark:bg-neutral-900 shadow-2xl border border-neutral-200 dark:border-neutral-800 w-[calc(100%-32px)] sm:w-full max-w-md pointer-events-auto z-50 transition-all duration-300",
             targetRect ? "mt-4" : "",
           )}
           style={
@@ -287,8 +287,8 @@ export function OnboardingGuide() {
             {current.description}
           </p>
 
-          <div className="flex items-center justify-between mt-auto">
-            <div className="flex gap-1.5">
+          <div className="flex flex-wrap items-center justify-between gap-4 mt-auto">
+            <div className="hidden sm:flex gap-1.5">
               {steps.map((_, i) => (
                 <div
                   key={i}

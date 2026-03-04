@@ -70,15 +70,38 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [strength, setStrength] = useState(getPasswordStrength(""));
+  const [lastValue, setLastValue] = useState("");
+
+  const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    const isDeleting = value.length < lastValue.length;
+
+    if (!isDeleting) {
+      value = value.replace(/\D/g, ""); // Remove all non-digits
+      if (value.length > 8) value = value.slice(0, 8); // Max 8 digits
+
+      let formatted = value;
+      if (value.length > 2) {
+        formatted = value.slice(0, 2) + "/" + value.slice(2);
+      }
+      if (value.length > 4) {
+        formatted = formatted.slice(0, 5) + "/" + formatted.slice(5);
+      }
+      value = formatted;
+    }
+
+    setDob(value);
+    setLastValue(value);
+  };
 
   const barColor =
     strength.score <= 1
       ? "bg-red-500"
       : strength.score === 2
-      ? "bg-yellow-500"
-      : strength.score === 3
-      ? "bg-green-500"
-      : "bg-emerald-600";
+        ? "bg-yellow-500"
+        : strength.score === 3
+          ? "bg-green-500"
+          : "bg-emerald-600";
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -103,7 +126,9 @@ export default function SignUpPage() {
 
     const parsedDob = parseDob(trimmedDobInput);
     if (!parsedDob) {
-      return setError("Please enter a valid date of birth in dd/mm/yyyy format.");
+      return setError(
+        "Please enter a valid date of birth in dd/mm/yyyy format.",
+      );
     }
 
     if (!isAtLeast12YearsOld(parsedDob)) {
@@ -132,7 +157,7 @@ export default function SignUpPage() {
         trimmedLastName,
         dobIso, // send ISO to backend
         trimmedEmail,
-        password
+        password,
       );
 
       // res.user is now { id, name, email } which matches auth.store
@@ -199,7 +224,7 @@ export default function SignUpPage() {
             <input
               className="w-full rounded-lg border p-2 outline-none focus:ring"
               value={dob}
-              onChange={(e) => setDob(e.target.value)}
+              onChange={handleDobChange}
               placeholder="dd/mm/yyyy"
               inputMode="numeric"
               maxLength={10}
@@ -252,8 +277,8 @@ export default function SignUpPage() {
                     strength.score <= 1
                       ? "text-red-600"
                       : strength.score === 2
-                      ? "text-yellow-600"
-                      : "text-green-700"
+                        ? "text-yellow-600"
+                        : "text-green-700"
                   }
                   aria-live="polite"
                 >
@@ -268,12 +293,12 @@ export default function SignUpPage() {
                       strength.score === 0
                         ? "10%"
                         : strength.score === 1
-                        ? "25%"
-                        : strength.score === 2
-                        ? "50%"
-                        : strength.score === 3
-                        ? "75%"
-                        : "100%",
+                          ? "25%"
+                          : strength.score === 2
+                            ? "50%"
+                            : strength.score === 3
+                              ? "75%"
+                              : "100%",
                   }}
                 />
               </div>

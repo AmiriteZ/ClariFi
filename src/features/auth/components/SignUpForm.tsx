@@ -65,6 +65,30 @@ export default function SignUpForm({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [strength, setStrength] = useState(getPasswordStrength(""));
+  const [lastValue, setLastValue] = useState("");
+
+  const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    const isDeleting = value.length < lastValue.length;
+
+    if (!isDeleting) {
+      // Only auto-format if we are adding characters
+      value = value.replace(/\D/g, ""); // Remove all non-digits
+      if (value.length > 8) value = value.slice(0, 8); // Max 8 digits
+
+      let formatted = value;
+      if (value.length > 2) {
+        formatted = value.slice(0, 2) + "/" + value.slice(2);
+      }
+      if (value.length > 4) {
+        formatted = formatted.slice(0, 5) + "/" + formatted.slice(5);
+      }
+      value = formatted;
+    }
+
+    setDob(value);
+    setLastValue(value);
+  };
 
   const barColor =
     strength.score <= 1
@@ -173,7 +197,7 @@ export default function SignUpForm({
           <input
             className="w-full rounded-lg border p-2 outline-none focus:ring"
             value={dob}
-            onChange={(e) => setDob(e.target.value)}
+            onChange={handleDobChange}
             placeholder="dd/mm/yyyy"
             inputMode="numeric"
             maxLength={10}
