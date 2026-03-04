@@ -71,7 +71,7 @@ router.post(
       // 4. Create Account
       const accountName =
         persona === "student" ? "Student Checking" : "Professional Rewards";
-      const startBalance = persona === "student" ? 1200 : 5000;
+      const startBalance = persona === "student" ? 3500 : 8000;
       const accountRes = await pool.query(
         `INSERT INTO accounts (
           bank_connection_id, household_id, external_account_id, name,
@@ -142,9 +142,10 @@ router.post(
         },
       ];
 
-      // Student irregular income schedule (weekly)
+      // Student income schedule
       if (persona === "student") {
-        for (let i = 0; i < 9; i++) {
+        // Weekly tutoring
+        for (let i = 0; i < 13; i++) {
           const incDate = new Date(now);
           incDate.setDate(now.getDate() - (i * 7 + 2));
           transactions.push({
@@ -154,6 +155,20 @@ router.post(
             merchant: "Private Tutoring",
             category: getCatId("Other Income") || getCatId("Income"),
             description: "Weekly Tutoring",
+          });
+        }
+        // Monthly Grant
+        for (let i = 0; i < 3; i++) {
+          const grantDate = new Date(now);
+          grantDate.setMonth(now.getMonth() - i);
+          grantDate.setDate(5);
+          transactions.push({
+            date: grantDate,
+            amount: 1250,
+            direction: "credit",
+            merchant: "SUSI Grant",
+            category: getCatId("Other Income") || getCatId("Income"),
+            description: "Monthly Education Grant",
           });
         }
       }
@@ -178,8 +193,8 @@ router.post(
 
       const merchants = persona === "student" ? studentMerchants : proMerchants;
 
-      // Seed over 60 days
-      for (let i = 0; i < 60; i++) {
+      // Seed over 90 days to ensure 100+ transactions
+      for (let i = 0; i < 90; i++) {
         const d = new Date(now);
         d.setDate(d.getDate() - i);
         const dayOfMonth = d.getDate();
@@ -202,8 +217,9 @@ router.post(
           }
         });
 
-        // 2. Add variable spending (approx 1-2 per day)
-        if (Math.random() > 0.3) {
+        // 2. Add variable spending (2-3 per day)
+        const density = Math.floor(Math.random() * 2) + 2; // 2 or 3
+        for (let j = 0; j < density; j++) {
           const m = merchants[Math.floor(Math.random() * merchants.length)];
           transactions.push({
             date: new Date(d),
