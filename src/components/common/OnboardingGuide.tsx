@@ -6,6 +6,7 @@ import { X, ChevronRight, ChevronLeft, Check } from "lucide-react";
 import { Button } from "../ui/Button";
 import { cn } from "../../lib/utils";
 import { useNavigate, useLocation } from "react-router-dom";
+import { PersonaSelectionModal } from "./PersonaSelectionModal";
 
 interface Step {
   title: string;
@@ -112,6 +113,9 @@ export function OnboardingGuide() {
   const [currentStep, setCurrentStep] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [showPersonaSelection, setShowPersonaSelection] = useState(false);
+
+  const ENABLE_DEMO_MODE = import.meta.env.VITE_ENABLE_DEMO_MODE === "true";
 
   // Resize listener
   useEffect(() => {
@@ -174,6 +178,11 @@ export function OnboardingGuide() {
   if (!user || user.hasOnboarded) return null;
 
   const handleFinish = async () => {
+    if (ENABLE_DEMO_MODE) {
+      setShowPersonaSelection(true);
+      return;
+    }
+
     if (token) {
       try {
         await setOnboardingStatus(token, true);
@@ -211,123 +220,131 @@ export function OnboardingGuide() {
               height: targetRect.height + 16,
             }}
             exit={{ opacity: 0, scale: 0.8 }}
-            className="absolute rounded-xl ring-[2000px] ring-black/40 shadow-[0_0_0_8px_rgba(16,185,129,0.3)] pointer-events-none z-50"
+            className="absolute rounded-xl ring-2000 ring-black/40 shadow-[0_0_0_8px_rgba(16,185,129,0.3)] pointer-events-none z-50"
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
           />
         )}
       </AnimatePresence>
 
       {/* Popover */}
-      <motion.div
-        key={currentStep}
-        initial={{ opacity: 0, y: 20, scale: 0.95 }}
-        animate={{
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          left: targetRect ? "auto" : "50%",
-          top: targetRect ? "auto" : "50%",
-          transform: targetRect ? "none" : "translate(-50%, -50%)",
-        }}
-        className={cn(
-          "absolute p-5 sm:p-6 rounded-2xl bg-white dark:bg-neutral-900 shadow-2xl border border-neutral-200 dark:border-neutral-800 w-[calc(100%-32px)] sm:w-full max-w-sm pointer-events-auto z-50 transition-all duration-300",
-          targetRect ? "mt-4" : "",
-        )}
-        style={
-          targetRect && windowWidth >= 768
-            ? {
-                top:
-                  current.position === "bottom"
-                    ? targetRect.bottom + 20
-                    : current.position === "top"
-                      ? targetRect.top - 200
-                      : "50%",
-                left:
-                  current.position === "right"
-                    ? targetRect.right + 20
-                    : current.position === "left"
-                      ? targetRect.left - 400
-                      : "50%",
-                transform:
-                  current.position === "bottom" || current.position === "top"
-                    ? "translateX(-50%)"
-                    : "none",
-              }
-            : {
-                top: targetRect ? targetRect.bottom + 20 : "50%",
-                left: "50%",
-                transform: "translate(-50%, 0)",
-                ...(!targetRect && { transform: "translate(-50%, -50%)" }),
-              }
-        }
-      >
-        <div className="flex justify-between items-start mb-4">
-          <h3 className="text-xl font-bold text-neutral-900 dark:text-white">
-            {current.title}
-          </h3>
-          <button
-            onClick={handleFinish}
-            className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg text-neutral-400"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <p className="text-sm sm:text-base text-neutral-600 dark:text-neutral-400 mb-6 sm:mb-8 leading-relaxed">
-          {current.description}
-        </p>
-
-        <div className="flex items-center justify-between mt-auto">
-          <div className="flex gap-1.5">
-            {steps.map((_, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "w-1.5 h-1.5 rounded-full transition-all duration-300",
-                  i === currentStep
-                    ? "bg-emerald-500 w-4"
-                    : "bg-neutral-200 dark:bg-neutral-700",
-                )}
-              />
-            ))}
+      {!showPersonaSelection && (
+        <motion.div
+          key={currentStep}
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            left: targetRect ? "auto" : "50%",
+            top: targetRect ? "auto" : "50%",
+            transform: targetRect ? "none" : "translate(-50%, -50%)",
+          }}
+          className={cn(
+            "absolute p-5 sm:p-6 rounded-2xl bg-white dark:bg-neutral-900 shadow-2xl border border-neutral-200 dark:border-neutral-800 w-[calc(100%-32px)] sm:w-full max-w-sm pointer-events-auto z-50 transition-all duration-300",
+            targetRect ? "mt-4" : "",
+          )}
+          style={
+            targetRect && windowWidth >= 768
+              ? {
+                  top:
+                    current.position === "bottom"
+                      ? targetRect.bottom + 20
+                      : current.position === "top"
+                        ? targetRect.top - 200
+                        : "50%",
+                  left:
+                    current.position === "right"
+                      ? targetRect.right + 20
+                      : current.position === "left"
+                        ? targetRect.left - 400
+                        : "50%",
+                  transform:
+                    current.position === "bottom" || current.position === "top"
+                      ? "translateX(-50%)"
+                      : "none",
+                }
+              : {
+                  top: targetRect ? targetRect.bottom + 20 : "50%",
+                  left: "50%",
+                  transform: "translate(-50%, 0)",
+                  ...(!targetRect && { transform: "translate(-50%, -50%)" }),
+                }
+          }
+        >
+          <div className="flex justify-between items-start mb-4">
+            <h3 className="text-xl font-bold text-neutral-900 dark:text-white">
+              {current.title}
+            </h3>
+            <button
+              onClick={handleFinish}
+              className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg text-neutral-400"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
-          <div className="flex gap-2">
-            {currentStep > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentStep(currentStep - 1)}
-                className="gap-2"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Back
-              </Button>
-            )}
-            {currentStep < steps.length - 1 ? (
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => setCurrentStep(currentStep + 1)}
-                className="gap-2"
-              >
-                Next
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            ) : (
-              <Button
-                variant="premium"
-                size="sm"
-                onClick={handleFinish}
-                className="gap-2"
-              >
-                Get Started
-                <Check className="w-4 h-4" />
-              </Button>
-            )}
+          <p className="text-sm sm:text-base text-neutral-600 dark:text-neutral-400 mb-6 sm:mb-8 leading-relaxed">
+            {current.description}
+          </p>
+
+          <div className="flex items-center justify-between mt-auto">
+            <div className="flex gap-1.5">
+              {steps.map((_, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "w-1.5 h-1.5 rounded-full transition-all duration-300",
+                    i === currentStep
+                      ? "bg-emerald-500 w-4"
+                      : "bg-neutral-200 dark:bg-neutral-700",
+                  )}
+                />
+              ))}
+            </div>
+
+            <div className="flex gap-2">
+              {currentStep > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentStep(currentStep - 1)}
+                  className="gap-2"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Back
+                </Button>
+              )}
+              {currentStep < steps.length - 1 ? (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setCurrentStep(currentStep + 1)}
+                  className="gap-2"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              ) : (
+                <Button
+                  variant="premium"
+                  size="sm"
+                  onClick={handleFinish}
+                  className="gap-2"
+                >
+                  Get Started
+                  <Check className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
+
+      {showPersonaSelection && (
+        <PersonaSelectionModal
+          onComplete={() => setShowPersonaSelection(false)}
+        />
+      )}
     </div>
   );
 }

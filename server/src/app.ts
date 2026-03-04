@@ -13,6 +13,7 @@ import aiRouter from "./routes/ai";
 import transactionsRouter from "./routes/transactions";
 import categoriesRouter from "./routes/categories";
 import householdsRouter from "./routes/households";
+import demoRouter from "./routes/demo";
 
 const app = express();
 
@@ -60,5 +61,6 @@ app.use("/api/ml", mlRouter);
 
 app.use("/api/ai", aiRouter);
 app.use("/api/households", householdsRouter);
+app.use("/api/demo", demoRouter);
 
 export default app;

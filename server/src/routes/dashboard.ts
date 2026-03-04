@@ -5,7 +5,6 @@ import {
   type AuthenticatedRequest,
 } from "../middleware/verifyFirebaseToken";
 import { pool } from "../db";
-import { DateUtils } from "../utils/dateUtils";
 
 const router = Router();
 
@@ -148,7 +147,7 @@ router.get(
         WHERE ${accountFilterSQL}
         ${transactionPrivacySQL}
       `,
-        [targetUserIds, DateUtils.getCurrentDate()],
+        [targetUserIds, new Date()],
       );
 
       const monthIncome = Number(flowResult.rows[0]?.month_income ?? 0);
@@ -169,7 +168,7 @@ router.get(
         GROUP BY c.name
         ORDER BY amount DESC
       `,
-        [targetUserIds, DateUtils.getCurrentDate()],
+        [targetUserIds, new Date()],
       );
 
       const spendingByCategory = categoryResult.rows.map((row) => ({

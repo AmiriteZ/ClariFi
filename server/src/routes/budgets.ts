@@ -1,6 +1,5 @@
 import { Router, Response } from "express";
 import { pool } from "../db";
-import { DateUtils } from "../utils/dateUtils";
 import {
   verifyFirebaseToken,
   AuthenticatedRequest,
@@ -87,7 +86,7 @@ router.post(
 
       const expiredBudgets = await pool.query(findExpiredQuery, [
         userId,
-        DateUtils.getCurrentDate(),
+        new Date(),
       ]);
 
       let renewedCount = 0;
@@ -441,7 +440,7 @@ router.get(
       // Calculate period elapsed
       const periodStart = new Date(budget.period_start);
       const periodEnd = new Date(budget.period_end);
-      const today = DateUtils.getCurrentDate();
+      const today = new Date();
       const totalDays = Math.ceil(
         (periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24),
       );
@@ -715,7 +714,7 @@ router.post(
         periodStart = new Date(req.body.periodStart);
         periodEnd = new Date(req.body.periodEnd);
       } else {
-        const today = DateUtils.getCurrentDate();
+        const today = new Date();
 
         if (periodType === "monthly") {
           // Snap to first and last day of current month
