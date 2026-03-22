@@ -489,4 +489,72 @@ router.patch(
   },
 );
 
+/**
+ * POST /api/transactions/bulk-delete
+ * Delete multiple transactions
+ */
+router.post(
+  "/bulk-delete",
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const authUser = req.user;
+      if (!authUser) {
+        res.status(401).json({ error: "Unauthenticated" });
+        return;
+      }
+
+      const { transactionIds } = req.body;
+
+      if (!Array.isArray(transactionIds) || transactionIds.length === 0) {
+        res.status(400).json({ error: "Invalid request body" });
+        return;
+      }
+
+      // 1. Resolve User ID
+      const userRes = await pool.query(
+        "SELECT id FROM users WHERE firebase_uid = $1",
+        [authUser.uid],
+      );
+      if (userRes.rows.length === 0) {
+        res.status(401).json({ error: "User not found" });
+        return;
+      }
+      const userId = userRes.rows[0].id;
+
+      // 2. Perform Delete ONLY on transactions owned by user
+      const deleteResult = await pool.query(
+        `
+        WITH owned_transactions AS (
+          SELECT id FROM transactions
+          WHERE id = ANY($1::uuid[])
+            AND account_id IN (
+              SELECT id FROM accounts 
+              WHERE bank_connection_id IN (
+                SELECT id FROM bank_connections WHERE user_id = $2
+              )
+            )
+        ),
+        deleted_contributions AS (
+          DELETE FROM goal_contributions
+          WHERE transaction_id IN (SELECT id FROM owned_transactions)
+        )
+        DELETE FROM transactions
+        WHERE id IN (SELECT id FROM owned_transactions)
+        RETURNING id
+        `,
+        [transactionIds, userId],
+      );
+
+      res.json({
+        message: "Transactions deleted",
+        deletedCount: deleteResult.rowCount,
+        deletedIds: deleteResult.rows.map((r) => r.id),
+      });
+    } catch (error) {
+      console.error("Error bulk deleting transactions:", error);
+      res.status(500).json({ error: "Failed to bulk delete transactions" });
+    }
+  },
+);
+
 export default router;

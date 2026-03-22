@@ -4,6 +4,7 @@ import {
   getTransactions,
   type Transaction,
   bulkUpdateTransactionPrivacy,
+  bulkDeleteTransactions,
 } from "../api/transactions.api";
 import { getAccounts, type Account } from "../../accounts/api/accounts.api";
 import {
@@ -19,6 +20,7 @@ import {
   Square,
   Plus,
   EyeOff,
+  Trash2,
 } from "lucide-react";
 import AddTransactionModal from "../components/AddTransactionModal";
 import { useHousehold } from "../../../store/household.context";
@@ -157,6 +159,30 @@ export default function TransactionsPage() {
     } catch (err) {
       console.error("Failed to update privacy:", err);
       setError("Failed to update transactions. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+
+    if (
+      !window.confirm(
+        "Are you sure you want to delete the selected transactions? This action cannot be undone.",
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await bulkDeleteTransactions(Array.from(selectedIds));
+      await fetchTransactions();
+      setSelectedIds(new Set());
+    } catch (err) {
+      console.error("Failed to delete transactions:", err);
+      setError("Failed to delete transactions. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -345,6 +371,14 @@ export default function TransactionsPage() {
                 className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
               >
                 Mark as visible
+              </button>
+              <div className="h-4 w-px bg-emerald-200" />
+              <button
+                onClick={handleBulkDelete}
+                className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 text-sm font-medium rounded-lg hover:bg-red-100 transition-colors shadow-sm"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
               </button>
             </div>
           </div>

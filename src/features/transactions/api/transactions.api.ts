@@ -174,3 +174,28 @@ export async function bulkUpdateTransactionPrivacy(
 
   return response.json();
 }
+
+export async function bulkDeleteTransactions(
+  transactionIds: string[],
+): Promise<{ deletedCount: number }> {
+  const user = auth.currentUser;
+  if (!user) throw new Error("User not authenticated");
+  const token = await user.getIdToken();
+
+  const response = await fetch(`${API_URL}/transactions/bulk-delete`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ transactionIds }),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to bulk delete transactions: ${response.statusText}`,
+    );
+  }
+
+  return response.json();
+}
