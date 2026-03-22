@@ -93,16 +93,15 @@ export default function AssistantPage() {
   }
 
   return (
-    <div className="w-full h-full flex items-center justify-center p-4 md:px-6 md:py-8">
-      {/* Single merged container */}
-      <div className="w-full max-w-4xl h-[85vh] flex flex-col bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-        {/* 3D Avatar Section - Top */}
-        <div className="h-[250px] md:h-[400px] border-b border-border flex-shrink-0 bg-muted/20">
+    <div className="w-full flex justify-center p-4 md:px-6 md:py-8">
+      <div className="w-full h-[85vh] flex flex-col lg:flex-row gap-4 lg:gap-6">
+        {/* 3D Avatar Section */}
+        <div className="w-full h-[35vh] lg:h-full lg:w-1/2 rounded-2xl border border-border shadow-sm overflow-hidden shrink-0 bg-muted/20">
           <Avatar3D isTalking={isTalking} modelPath="/models/scene.gltf" />
         </div>
 
-        {/* Chat Section - Bottom */}
-        <div className="flex-1 min-h-0 bg-card">
+        {/* Chat Section */}
+        <div className="flex-1 min-h-0 w-full lg:w-1/2 bg-card rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col">
           <ChatInterface
             messages={messages}
             isLoading={isLoading}

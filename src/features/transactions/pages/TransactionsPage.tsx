@@ -23,6 +23,7 @@ import {
   Trash2,
 } from "lucide-react";
 import AddTransactionModal from "../components/AddTransactionModal";
+import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import { useHousehold } from "../../../store/household.context";
 
 export default function TransactionsPage() {
@@ -31,6 +32,7 @@ export default function TransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { viewMode } = useHousehold();
   const [pagination, setPagination] = useState({
     page: 1,
@@ -164,22 +166,18 @@ export default function TransactionsPage() {
     }
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (selectedIds.size === 0) return;
+    setIsDeleteModalOpen(true);
+  };
 
-    if (
-      !window.confirm(
-        "Are you sure you want to delete the selected transactions? This action cannot be undone.",
-      )
-    ) {
-      return;
-    }
-
+  const confirmDelete = async () => {
     try {
       setLoading(true);
       await bulkDeleteTransactions(Array.from(selectedIds));
       await fetchTransactions();
       setSelectedIds(new Set());
+      setIsDeleteModalOpen(false);
     } catch (err) {
       console.error("Failed to delete transactions:", err);
       setError("Failed to delete transactions. Please try again.");
@@ -196,6 +194,13 @@ export default function TransactionsPage() {
         onSuccess={fetchTransactions}
         accounts={accounts}
         categories={categories}
+      />
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        count={selectedIds.size}
+        loading={loading}
       />
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
@@ -222,7 +227,7 @@ export default function TransactionsPage() {
         {/* Filters */}
         <div className="bg-card p-4 rounded-xl border border-border shadow-sm flex flex-col md:flex-row gap-4 flex-wrap">
           {/* Search */}
-          <div className="relative flex-1 min-w-[200px]">
+          <div className="relative flex-1 w-full md:w-auto min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
@@ -237,7 +242,7 @@ export default function TransactionsPage() {
           </div>
 
           {/* Account Filter */}
-          <div className="relative min-w-[150px]">
+          <div className="relative w-full md:w-auto min-w-[150px]">
             <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <select
               className="w-full pl-10 pr-8 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 appearance-none"
@@ -257,7 +262,7 @@ export default function TransactionsPage() {
           </div>
 
           {/* Category Filter */}
-          <div className="relative min-w-[150px]">
+          <div className="relative w-full md:w-auto min-w-[150px]">
             <div className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -294,11 +299,11 @@ export default function TransactionsPage() {
           </div>
 
           {/* Date Range (Simplified as input date for now) */}
-          <div className="flex items-center gap-2">
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+            <div className="relative w-full sm:w-auto">
               <input
                 type="date"
-                className="pl-3 pr-2 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                className="w-full pl-3 pr-2 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 value={startDate}
                 onChange={(e) => {
                   setStartDate(e.target.value);
@@ -306,11 +311,13 @@ export default function TransactionsPage() {
                 }}
               />
             </div>
-            <span className="text-muted-foreground">-</span>
-            <div className="relative">
+            <span className="text-muted-foreground hidden sm:block text-center">
+              -
+            </span>
+            <div className="relative w-full sm:w-auto">
               <input
                 type="date"
-                className="pl-3 pr-2 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                className="w-full pl-3 pr-2 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 value={endDate}
                 onChange={(e) => {
                   setEndDate(e.target.value);

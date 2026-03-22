@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
-import { Menu, RefreshCw, Users } from "lucide-react";
+import { Outlet, Link } from "react-router-dom";
+import { Menu, RefreshCw, Users, Settings, LogOut } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 import { ScreenOrientationLock } from "./ScreenOrientationLock";
 import { useAuthStore } from "../../store/auth.store";
@@ -11,7 +11,8 @@ import { OnboardingGuide } from "../common/OnboardingGuide";
 export default function Layout({ children }: { children?: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isResyncing, setIsResyncing] = useState(false);
-  const { user } = useAuthStore();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { user, logout } = useAuthStore();
   const { viewMode, activeHousehold, toggleView } = useHousehold();
 
   async function handleResync() {
@@ -28,6 +29,36 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
       setIsResyncing(false);
     }
   }
+
+  const renderProfileDropdown = () =>
+    isDropdownOpen && (
+      <>
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setIsDropdownOpen(false)}
+        />
+        <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg z-50 py-1 origin-top-right animate-in fade-in zoom-in-95">
+          <Link
+            to="/settings"
+            onClick={() => setIsDropdownOpen(false)}
+            className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+          >
+            <Settings className="w-4 h-4" />
+            Settings
+          </Link>
+          <button
+            onClick={() => {
+              setIsDropdownOpen(false);
+              logout();
+            }}
+            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Logout
+          </button>
+        </div>
+      </>
+    );
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex transition-colors duration-300">
@@ -53,20 +84,26 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
           </div>
 
           {/* User Avatar (Mobile) */}
-          <div className="w-8 h-8 rounded-md overflow-hidden bg-neutral-200 dark:bg-neutral-800">
-            {user?.photoUrl ? (
-              <img
-                src={user.photoUrl}
-                alt={user.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-neutral-500">
-                <span className="text-xs font-medium">
-                  {user?.name?.charAt(0) || "U"}
-                </span>
-              </div>
-            )}
+          <div className="relative">
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="w-8 h-8 rounded-md overflow-hidden bg-neutral-200 dark:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-shadow"
+            >
+              {user?.photoUrl ? (
+                <img
+                  src={user.photoUrl}
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-neutral-500">
+                  <span className="text-xs font-medium">
+                    {user?.name?.charAt(0) || "U"}
+                  </span>
+                </div>
+              )}
+            </button>
+            {renderProfileDropdown()}
           </div>
         </header>
 
@@ -131,20 +168,27 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                 {user?.email}
               </p>
             </div>
-            <div className="w-9 h-9 rounded-md overflow-hidden bg-neutral-200 dark:bg-neutral-800 ring-2 ring-white dark:ring-neutral-900 shadow-sm">
-              {user?.photoUrl ? (
-                <img
-                  src={user.photoUrl}
-                  alt={user.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-neutral-500">
-                  <span className="text-sm font-medium">
-                    {user?.name?.charAt(0) || "U"}
-                  </span>
-                </div>
-              )}
+            {/* User Avatar (Desktop) */}
+            <div className="relative">
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="w-9 h-9 rounded-md overflow-hidden bg-neutral-200 dark:bg-neutral-800 ring-2 ring-white dark:ring-neutral-900 shadow-sm focus:outline-none focus:ring-brand-500 transition-shadow block"
+              >
+                {user?.photoUrl ? (
+                  <img
+                    src={user.photoUrl}
+                    alt={user.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-neutral-500">
+                    <span className="text-sm font-medium">
+                      {user?.name?.charAt(0) || "U"}
+                    </span>
+                  </div>
+                )}
+              </button>
+              {renderProfileDropdown()}
             </div>
           </div>
         </header>
