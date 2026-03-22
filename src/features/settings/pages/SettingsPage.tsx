@@ -23,6 +23,7 @@ import {
   RefreshCcw,
 } from "lucide-react";
 import { useTheme } from "../../../components/theme-provider";
+import { ImageCropperModal } from "../components/ImageCropperModal";
 
 export default function SettingsPage() {
   const { user, token, login } = useAuthStore();
@@ -43,6 +44,9 @@ export default function SettingsPage() {
     user?.photoUrl || null,
   );
 
+  const [rawImage, setRawImage] = useState<string | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,10 +61,24 @@ export default function SettingsPage() {
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64 = reader.result as string;
-      setPhotoBase64(base64);
-      setPreviewUrl(base64);
+      setRawImage(base64);
+      setShowCropper(true);
+      // Reset input so the same file triggers change again if clicked twice
+      if (fileInputRef.current) fileInputRef.current.value = "";
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleCropSave = (croppedDataUrl: string) => {
+    setPhotoBase64(croppedDataUrl);
+    setPreviewUrl(croppedDataUrl);
+    setShowCropper(false);
+    setRawImage(null);
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setRawImage(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -328,6 +346,14 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {showCropper && rawImage && (
+        <ImageCropperModal
+          imageSrc={rawImage}
+          onSave={handleCropSave}
+          onCancel={handleCropCancel}
+        />
+      )}
     </div>
   );
 }

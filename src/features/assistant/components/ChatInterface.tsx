@@ -54,7 +54,7 @@ export default function ChatInterface({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-4">
         {messages.length === 0 && !isTyping ? (
           <div className="text-center py-8">
             <div className="text-4xl mb-4">👋</div>
@@ -121,23 +121,23 @@ export default function ChatInterface({
       {/* Input */}
       <form
         onSubmit={handleSubmit}
-        className="px-6 py-4 border-t border-border bg-card"
+        className="p-3 md:px-6 md:py-4 border-t border-border bg-card shrink-0"
       >
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask me anything about your finances..."
+            placeholder="Ask me anything..."
             disabled={isLoading}
-            className="flex-1 px-4 py-3 border border-input bg-background text-foreground rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-muted-foreground"
+            className="flex-1 min-w-0 px-4 py-2.5 md:py-3 text-sm border border-input bg-background text-foreground rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-muted-foreground"
           />
           <button
             type="submit"
             disabled={!input.trim() || isLoading}
-            className="p-3 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 md:p-3 shrink-0 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Send className="w-5 h-5" />
+            <Send className="w-4 h-4 md:w-5 md:h-5" />
           </button>
         </div>
       </form>

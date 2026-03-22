@@ -73,6 +73,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
         <header className="sticky top-0 z-30 xl:hidden h-16 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800 flex items-center px-4 justify-between">
           <div className="flex items-center gap-3">
             <button
+              id="mobile-menu-btn"
               onClick={() => setSidebarOpen(true)}
               className="p-2 -ml-2 rounded-lg text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
             >

@@ -42,7 +42,7 @@ const steps: Step[] = [
   {
     title: "Managing Transactions",
     description:
-      "Track every dollar. You can categorize, search, and even hide personal transactions from your household here.",
+      "Track every transaction. You can categorize, search, and even hide personal transactions from your household here.",
     route: "/transactions",
     position: "center",
   },
@@ -126,18 +126,26 @@ export function OnboardingGuide() {
 
   // Navigation Effect: Only trigger navigation when the actual STEP changes
   useEffect(() => {
+    if (!user || user.hasOnboarded) return;
+
     const step = steps[currentStep];
     if (step.route && location.pathname !== step.route) {
       navigate(step.route);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep]); // Navigation only depends on currentStep
+  }, [currentStep, user?.hasOnboarded]); // Navigation only depends on currentStep and onboarding state
 
   // Spotlight Effect: Update position whenever step OR location changes
   useEffect(() => {
     const updateSpotlight = () => {
       const step = steps[currentStep];
-      const targetId = step.targetId;
+      let targetId = step.targetId;
+
+      // Swap to highlighting the hamburger menu button instead of the off-screen sidebar layout upon mobile
+      if (targetId === "sidebar-nav" && windowWidth < 1280) {
+        targetId = "mobile-menu-btn";
+      }
+
       if (targetId) {
         const el = document.getElementById(targetId);
         if (el) {
@@ -257,7 +265,10 @@ export function OnboardingGuide() {
                       ? targetRect.right + 20
                       : current.position === "left"
                         ? targetRect.left - 400
-                        : "50%",
+                        : windowWidth < 1280 &&
+                            current.targetId === "sidebar-nav"
+                          ? targetRect.right + 20
+                          : "50%",
                   transform:
                     current.position === "bottom" || current.position === "top"
                       ? "translateX(-50%)"
