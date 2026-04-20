@@ -272,12 +272,13 @@ router.post(
 
       const userId = userQuery.rows[0].id;
 
-      // Verify account belongs to user (or their household)
+      // Verify account belongs to user (or their household) checking provider to update balance later
       const accountCheck = await pool.query(
-        `SELECT id FROM accounts 
-         WHERE id = $1 AND (
-           bank_connection_id IN (SELECT id FROM bank_connections WHERE user_id = $2)
-           OR household_id IN (SELECT household_id FROM household_members WHERE user_id = $2)
+        `SELECT a.id, bc.provider FROM accounts a
+         LEFT JOIN bank_connections bc ON a.bank_connection_id = bc.id
+         WHERE a.id = $1 AND (
+           a.bank_connection_id IN (SELECT id FROM bank_connections WHERE user_id = $2)
+           OR a.household_id IN (SELECT household_id FROM household_members WHERE user_id = $2)
          )`,
         [account_id, userId],
       );
@@ -321,6 +322,21 @@ router.post(
         merchant_name || description,
         is_hidden_from_household,
       ]);
+
+      const provider = accountCheck.rows[0].provider;
+      if (provider === "manual") {
+        const amountNum = parseFloat(amount);
+        if (!isNaN(amountNum)) {
+          const balanceChange = direction === "credit" ? amountNum : -amountNum;
+          await pool.query(
+            `UPDATE accounts 
+             SET current_balance = current_balance + $1,
+                 available_balance = available_balance + $1
+             WHERE id = $2`,
+            [balanceChange, account_id],
+          );
+        }
+      }
 
       const row = result.rows[0];
       const newTransaction = {
@@ -522,6 +538,42 @@ router.post(
       const userId = userRes.rows[0].id;
 
       // 2. Perform Delete ONLY on transactions owned by user
+      // First, compute balance adjustments for manual accounts
+      const txs = await pool.query(
+        `SELECT t.id, t.account_id, t.amount, t.direction, bc.provider
+         FROM transactions t
+         JOIN accounts a ON t.account_id = a.id
+         LEFT JOIN bank_connections bc ON a.bank_connection_id = bc.id
+         WHERE t.id = ANY($1::uuid[])
+           AND a.bank_connection_id IN (
+             SELECT id FROM bank_connections WHERE user_id = $2
+           )`,
+        [transactionIds, userId]
+      );
+
+      const balanceUpdates: Record<string, number> = {};
+      for (const tx of txs.rows) {
+        if (tx.provider === "manual") {
+          const amountNum = parseFloat(tx.amount);
+          if (!isNaN(amountNum)) {
+            // Revert transaction: if it was credit, subtract. If debit, add.
+            const change = tx.direction === "credit" ? -amountNum : amountNum;
+            balanceUpdates[tx.account_id] = (balanceUpdates[tx.account_id] || 0) + change;
+          }
+        }
+      }
+
+      // Apply balance updates
+      for (const [accId, change] of Object.entries(balanceUpdates)) {
+        await pool.query(
+          `UPDATE accounts
+           SET current_balance = current_balance + $1,
+               available_balance = available_balance + $1
+           WHERE id = $2`,
+          [change, accId]
+        );
+      }
+
       const deleteResult = await pool.query(
         `
         WITH owned_transactions AS (
