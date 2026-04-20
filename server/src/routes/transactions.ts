@@ -330,8 +330,8 @@ router.post(
           const balanceChange = direction === "credit" ? amountNum : -amountNum;
           await pool.query(
             `UPDATE accounts 
-             SET current_balance = current_balance + $1,
-                 available_balance = available_balance + $1
+             SET current_balance = COALESCE(current_balance, 0) + $1,
+                 available_balance = COALESCE(available_balance, 0) + $1
              WHERE id = $2`,
             [balanceChange, account_id],
           );
@@ -567,8 +567,8 @@ router.post(
       for (const [accId, change] of Object.entries(balanceUpdates)) {
         await pool.query(
           `UPDATE accounts
-           SET current_balance = current_balance + $1,
-               available_balance = available_balance + $1
+           SET current_balance = COALESCE(current_balance, 0) + $1,
+               available_balance = COALESCE(available_balance, 0) + $1
            WHERE id = $2`,
           [change, accId]
         );

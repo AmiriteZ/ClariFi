@@ -90,11 +90,7 @@ router.get(
       // dev:  external_account_id = 'tool-account-' || userId
       // UPDATED: Now filters by ANY of the targetUserIds
       const accountFilterSQL = `
-        (
-          a.external_account_id = ANY($1)
-          OR 
-          a.external_account_id IN (SELECT 'tool-account-' || u_id FROM unnest($1::text[]) AS u_id)
-        )
+        a.bank_connection_id IN (SELECT id FROM bank_connections WHERE user_id = ANY($1::uuid[]))
       `;
 
       // Filter out hidden transactions if we are in household mode
@@ -366,11 +362,7 @@ router.get(
       }
 
       const accountFilterSQL = `
-        (
-          a.external_account_id = ANY($1)
-          OR 
-          a.external_account_id IN (SELECT 'tool-account-' || u_id FROM unnest($1::text[]) AS u_id)
-        )
+        a.bank_connection_id IN (SELECT id FROM bank_connections WHERE user_id = ANY($1::uuid[]))
       `;
 
       const transactionPrivacySQL = householdId
