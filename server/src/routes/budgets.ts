@@ -273,11 +273,7 @@ router.get(
           COUNT(*) as transaction_count
          FROM transactions t
          JOIN accounts a ON t.account_id = a.id
-         WHERE (
-           a.external_account_id = ANY($1)
-           OR 
-           a.external_account_id IN (SELECT 'tool-account-' || u_id FROM unnest($1::text[]) AS u_id)
-         )
+         WHERE a.bank_connection_id IN (SELECT id FROM bank_connections WHERE user_id = ANY($1::uuid[]))
            AND t.posted_at >= $2
            AND t.posted_at <= $3
            AND t.direction = 'debit'
@@ -354,11 +350,7 @@ router.get(
          FROM transactions t
          JOIN accounts a ON t.account_id = a.id
          LEFT JOIN categories c ON t.category_id = c.id
-         WHERE (
-           a.external_account_id = ANY($1)
-           OR 
-           a.external_account_id IN (SELECT 'tool-account-' || u_id FROM unnest($1::text[]) AS u_id)
-         )
+         WHERE a.bank_connection_id IN (SELECT id FROM bank_connections WHERE user_id = ANY($1::uuid[]))
            AND t.posted_at >= $2
            AND t.posted_at <= $3
            AND t.direction = 'debit'
@@ -397,11 +389,7 @@ router.get(
         `SELECT t.id, t.posted_at, t.description, t.merchant_name, t.amount, a.name as account_name
          FROM transactions t
          JOIN accounts a ON t.account_id = a.id
-         WHERE (
-           a.external_account_id = ANY($1)
-           OR 
-           a.external_account_id IN (SELECT 'tool-account-' || u_id FROM unnest($1::text[]) AS u_id)
-         )
+         WHERE a.bank_connection_id IN (SELECT id FROM bank_connections WHERE user_id = ANY($1::uuid[]))
            AND t.posted_at >= $2
            AND t.posted_at <= $3
            AND t.category_id IS NULL
@@ -519,11 +507,7 @@ router.get(
               `SELECT SUM(ABS(t.amount)) as total_spent
              FROM transactions t
              JOIN accounts a ON t.account_id = a.id
-             WHERE (
-               a.external_account_id = ANY($1)
-               OR 
-               a.external_account_id IN (SELECT 'tool-account-' || u_id FROM unnest($1::text[]) AS u_id)
-             )
+             WHERE a.bank_connection_id IN (SELECT id FROM bank_connections WHERE user_id = ANY($1::uuid[]))
                AND t.posted_at >= $2
                AND t.posted_at <= $3
                AND t.direction = 'debit'`,
